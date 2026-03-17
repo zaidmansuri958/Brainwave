@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { courseApi } from "@/lib/api";
 import { CourseCard } from "@/components/course/CourseCard";
@@ -47,31 +47,29 @@ export default function CoursesPage() {
   const hasFilters = search || category || level;
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="app-shell flex flex-col">
       <Navbar />
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Browse Courses</h1>
-          <p className="text-gray-500 mt-1">{total.toLocaleString()} courses available</p>
+        <div className="mb-6 glass-panel p-6">
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">Browse Courses</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">{total.toLocaleString()} courses available</p>
         </div>
 
-        {/* Search + Filters Row */}
         <div className="flex gap-3 mb-6">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
             <input
               type="text"
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               placeholder="Search courses, topics, teachers..."
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 dark:bg-gray-800 dark:text-white outline-none"
+              className="modern-input pl-10 pr-4"
             />
           </div>
           <button
             onClick={() => setFiltersOpen(!filtersOpen)}
-            className="flex items-center gap-2 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            className="modern-btn-secondary px-4 py-3"
           >
             <SlidersHorizontal className="h-5 w-5" />
             <span className="hidden sm:block">Filters</span>
@@ -80,7 +78,7 @@ export default function CoursesPage() {
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
-            className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-800 dark:text-white outline-none"
+            className="modern-select"
           >
             {SORT_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -88,26 +86,25 @@ export default function CoursesPage() {
           </select>
         </div>
 
-        {/* Expanded Filters */}
         {filtersOpen && (
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="glass-panel p-4 mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Category</label>
               <select
                 value={category}
                 onChange={(e) => { setCategory(e.target.value); setPage(1); }}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white outline-none text-sm"
+                className="modern-select w-full px-3 py-2 text-sm"
               >
                 <option value="">All Categories</option>
                 {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Level</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Level</label>
               <select
                 value={level}
                 onChange={(e) => { setLevel(e.target.value); setPage(1); }}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white outline-none text-sm"
+                className="modern-select w-full px-3 py-2 text-sm"
               >
                 <option value="">All Levels</option>
                 {LEVELS.map((l) => <option key={l} value={l}>{l.charAt(0).toUpperCase() + l.slice(1)}</option>)}
@@ -126,15 +123,14 @@ export default function CoursesPage() {
           </div>
         )}
 
-        {/* Course Grid */}
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="bg-gray-100 dark:bg-gray-800 rounded-xl aspect-[4/3] animate-pulse" />
+              <div key={i} className="glass-card rounded-xl aspect-[4/3] animate-pulse" />
             ))}
           </div>
         ) : courses.length === 0 ? (
-          <div className="text-center py-20 text-gray-500">
+          <div className="glass-panel text-center py-20 text-slate-500 dark:text-slate-400">
             <Search className="h-12 w-12 mx-auto mb-4 opacity-30" />
             <p className="text-lg font-medium">No courses found</p>
             <p className="text-sm mt-1">Try adjusting your filters</p>
@@ -147,7 +143,6 @@ export default function CoursesPage() {
           </div>
         )}
 
-        {/* Pagination */}
         {pages > 1 && (
           <div className="flex justify-center gap-2 mt-8">
             {Array.from({ length: Math.min(pages, 10) }, (_, i) => i + 1).map((p) => (
@@ -157,7 +152,7 @@ export default function CoursesPage() {
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   p === page
                     ? "bg-primary-600 text-white"
-                    : "border border-gray-300 text-gray-600 hover:bg-gray-50"
+                    : "border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-slate-800/70"
                 }`}
               >
                 {p}

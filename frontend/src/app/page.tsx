@@ -2,7 +2,17 @@ import Link from "next/link";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { CourseCard } from "@/components/course/CourseCard";
-import { BookOpen, Brain, Award, Shield, Users, Zap, Star, ArrowRight, GraduationCap } from "lucide-react";
+import {
+  ArrowRight,
+  Award,
+  BookOpen,
+  Brain,
+  GraduationCap,
+  Shield,
+  Sparkles,
+  Users,
+  Zap,
+} from "lucide-react";
 
 async function getFeaturedCourses() {
   try {
@@ -62,99 +72,103 @@ export default async function HomePage() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="app-shell flex flex-col">
       <Navbar />
 
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-primary-600 via-primary-700 to-indigo-800 text-white overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full -translate-x-1/2 -translate-y-1/2" />
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full translate-x-1/2 translate-y-1/2" />
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -top-24 -left-10 h-72 w-72 rounded-full bg-primary-500/20 blur-3xl" />
+          <div className="absolute -top-20 right-0 h-72 w-72 rounded-full bg-indigo-500/20 blur-3xl" />
+          <div className="absolute -bottom-20 left-1/3 h-72 w-72 rounded-full bg-violet-500/15 blur-3xl" />
         </div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
-          <div className="max-w-3xl">
-            <div className="flex items-center gap-2 mb-4">
-              <GraduationCap className="h-8 w-8 text-primary-200" />
-              <span className="text-primary-200 font-semibold">India's AI-Powered Learning Platform</span>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 md:pt-20 pb-16 md:pb-20">
+          <div className="glass-panel p-7 md:p-10 lg:p-12">
+            <div className="flex items-center gap-2 mb-4 text-primary-600 dark:text-primary-300">
+              <Sparkles className="h-5 w-5" />
+              <span className="font-semibold text-sm uppercase tracking-wide">India&apos;s AI-powered learning platform</span>
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6">
-              Learn from India's Best Teachers.{" "}
-              <span className="text-primary-200">Powered by AI.</span>
-            </h1>
-            <p className="text-xl text-primary-100 mb-8 max-w-2xl">
-              Teachers upload their recordings — AI creates the course. Students get an AI chatbot, 
-              live sessions, and verified certificates.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Link
-                href="/courses"
-                className="inline-flex items-center justify-center gap-2 bg-white text-primary-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-primary-50 transition-colors shadow-lg"
-              >
-                Browse Courses <ArrowRight className="h-5 w-5" />
-              </Link>
-              <Link
-                href="/register?role=teacher"
-                className="inline-flex items-center justify-center gap-2 border-2 border-white text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-white/10 transition-colors"
-              >
-                Teach on Brainwave
-              </Link>
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-16">
-            {stats.map((stat) => (
-              <div key={stat.label} className="text-center">
-                <p className="text-3xl font-bold text-white">{stat.value}</p>
-                <p className="text-primary-200 mt-1">{stat.label}</p>
+            <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+              <div>
+                <h1 className="text-4xl md:text-6xl font-bold leading-tight text-slate-900 dark:text-white">
+                  Learn Faster with
+                  <span className="block text-primary-600 dark:text-primary-300">Modern AI Education</span>
+                </h1>
+                <p className="mt-5 text-base md:text-xl text-slate-600 dark:text-slate-300 max-w-2xl">
+                  Teachers upload recordings, AI structures the entire course, and students get adaptive learning,
+                  live support, and verifiable certificates.
+                </p>
+                <div className="mt-8 flex flex-col sm:flex-row gap-3">
+                  <Link href="/courses" className="modern-btn-primary px-7 py-3 text-base">
+                    Browse Courses <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link href="/register?role=teacher" className="modern-btn-secondary px-7 py-3 text-base">
+                    Teach on Brainwave
+                  </Link>
+                </div>
               </div>
-            ))}
+
+              <div className="grid grid-cols-2 gap-4">
+                {stats.map((stat) => (
+                  <div key={stat.label} className="glass-card p-4">
+                    <p className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">{stat.value}</p>
+                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="glass-card p-4 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                  <GraduationCap className="h-5 w-5 text-primary-600 dark:text-primary-300" />
+                </div>
+                <p className="text-sm text-slate-700 dark:text-slate-200">Professional, mentor-first course journeys</p>
+              </div>
+              <div className="glass-card p-4 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                  <Brain className="h-5 w-5 text-primary-600 dark:text-primary-300" />
+                </div>
+                <p className="text-sm text-slate-700 dark:text-slate-200">AI generated summaries, quizzes, and context chat</p>
+              </div>
+              <div className="glass-card p-4 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                  <Award className="h-5 w-5 text-primary-600 dark:text-primary-300" />
+                </div>
+                <p className="text-sm text-slate-700 dark:text-slate-200">Certificate verification for hiring-ready outcomes</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="py-20 bg-gray-50 dark:bg-gray-900">
+      <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
-              Everything You Need to Learn or Teach
-            </h2>
-            <p className="text-gray-500 dark:text-gray-400 mt-4 text-lg max-w-2xl mx-auto">
+            <h2 className="section-title">Everything You Need to Learn or Teach</h2>
+            <p className="section-subtitle max-w-2xl mx-auto">
               Built for India — from non-technical teachers to ambitious students.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feature) => (
-              <div
-                key={feature.title}
-                className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
-              >
+              <div key={feature.title} className="glass-card glass-card-hover p-6">
                 <div className="w-14 h-14 bg-primary-50 dark:bg-primary-900/30 rounded-xl flex items-center justify-center mb-4">
                   {feature.icon}
                 </div>
-                <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-2">
-                  {feature.title}
-                </h3>
-                <p className="text-gray-500 dark:text-gray-400 text-sm">{feature.description}</p>
+                <h3 className="font-semibold text-lg text-slate-900 dark:text-white mb-2">{feature.title}</h3>
+                <p className="text-slate-600 dark:text-slate-300 text-sm">{feature.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Featured Courses */}
       {featuredCourses.length > 0 && (
         <section className="py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-                Popular Courses
-              </h2>
-              <Link
-                href="/courses"
-                className="text-primary-600 font-semibold hover:text-primary-700 flex items-center gap-1"
-              >
+              <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">Popular Courses</h2>
+              <Link href="/courses" className="text-primary-600 font-semibold hover:text-primary-700 flex items-center gap-1">
                 View All <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
@@ -167,21 +181,19 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* CTA Section */}
-      <section className="py-20 bg-primary-600">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Ready to start your learning journey?
-          </h2>
-          <p className="text-primary-100 text-lg mb-8">
+      <section className="pb-20">
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="glass-panel p-8 md:p-10 text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">
+              Ready to start your learning journey?
+            </h2>
+            <p className="text-slate-600 dark:text-slate-300 text-lg mb-8">
             Join thousands of students learning with AI-powered courses.
-          </p>
-          <Link
-            href="/register"
-            className="inline-flex items-center gap-2 bg-white text-primary-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-primary-50 transition-colors shadow-lg"
-          >
-            Start Learning Free <ArrowRight className="h-5 w-5" />
-          </Link>
+            </p>
+            <Link href="/register" className="modern-btn-primary px-8 py-3 text-lg">
+              Start Learning Free <ArrowRight className="h-5 w-5" />
+            </Link>
+          </div>
         </div>
       </section>
 

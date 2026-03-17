@@ -6,6 +6,7 @@ import { authApi } from "@/lib/api";
 import { useAuthStore } from "@/stores/authStore";
 import { GraduationCap, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
 function RegisterPageContent() {
   const router = useRouter();
@@ -44,26 +45,28 @@ function RegisterPageContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-md p-8">
+    <div className="app-shell flex items-center justify-center p-4 relative">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      <div className="glass-panel w-full max-w-md p-8">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 text-primary-600 font-bold text-2xl">
             <GraduationCap className="h-8 w-8" />
             <span>Brainwave.ai</span>
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mt-4">Create your account</h1>
-          <p className="text-gray-500 mt-1">Start your learning journey today</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white mt-4">Create your account</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">Start your learning journey today</p>
         </div>
 
-        {/* Role Toggle */}
-        <div className="flex rounded-xl border border-gray-200 dark:border-gray-700 p-1 mb-6">
+        <div className="flex rounded-xl border border-slate-200 dark:border-slate-700 p-1 mb-6 bg-white/50 dark:bg-slate-900/40">
           <button
             type="button"
             onClick={() => setFormData({ ...formData, role: "student" })}
             className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors ${
               formData.role === "student"
                 ? "bg-primary-600 text-white"
-                : "text-gray-500 hover:text-gray-900"
+                : "text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
             I want to Learn
@@ -74,7 +77,7 @@ function RegisterPageContent() {
             className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors ${
               formData.role === "teacher"
                 ? "bg-primary-600 text-white"
-                : "text-gray-500 hover:text-gray-900"
+                : "text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
             I want to Teach
@@ -83,38 +86,38 @@ function RegisterPageContent() {
 
         <form onSubmit={handleRegister} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Full Name</label>
             <input
               type="text"
               value={formData.full_name}
               onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
               required
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white outline-none transition-all"
+              className="modern-input"
               placeholder="Your full name"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Email</label>
             <input
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               required
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white outline-none transition-all"
+              className="modern-input"
               placeholder="you@example.com"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Password</label>
             <input
               type="password"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               required
               minLength={8}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white outline-none transition-all"
+              className="modern-input"
               placeholder="Min. 8 characters"
             />
           </div>
@@ -122,14 +125,14 @@ function RegisterPageContent() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-primary-600 text-white py-3 rounded-xl font-semibold hover:bg-primary-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2 min-h-[48px]"
+            className="w-full modern-btn-primary py-3 min-h-[48px]"
           >
             {loading && <Loader2 className="h-5 w-5 animate-spin" />}
             {loading ? "Creating account..." : `Create ${formData.role === "teacher" ? "Teacher" : "Student"} Account`}
           </button>
         </form>
 
-        <div className="text-center mt-6 text-sm text-gray-500">
+        <div className="text-center mt-6 text-sm text-slate-500 dark:text-slate-400">
           Already have an account?{" "}
           <Link href="/login" className="text-primary-600 font-semibold hover:underline">
             Sign in
@@ -143,7 +146,7 @@ function RegisterPageContent() {
 export default function RegisterPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
       </div>
     }>

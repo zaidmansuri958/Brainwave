@@ -29,8 +29,7 @@ interface CourseCardProps {
 export function CourseCard({ course }: CourseCardProps) {
   return (
     <Link href={`/courses/${course.slug}`} className="group block">
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-all duration-200 hover:-translate-y-1">
-        {/* Thumbnail */}
+      <div className="glass-card glass-card-hover overflow-hidden">
         <div className="relative aspect-video bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900 dark:to-primary-800">
           {course.thumbnail_url ? (
             <img
@@ -43,45 +42,43 @@ export function CourseCard({ course }: CourseCardProps) {
               <BookOpen className="h-12 w-12 text-primary-400" />
             </div>
           )}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/45 via-slate-900/5 to-transparent" />
           {course.price === 0 && (
-            <span className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
+            <span className="absolute top-3 left-3 bg-emerald-500/90 text-white text-xs px-2 py-1 rounded-full font-semibold">
               FREE
             </span>
           )}
           {course.difficulty_level && (
-            <span className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
+            <span className="absolute top-3 right-3 bg-slate-900/65 text-white text-xs px-2 py-1 rounded-full">
               {course.difficulty_level}
             </span>
           )}
         </div>
 
-        {/* Content */}
         <div className="p-4">
           {course.category && (
-            <span className="text-xs text-primary-600 font-semibold uppercase tracking-wide">
+            <span className="text-xs text-primary-600 dark:text-primary-300 font-semibold uppercase tracking-wide">
               {course.category}
             </span>
           )}
-          <h3 className="font-semibold text-gray-900 dark:text-white mt-1 line-clamp-2 group-hover:text-primary-600 transition-colors">
+          <h3 className="font-semibold text-slate-900 dark:text-white mt-1 line-clamp-2 group-hover:text-primary-600 transition-colors">
             {course.title}
           </h3>
           {course.short_description && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+            <p className="text-sm text-slate-600 dark:text-slate-300 mt-1 line-clamp-2">
               {course.short_description}
             </p>
           )}
 
-          {/* Teacher */}
           {course.teacher && (
-            <p className="text-xs text-gray-500 mt-2">by {course.teacher.full_name}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">by {course.teacher.full_name}</p>
           )}
 
-          {/* Stats */}
-          <div className="flex items-center gap-3 mt-3 text-xs text-gray-500">
+          <div className="flex items-center gap-3 mt-3 text-xs text-slate-500 dark:text-slate-400">
             <span className="flex items-center gap-1">
               <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
               {Number(course.avg_rating).toFixed(1)}
-              <span className="text-gray-400">({course.review_count})</span>
+              <span className="text-slate-400 dark:text-slate-500">({course.review_count})</span>
             </span>
             <span className="flex items-center gap-1">
               <Users className="h-3 w-3" />
@@ -95,12 +92,11 @@ export function CourseCard({ course }: CourseCardProps) {
             )}
           </div>
 
-          {/* Price */}
-          <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-            <span className="font-bold text-gray-900 dark:text-white text-lg">
+          <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-200/70 dark:border-slate-700/70">
+            <span className="font-bold text-slate-900 dark:text-white text-lg">
               {formatPrice(Number(course.price), course.currency)}
             </span>
-            <span className="text-xs text-gray-400">{course.total_chapters} chapters</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500">{course.total_chapters} chapters</span>
           </div>
         </div>
       </div>
