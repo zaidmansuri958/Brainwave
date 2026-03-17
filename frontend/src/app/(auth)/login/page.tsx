@@ -10,16 +10,15 @@ import {
   Eye,
   EyeOff,
   Loader2,
-  BookOpen,
-  Users,
-  Sparkles,
-  Zap,
-  Quote,
+  Mail,
+  Lock,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { AnimatedGridBg } from "@/components/ui/animated-grid-bg";
+import { RippleEffect } from "@/components/ui/ripple-effect";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -53,128 +52,62 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left side - Brand panel */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-primary-600 via-purple-600 to-primary-800">
-        {/* Floating particles CSS animation */}
-        <div className="absolute inset-0">
-          {Array.from({ length: 15 }).map((_, i) => (
-            <div
-              key={i}
-              className="auth-particle"
-              style={{
-                left: `${(i * 17 + 5) % 100}%`,
-                top: `${(i * 23 + 10) % 100}%`,
-                width: `${(i % 3 + 1) * 8}px`,
-                height: `${(i % 3 + 1) * 8}px`,
-                animationDelay: `${i * 0.5}s`,
-                animationDuration: `${8 + (i % 5) * 2}s`,
-              }}
-            />
-          ))}
-        </div>
+    <div className="relative min-h-screen flex items-center justify-center bg-[#030014] overflow-hidden">
+      <AnimatedGridBg />
 
-        {/* Grid overlay */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="w-full h-full" style={{ backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.3) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
-        </div>
-
-        <div className="relative z-10 flex flex-col justify-between p-12 text-white w-full">
-          {/* Logo */}
-          <div className="flex items-center gap-2 text-white font-bold text-2xl">
-            <GraduationCap className="h-8 w-8" />
-            <span>Brainwave.ai</span>
-          </div>
-
-          {/* Main content */}
-          <div className="space-y-8">
-            <div>
-              <h2 className="text-4xl font-bold leading-tight">
-                Welcome back to
-                <br />
-                your learning journey
-              </h2>
-              <p className="text-lg text-white/70 mt-4 max-w-md">
-                Pick up right where you left off. Your courses, progress, and achievements are waiting.
-              </p>
-            </div>
-
-            {/* Feature highlights */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 text-white/80">
-                <div className="h-10 w-10 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                  <Sparkles className="h-5 w-5" />
-                </div>
-                <span className="text-sm">AI-powered personalized learning paths</span>
-              </div>
-              <div className="flex items-center gap-3 text-white/80">
-                <div className="h-10 w-10 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                  <BookOpen className="h-5 w-5" />
-                </div>
-                <span className="text-sm">500+ expert-curated courses</span>
-              </div>
-              <div className="flex items-center gap-3 text-white/80">
-                <div className="h-10 w-10 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                  <Zap className="h-5 w-5" />
-                </div>
-                <span className="text-sm">Real-time doubt resolution with AI</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Testimonial */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
-            <Quote className="h-6 w-6 text-white/40 mb-3" />
-            <p className="text-sm text-white/80 italic leading-relaxed">
-              &quot;Brainwave.ai transformed how I learn. The AI tutor feels like having a personal mentor available 24/7.&quot;
-            </p>
-            <div className="flex items-center gap-3 mt-4">
-              <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold">
-                AK
-              </div>
-              <div>
-                <p className="text-sm font-medium">Anika Kapoor</p>
-                <p className="text-xs text-white/50">Data Science Student</p>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Subtle left decoration */}
+      <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/3 opacity-40">
+        <RippleEffect color="rgba(99,102,241,0.12)" count={4} />
       </div>
 
-      {/* Right side - Form */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-8 bg-white dark:bg-gray-900">
-        <div className="w-full max-w-md space-y-8">
-          {/* Mobile logo */}
-          <div className="text-center">
-            <Link href="/" className="inline-flex items-center gap-2 text-primary-600 font-bold text-2xl">
-              <GraduationCap className="h-8 w-8" />
-              <span>Brainwave.ai</span>
+      {/* Mesh gradient blurs */}
+      <div className="pointer-events-none absolute top-0 left-1/4 h-[500px] w-[500px] rounded-full bg-indigo-600/10 blur-[120px]" />
+      <div className="pointer-events-none absolute bottom-0 right-1/4 h-[400px] w-[400px] rounded-full bg-purple-600/10 blur-[120px]" />
+
+      {/* Card */}
+      <div className="relative z-10 w-full max-w-md mx-4">
+        <div className="bg-gray-900/50 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl shadow-indigo-500/5">
+          {/* Logo */}
+          <div className="text-center mb-8">
+            <Link href="/" className="inline-flex items-center gap-2.5 group">
+              <div className="h-10 w-10 rounded-xl bg-indigo-600/20 flex items-center justify-center border border-indigo-500/20">
+                <GraduationCap className="h-5 w-5 text-indigo-400" />
+              </div>
+              <span className="text-xl font-bold text-white tracking-tight">Brainwave.ai</span>
             </Link>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mt-6">
+            <h1 className="text-2xl font-bold text-white mt-6">
               Welcome back
             </h1>
-            <p className="text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-gray-400 mt-1.5 text-sm">
               Sign in to continue your learning journey
             </p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email">Email address</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="you@example.com"
-                className="h-11"
-              />
+              <Label htmlFor="email" className="text-gray-300 text-sm font-medium">
+                Email address
+              </Label>
+              <div className="relative">
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="you@example.com"
+                  className="h-11 pl-10 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-indigo-500/50 focus:ring-indigo-500/20"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-gray-300 text-sm font-medium">
+                Password
+              </Label>
               <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                 <Input
                   id="password"
                   type={showPass ? "text" : "password"}
@@ -182,12 +115,12 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="Enter your password"
-                  className="h-11 pr-10"
+                  className="h-11 pl-10 pr-10 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-indigo-500/50 focus:ring-indigo-500/20"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
                 >
                   {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -199,7 +132,7 @@ export default function LoginPage() {
               variant="shimmer"
               size="lg"
               disabled={loading}
-              className="w-full h-11 text-sm font-semibold"
+              className="w-full h-11 text-sm font-semibold rounded-xl"
             >
               {loading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               {loading ? "Signing in..." : "Sign In"}
@@ -207,20 +140,20 @@ export default function LoginPage() {
           </form>
 
           {/* Divider */}
-          <div className="relative">
+          <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200 dark:border-gray-700" />
+              <div className="w-full border-t border-white/10" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white dark:bg-gray-900 px-2 text-gray-400">or continue with</span>
+              <span className="bg-gray-900/80 px-3 text-gray-500 tracking-wider">or continue with</span>
             </div>
           </div>
 
-          {/* Social login */}
+          {/* Google SSO */}
           <Button
             type="button"
             variant="outline"
-            className="w-full h-11 text-sm font-medium"
+            className="w-full h-11 text-sm font-medium bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:text-white rounded-xl"
           >
             <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24">
               <path
@@ -243,9 +176,9 @@ export default function LoginPage() {
             Continue with Google
           </Button>
 
-          <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-center text-sm text-gray-500 mt-6">
             Don&apos;t have an account?{" "}
-            <Link href="/register" className="text-primary-600 font-semibold hover:underline">
+            <Link href="/register" className="text-indigo-400 font-semibold hover:text-indigo-300 transition-colors">
               Create account
             </Link>
           </p>

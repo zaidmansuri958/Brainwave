@@ -20,6 +20,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export function Navbar() {
   const { user, logout, isAuthenticated } = useAuthStore();
@@ -90,8 +91,8 @@ export function Navbar() {
       className={cn(
         "sticky top-0 z-50 transition-all duration-300",
         scrolled
-          ? "bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-white/20 dark:border-gray-700/30 shadow-lg shadow-black/[0.03]"
-          : "bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border-b border-white/20 dark:border-gray-800/30"
+          ? "bg-[#030014]/95 backdrop-blur-2xl border-b border-white/[0.06] shadow-2xl shadow-black/20"
+          : "bg-[#030014]/80 backdrop-blur-2xl border-b border-white/[0.06]"
       )}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -102,10 +103,10 @@ export function Navbar() {
             className="flex items-center gap-2.5 font-bold text-xl group"
           >
             <div className="relative">
-              <GraduationCap className="h-7 w-7 text-primary-600 transition-transform duration-300 group-hover:scale-110" />
-              <div className="absolute inset-0 bg-primary-400/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <GraduationCap className="h-7 w-7 text-indigo-400 transition-transform duration-300 group-hover:scale-110" />
+              <div className="absolute inset-0 bg-indigo-400/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </div>
-            <span className="bg-gradient-to-r from-primary-600 to-primary-400 bg-clip-text text-transparent">
+            <span className="text-white font-bold tracking-tight">
               Brainwave.ai
             </span>
           </Link>
@@ -121,15 +122,15 @@ export function Navbar() {
                   className={cn(
                     "relative px-4 py-2 text-sm font-medium rounded-lg transition-colors",
                     isActive(link.href)
-                      ? "text-primary-600 dark:text-primary-400"
-                      : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                      ? "text-white"
+                      : "text-gray-400 hover:text-white"
                   )}
                 >
                   {link.label}
                   {isActive(link.href) && (
                     <motion.div
                       layoutId="navbar-active-indicator"
-                      className="absolute bottom-0 left-2 right-2 h-0.5 bg-gradient-to-r from-primary-500 to-primary-400 rounded-full"
+                      className="absolute bottom-0 left-2 right-2 h-0.5 bg-gradient-to-r from-indigo-500 to-indigo-400 rounded-full"
                       transition={{
                         type: "spring",
                         stiffness: 380,
@@ -145,10 +146,13 @@ export function Navbar() {
           <div className="hidden md:flex items-center gap-2">
             {isAuthenticated() ? (
               <>
+                {/* Theme Toggle */}
+                <ThemeToggle />
+
                 {/* Notifications */}
                 <Link
                   href="/notifications"
-                  className="relative p-2.5 rounded-xl text-gray-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all duration-200"
+                  className="relative p-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/[0.06] transition-all duration-200"
                 >
                   <Bell className="h-5 w-5" />
                   {unreadCount > 0 && (
@@ -157,8 +161,8 @@ export function Navbar() {
                       animate={{ scale: 1 }}
                       className="absolute -top-0.5 -right-0.5 flex items-center justify-center"
                     >
-                      <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 animate-ping" />
-                      <span className="relative inline-flex items-center justify-center h-5 w-5 rounded-full bg-red-500 text-white text-[10px] font-bold">
+                      <span className="absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75 animate-ping" />
+                      <span className="relative inline-flex items-center justify-center h-5 w-5 rounded-full bg-indigo-500 text-white text-[10px] font-bold">
                         {unreadCount > 9 ? "9+" : unreadCount}
                       </span>
                     </motion.span>
@@ -172,8 +176,8 @@ export function Navbar() {
                     className={cn(
                       "flex items-center gap-2 p-1.5 pr-3 rounded-xl transition-all duration-200",
                       profileOpen
-                        ? "bg-primary-50 dark:bg-primary-900/20"
-                        : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                        ? "bg-white/[0.08]"
+                        : "hover:bg-white/[0.06]"
                     )}
                   >
                     <Avatar className="h-8 w-8">
@@ -184,7 +188,7 @@ export function Navbar() {
                           className="h-full w-full object-cover rounded-full"
                         />
                       ) : (
-                        <AvatarFallback className="bg-gradient-to-br from-primary-500 to-primary-700 text-white text-sm font-semibold">
+                        <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-sm font-semibold">
                           {user?.full_name?.charAt(0)?.toUpperCase()}
                         </AvatarFallback>
                       )}
@@ -204,23 +208,23 @@ export function Navbar() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 8, scale: 0.96 }}
                         transition={{ duration: 0.15, ease: "easeOut" }}
-                        className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-2xl shadow-xl shadow-black/10 border border-gray-200/80 dark:border-gray-700 py-1.5 z-50 overflow-hidden"
+                        className="absolute right-0 mt-2 w-56 bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-xl shadow-black/30 border border-white/[0.08] py-1.5 z-50 overflow-hidden"
                       >
-                        <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
-                          <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                        <div className="px-4 py-3 border-b border-white/[0.06]">
+                          <p className="text-sm font-semibold text-white truncate">
                             {user?.full_name}
                           </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                          <p className="text-xs text-gray-400 truncate mt-0.5">
                             {user?.email}
                           </p>
                         </div>
                         <div className="py-1">
                           <Link
                             href="/profile"
-                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/[0.06] hover:text-white transition-colors"
                             onClick={() => setProfileOpen(false)}
                           >
-                            <User className="h-4 w-4 text-gray-400" />
+                            <User className="h-4 w-4 text-gray-500" />
                             Profile
                           </Link>
                           <button
@@ -229,7 +233,7 @@ export function Navbar() {
                               setProfileOpen(false);
                               window.location.href = "/";
                             }}
-                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-full transition-colors"
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 w-full transition-colors"
                           >
                             <LogOut className="h-4 w-4" />
                             Sign Out
@@ -242,13 +246,16 @@ export function Navbar() {
               </>
             ) : (
               <div className="flex items-center gap-3">
+                {/* Theme Toggle */}
+                <ThemeToggle />
+
                 <Link
                   href="/login"
-                  className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors px-3 py-2"
+                  className="text-sm font-medium text-gray-400 hover:text-white transition-colors px-3 py-2"
                 >
                   Log In
                 </Link>
-                <Button asChild size="sm" className="rounded-xl px-5">
+                <Button asChild variant="shimmer" size="sm" className="rounded-xl px-5">
                   <Link href="/register">Get Started</Link>
                 </Button>
               </div>
@@ -257,7 +264,7 @@ export function Navbar() {
 
           {/* Mobile hamburger */}
           <button
-            className="md:hidden relative p-2 rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="md:hidden relative p-2 rounded-xl text-gray-400 hover:bg-white/[0.06] transition-colors"
             onClick={() => setMobileOpen(!mobileOpen)}
           >
             <AnimatePresence mode="wait">
@@ -296,7 +303,7 @@ export function Navbar() {
               transition={{ duration: 0.25, ease: "easeInOut" }}
               className="md:hidden overflow-hidden"
             >
-              <div className="py-4 border-t border-gray-100 dark:border-gray-800 space-y-1">
+              <div className="py-4 border-t border-white/[0.06] space-y-1">
                 {navLinks
                   .filter((link) => link.show)
                   .map((link) => (
@@ -306,8 +313,8 @@ export function Navbar() {
                       className={cn(
                         "block px-4 py-2.5 rounded-xl text-sm font-medium transition-colors",
                         isActive(link.href)
-                          ? "bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400"
-                          : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                          ? "bg-indigo-500/10 text-white"
+                          : "text-gray-400 hover:text-white hover:bg-white/[0.04]"
                       )}
                     >
                       {link.label}
@@ -318,19 +325,19 @@ export function Navbar() {
                   <>
                     <Link
                       href="/notifications"
-                      className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                      className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-white/[0.04] transition-colors"
                     >
                       <Bell className="h-4 w-4" />
                       Notifications
                       {unreadCount > 0 && (
-                        <span className="ml-auto inline-flex items-center justify-center h-5 min-w-[20px] px-1.5 rounded-full bg-red-500 text-white text-[10px] font-bold">
+                        <span className="ml-auto inline-flex items-center justify-center h-5 min-w-[20px] px-1.5 rounded-full bg-indigo-500 text-white text-[10px] font-bold">
                           {unreadCount > 9 ? "9+" : unreadCount}
                         </span>
                       )}
                     </Link>
                     <Link
                       href="/profile"
-                      className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                      className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-white/[0.04] transition-colors"
                     >
                       <User className="h-4 w-4" />
                       Profile
@@ -340,7 +347,7 @@ export function Navbar() {
                         logout();
                         window.location.href = "/";
                       }}
-                      className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                      className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors"
                     >
                       <LogOut className="h-4 w-4" />
                       Sign Out
@@ -352,11 +359,11 @@ export function Navbar() {
                   <div className="pt-2 space-y-2 px-4">
                     <Link
                       href="/login"
-                      className="block py-2.5 text-center rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                      className="block py-2.5 text-center rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-white/[0.04] transition-colors"
                     >
                       Log In
                     </Link>
-                    <Button asChild className="w-full rounded-xl">
+                    <Button asChild variant="shimmer" className="w-full rounded-xl">
                       <Link href="/register">Get Started</Link>
                     </Button>
                   </div>
