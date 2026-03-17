@@ -4,7 +4,9 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { quizApi } from "@/lib/api";
 import { Navbar } from "@/components/layout/Navbar";
 import Link from "next/link";
-import { CheckCircle, XCircle, Clock, Trophy, ArrowLeft, Loader2 } from "lucide-react";
+import { CheckCircle, XCircle, Trophy, ArrowLeft, Loader2, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 export default function QuizPage({ params }: { params: { slug: string; quizId: string } }) {
   const [currentQ, setCurrentQ] = useState(0);
@@ -40,7 +42,7 @@ export default function QuizPage({ params }: { params: { slug: string; quizId: s
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-950">
+      <div className="min-h-screen flex flex-col">
         <Navbar />
         <div className="flex items-center justify-center h-96">
           <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
@@ -55,58 +57,54 @@ export default function QuizPage({ params }: { params: { slug: string; quizId: s
   const currentQuestion = questions[currentQ];
   const answeredCount = Object.keys(answers).length;
 
-  // Results View
   if (submitted && result) {
     const passed = result.passed;
-    const score = result.score;
-    const percentage = result.percentage;
 
     return (
-      <div className="min-h-screen bg-gray-950">
+      <div className="min-h-screen flex flex-col">
         <Navbar />
-        <div className="max-w-2xl mx-auto px-4 py-12">
-          <div className={`rounded-3xl p-8 text-center border ${passed ? "bg-green-900/20 border-green-800" : "bg-red-900/20 border-red-800"}`}>
-            <div className={`inline-flex p-4 rounded-full mb-4 ${passed ? "bg-green-900/30" : "bg-red-900/30"}`}>
-              {passed ? <Trophy className="h-10 w-10 text-yellow-400" /> : <XCircle className="h-10 w-10 text-red-400" />}
+        <div className="flex-1 max-w-2xl mx-auto px-4 py-12 w-full">
+          <div className={`glass-card rounded-3xl p-8 text-center ${passed ? "border-emerald-500/20" : "border-red-500/20"}`}>
+            <div className={`inline-flex h-16 w-16 rounded-2xl items-center justify-center mb-4 ${
+              passed ? "bg-emerald-500/10" : "bg-red-500/10"
+            }`}>
+              {passed ? <Trophy className="h-8 w-8 text-amber-500" /> : <XCircle className="h-8 w-8 text-red-500" />}
             </div>
-            <h2 className="text-2xl font-bold text-white mb-2">
+            <h2 className="text-2xl font-bold text-foreground mb-2">
               {passed ? "Congratulations!" : "Better luck next time!"}
             </h2>
-            <p className="text-gray-400 mb-6">
-              {passed ? "You passed the quiz." : "You didn't pass this time. Review the material and try again."}
+            <p className="text-muted-foreground mb-8">
+              {passed ? "You passed the quiz." : "Review the material and try again."}
             </p>
 
             <div className="grid grid-cols-3 gap-4 mb-8">
-              <div className="bg-gray-900/60 rounded-xl p-4">
-                <p className="text-3xl font-bold text-white">{score}</p>
-                <p className="text-xs text-gray-400 mt-1">Score</p>
-              </div>
-              <div className="bg-gray-900/60 rounded-xl p-4">
-                <p className="text-3xl font-bold text-white">{percentage}%</p>
-                <p className="text-xs text-gray-400 mt-1">Percentage</p>
-              </div>
-              <div className="bg-gray-900/60 rounded-xl p-4">
-                <p className="text-3xl font-bold text-white">{result.correct_count}/{questions.length}</p>
-                <p className="text-xs text-gray-400 mt-1">Correct</p>
-              </div>
+              {[
+                { label: "Score", value: result.score },
+                { label: "Percentage", value: `${result.percentage}%` },
+                { label: "Correct", value: `${result.correct_count}/${questions.length}` },
+              ].map((item) => (
+                <div key={item.label} className="glass rounded-2xl p-4">
+                  <p className="text-2xl font-bold text-foreground">{item.value}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{item.label}</p>
+                </div>
+              ))}
             </div>
 
-            {/* Question Review */}
             {result.question_results && (
-              <div className="text-left space-y-4 mb-8">
-                <h3 className="text-white font-semibold text-lg">Review</h3>
+              <div className="text-left space-y-3 mb-8">
+                <h3 className="text-foreground font-bold text-lg">Review</h3>
                 {result.question_results.map((qr: any, i: number) => (
-                  <div key={i} className={`p-4 rounded-xl border ${qr.correct ? "border-green-700 bg-green-900/10" : "border-red-700 bg-red-900/10"}`}>
+                  <div key={i} className={`glass p-4 rounded-2xl ${qr.correct ? "border-emerald-500/20" : "border-red-500/20"}`}>
                     <div className="flex items-start gap-2 mb-2">
-                      {qr.correct ? <CheckCircle className="h-4 w-4 text-green-400 flex-shrink-0 mt-0.5" /> : <XCircle className="h-4 w-4 text-red-400 flex-shrink-0 mt-0.5" />}
-                      <p className="text-sm text-white font-medium">{qr.question}</p>
+                      {qr.correct ? <CheckCircle className="h-4 w-4 text-emerald-500 flex-shrink-0 mt-0.5" /> : <XCircle className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />}
+                      <p className="text-sm text-foreground font-medium">{qr.question}</p>
                     </div>
                     {!qr.correct && (
-                      <div className="ml-6 text-sm">
-                        <p className="text-red-400">Your answer: {qr.selected_answer}</p>
-                        <p className="text-green-400">Correct: {qr.correct_answer}</p>
+                      <div className="ml-6 text-sm space-y-1">
+                        <p className="text-red-500">Your answer: {qr.selected_answer}</p>
+                        <p className="text-emerald-500">Correct: {qr.correct_answer}</p>
                         {qr.explanation && (
-                          <p className="text-gray-400 mt-1 text-xs">{qr.explanation}</p>
+                          <p className="text-muted-foreground text-xs mt-1">{qr.explanation}</p>
                         )}
                       </div>
                     )}
@@ -116,19 +114,17 @@ export default function QuizPage({ params }: { params: { slug: string; quizId: s
             )}
 
             <div className="flex gap-3 justify-center">
-              <Link
-                href={`/learn/${params.slug}`}
-                className="bg-primary-600 text-white px-6 py-3 rounded-xl hover:bg-primary-700 transition-colors"
-              >
-                Back to Course
+              <Link href={`/learn/${params.slug}`}>
+                <Button variant="gradient" className="rounded-2xl">Back to Course</Button>
               </Link>
               {!passed && (
-                <button
+                <Button
+                  variant="glass"
+                  className="rounded-2xl"
                   onClick={() => { setSubmitted(false); setResult(null); setAnswers({}); setCurrentQ(0); }}
-                  className="bg-gray-800 text-white px-6 py-3 rounded-xl hover:bg-gray-700 transition-colors"
                 >
                   Retry Quiz
-                </button>
+                </Button>
               )}
             </div>
           </div>
@@ -138,44 +134,41 @@ export default function QuizPage({ params }: { params: { slug: string; quizId: s
   }
 
   return (
-    <div className="min-h-screen bg-gray-950">
+    <div className="min-h-screen flex flex-col">
       <Navbar />
 
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        {/* Header */}
+      <main className="flex-1 max-w-2xl mx-auto px-4 py-10 w-full">
         <div className="flex items-center gap-4 mb-6">
-          <Link href={`/learn/${params.slug}`} className="text-gray-400 hover:text-white">
+          <Link href={`/learn/${params.slug}`} className="text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div className="flex-1">
-            <h1 className="text-white font-bold text-lg">{quiz.title}</h1>
-            <p className="text-gray-400 text-sm">{questions.length} questions · {answeredCount} answered</p>
+            <h1 className="text-foreground font-bold text-lg">{quiz.title}</h1>
+            <p className="text-muted-foreground text-sm">{questions.length} questions &middot; {answeredCount} answered</p>
           </div>
         </div>
 
-        {/* Progress */}
         <div className="flex gap-1.5 mb-6">
           {questions.map((_: any, i: number) => (
             <button
               key={i}
               onClick={() => setCurrentQ(i)}
-              className={`flex-1 h-1.5 rounded-full transition-colors ${
-                i === currentQ ? "bg-primary-500" :
-                answers[questions[i]?.id] !== undefined ? "bg-primary-800" :
-                "bg-gray-700"
+              className={`flex-1 h-2 rounded-full transition-colors ${
+                i === currentQ ? "gradient-bg" :
+                answers[questions[i]?.id] !== undefined ? "bg-primary-500/30" :
+                "bg-muted"
               }`}
             />
           ))}
         </div>
 
-        {/* Question Card */}
         {currentQuestion && (
-          <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
-            <div className="flex items-center gap-2 text-xs text-gray-400 mb-4">
-              <span>Question {currentQ + 1} of {questions.length}</span>
-            </div>
+          <div className="glass-card p-6 md:p-8 rounded-3xl">
+            <Badge variant="secondary" className="mb-4">
+              Question {currentQ + 1} of {questions.length}
+            </Badge>
 
-            <h2 className="text-white font-semibold text-lg mb-6">{currentQuestion.question_text}</h2>
+            <h2 className="text-foreground font-bold text-lg mb-6">{currentQuestion.question_text}</h2>
 
             <div className="space-y-3">
               {(currentQuestion.options || []).map((option: string, i: number) => {
@@ -184,71 +177,63 @@ export default function QuizPage({ params }: { params: { slug: string; quizId: s
                   <button
                     key={i}
                     onClick={() => handleSelectAnswer(currentQuestion.id, i)}
-                    className={`w-full text-left p-4 rounded-xl border transition-all ${
+                    className={`w-full text-left p-4 rounded-2xl border transition-all duration-200 flex items-center gap-3 ${
                       isSelected
-                        ? "border-primary-500 bg-primary-900/30 text-white"
-                        : "border-gray-700 bg-gray-800/50 text-gray-300 hover:border-gray-600 hover:bg-gray-800"
+                        ? "border-primary-500 bg-primary-500/10 text-foreground shadow-glow"
+                        : "border-border glass hover:border-primary-500/30 hover:bg-accent/30 text-muted-foreground"
                     }`}
                   >
-                    <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold mr-3 flex-shrink-0 ${
-                      isSelected ? "bg-primary-600 text-white" : "bg-gray-700 text-gray-400"
+                    <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-bold flex-shrink-0 ${
+                      isSelected ? "gradient-bg text-white" : "bg-muted text-muted-foreground"
                     }`}>
                       {String.fromCharCode(65 + i)}
                     </span>
-                    {option}
+                    <span className="text-sm">{option}</span>
                   </button>
                 );
               })}
             </div>
 
-            {/* Navigation */}
             <div className="flex gap-3 mt-6">
               {currentQ > 0 && (
-                <button
-                  onClick={() => setCurrentQ((p) => p - 1)}
-                  className="text-gray-400 hover:text-white px-4 py-2 rounded-xl text-sm border border-gray-700 hover:border-gray-600 transition-colors"
-                >
+                <Button variant="ghost" onClick={() => setCurrentQ((p) => p - 1)}>
                   Previous
-                </button>
+                </Button>
               )}
               {currentQ < questions.length - 1 ? (
-                <button
-                  onClick={() => setCurrentQ((p) => p + 1)}
-                  className="ml-auto bg-primary-600 text-white px-6 py-2 rounded-xl text-sm hover:bg-primary-700 transition-colors"
-                >
-                  Next
-                </button>
+                <Button variant="gradient" onClick={() => setCurrentQ((p) => p + 1)} className="ml-auto gap-1.5 rounded-xl">
+                  Next <ArrowRight className="h-4 w-4" />
+                </Button>
               ) : (
-                <button
+                <Button
+                  variant="gradient"
                   onClick={handleSubmit}
-                  disabled={submitQuiz.isPending}
-                  className="ml-auto bg-green-600 text-white px-6 py-2 rounded-xl text-sm hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center gap-2"
+                  loading={submitQuiz.isPending}
+                  className="ml-auto rounded-xl bg-emerald-500 hover:bg-emerald-600"
                 >
-                  {submitQuiz.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                   Submit Quiz
-                </button>
+                </Button>
               )}
             </div>
           </div>
         )}
 
-        {/* Question Navigator */}
         <div className="mt-4 grid grid-cols-5 gap-2">
           {questions.map((_: any, i: number) => (
             <button
               key={i}
               onClick={() => setCurrentQ(i)}
-              className={`py-2 rounded-xl text-sm font-medium transition-colors ${
-                i === currentQ ? "bg-primary-600 text-white" :
-                answers[questions[i]?.id] !== undefined ? "bg-primary-900/50 text-primary-400" :
-                "bg-gray-800 text-gray-400 hover:bg-gray-700"
+              className={`py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                i === currentQ ? "gradient-bg text-white shadow-glow" :
+                answers[questions[i]?.id] !== undefined ? "bg-primary-500/10 text-primary-500" :
+                "glass text-muted-foreground hover:bg-accent"
               }`}
             >
               {i + 1}
             </button>
           ))}
         </div>
-      </div>
+      </main>
     </div>
   );
 }
