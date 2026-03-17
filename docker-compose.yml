@@ -1,0 +1,303 @@
+services:
+  # ─────────────────────────────────────────
+  # FRONTEND
+  # ─────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+      - NEXT_PUBLIC_AI_URL=http://localhost:8001
+      - NEXT_PUBLIC_SOCKET_URL=http://localhost:8000
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - NEXTAUTH_URL=http://localhost:3000
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+  # ─────────────────────────────────────────
+  # BACKEND API
+  # ─────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/brainwave
+      - REDIS_URL=redis://redis:6379/0
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ENDPOINT_URL=http://minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - MINIO_SECURE=false
+      - STORAGE_PUBLIC_URL=http://localhost:9000
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=60
+      - REFRESH_TOKEN_EXPIRE_DAYS=30
+      - AI_SERVICE_URL=http://ai-services:8001
+      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID}
+      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET}
+      - RAZORPAY_WEBHOOK_SECRET=${RAZORPAY_WEBHOOK_SECRET}
+      - PLATFORM_CUT_PERCENT=20
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - PLATFORM_EMAIL=${PLATFORM_EMAIL}
+      - PLATFORM_NAME=Brainwave.ai
+      - FRONTEND_URL=http://localhost:3000
+      - BACKEND_URL=http://localhost:8000
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - JITSI_DOMAIN=meet.jit.si
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - app-network
+    volumes:
+      - ./backend:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  # ─────────────────────────────────────────
+  # CELERY WORKER
+  # ─────────────────────────────────────────
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: celery -A tasks.celery_app worker --loglevel=info --concurrency=4
+    environment:
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/brainwave
+      - REDIS_URL=redis://redis:6379/0
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ENDPOINT_URL=http://minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - MINIO_SECURE=false
+      - STORAGE_PUBLIC_URL=http://localhost:9000
+      - AI_SERVICE_URL=http://ai-services:8001
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - PLATFORM_EMAIL=${PLATFORM_EMAIL}
+      - PLATFORM_NAME=Brainwave.ai
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - redis
+      - postgres
+      - ai-services
+    networks:
+      - app-network
+    volumes:
+      - ./backend:/app
+
+  # ─────────────────────────────────────────
+  # CELERY BEAT (Scheduler)
+  # ─────────────────────────────────────────
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: celery -A tasks.celery_app beat --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/brainwave
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - redis
+    networks:
+      - app-network
+    volumes:
+      - ./backend:/app
+
+  # ─────────────────────────────────────────
+  # AI SERVICES
+  # ─────────────────────────────────────────
+  ai-services:
+    build:
+      context: ./ai-services
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      - OLLAMA_URL=http://ollama:11434
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - WHISPER_MODEL=large-v3
+    depends_on:
+      - ollama
+      - qdrant
+    networks:
+      - app-network
+    volumes:
+      - whisper_cache:/root/.cache/whisper
+      - ./ai-services:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+
+  # ─────────────────────────────────────────
+  # OLLAMA (Local AI Models)
+  # ─────────────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - app-network
+    # Uncomment below if you have NVIDIA GPU:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  # Pull models on startup
+  ollama-init:
+    image: curlimages/curl:latest
+    depends_on:
+      - ollama
+    networks:
+      - app-network
+    entrypoint: >
+      sh -c "
+        sleep 10 &&
+        curl -s http://ollama:11434/api/pull -d '{\"name\": \"llama3:8b\"}' &&
+        curl -s http://ollama:11434/api/pull -d '{\"name\": \"nomic-embed-text\"}' &&
+        echo 'Models ready!'
+      "
+
+  # ─────────────────────────────────────────
+  # QDRANT (Vector Database)
+  # ─────────────────────────────────────────
+  qdrant:
+    image: qdrant/qdrant:v1.8.4
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - app-network
+
+  # ─────────────────────────────────────────
+  # POSTGRESQL
+  # ─────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=brainwave
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─────────────────────────────────────────
+  # REDIS
+  # ─────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─────────────────────────────────────────
+  # MINIO (Object Storage)
+  # ─────────────────────────────────────────
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ACCESS_KEY}
+      - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY}
+    volumes:
+      - minio_data:/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # MinIO bucket setup
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    networks:
+      - app-network
+    entrypoint: >
+      /bin/sh -c "
+        mc alias set myminio http://minio:9000 ${MINIO_ACCESS_KEY} ${MINIO_SECRET_KEY};
+        mc mb myminio/course-videos --ignore-existing;
+        mc mb myminio/course-materials --ignore-existing;
+        mc mb myminio/thumbnails --ignore-existing;
+        mc mb myminio/certificates --ignore-existing;
+        mc mb myminio/avatars --ignore-existing;
+        mc anonymous set download myminio/thumbnails;
+        mc anonymous set download myminio/course-videos;
+        echo 'MinIO buckets ready!'
+      "
+
+  # ─────────────────────────────────────────
+  # NGINX (Reverse Proxy)
+  # ─────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  qdrant_data:
+  ollama_data:
+  whisper_cache:

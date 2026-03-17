@@ -1,0 +1,109 @@
+import os
+import io
+from PIL import Image, ImageDraw, ImageFont
+import hashlib
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+
+
+async def generate_thumbnail(title: str, category: str, description: str) -> bytes:
+    """
+    Generate course thumbnail.
+    Uses Gemini Imagen if API key available, otherwise creates a styled placeholder.
+    """
+    if GEMINI_API_KEY and GEMINI_API_KEY != "your_gemini_api_key_here":
+        try:
+            return await generate_with_gemini(title, category, description)
+        except Exception as e:
+            print(f"Gemini thumbnail failed: {e}")
+
+    return generate_placeholder_thumbnail(title, category)
+
+
+async def generate_with_gemini(title: str, category: str, description: str) -> bytes:
+    """Generate thumbnail using Gemini Imagen API."""
+    import google.generativeai as genai
+
+    genai.configure(api_key=GEMINI_API_KEY)
+
+    prompt = f"""Create a professional educational course thumbnail.
+    Course: {title}
+    Subject: {category}
+    Style: Modern, vibrant colors, clean design. No text. 16:9 aspect ratio."""
+
+    model = genai.ImageGenerationModel("imagen-3.0-generate-001")
+    result = model.generate_images(
+        prompt=prompt,
+        number_of_images=1,
+        aspect_ratio="16:9",
+    )
+
+    img = result.images[0]._pil_image
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return buf.getvalue()
+
+
+def generate_placeholder_thumbnail(title: str, category: str) -> bytes:
+    """Generate a styled placeholder thumbnail using PIL."""
+    width, height = 1280, 720
+
+    # Color palette based on category
+    colors = {
+        "Mathematics": ("#1e40af", "#3b82f6"),
+        "Physics": ("#7c3aed", "#a78bfa"),
+        "Chemistry": ("#065f46", "#10b981"),
+        "Biology": ("#064e3b", "#34d399"),
+        "Programming": ("#1e3a5f", "#60a5fa"),
+        "History": ("#78350f", "#f59e0b"),
+        "English": ("#831843", "#f472b6"),
+        "default": ("#312e81", "#6366f1"),
+    }
+
+    bg_color, accent = colors.get(category, colors["default"])
+
+    img = Image.new("RGB", (width, height), bg_color)
+    draw = ImageDraw.Draw(img)
+
+    # Background gradient effect
+    for y in range(height):
+        ratio = y / height
+        r1, g1, b1 = int(bg_color[1:3], 16), int(bg_color[3:5], 16), int(bg_color[5:7], 16)
+        r2, g2, b2 = int(accent[1:3], 16), int(accent[3:5], 16), int(accent[5:7], 16)
+        r = int(r1 + (r2 - r1) * ratio * 0.3)
+        g = int(g1 + (g2 - g1) * ratio * 0.3)
+        b = int(b1 + (b2 - b1) * ratio * 0.3)
+        draw.line([(0, y), (width, y)], fill=(r, g, b))
+
+    # Add decorative circles
+    draw.ellipse([width - 300, -100, width + 100, 300], fill=accent + "40", outline=None)
+    draw.ellipse([-100, height - 200, 200, height + 100], fill=accent + "30", outline=None)
+
+    # Category badge
+    draw.rectangle([60, 60, 60 + len(category) * 14 + 30, 100], fill=accent, outline=None)
+
+    # Title text (wrap)
+    words = title.split()
+    lines = []
+    current = ""
+    for word in words:
+        test = (current + " " + word).strip()
+        if len(test) > 30:
+            lines.append(current)
+            current = word
+        else:
+            current = test
+    if current:
+        lines.append(current)
+
+    y_pos = height // 2 - len(lines) * 40
+    for line in lines[:4]:
+        draw.text((60, y_pos), line, fill="white")
+        y_pos += 60
+
+    # Platform watermark
+    draw.text((60, height - 60), "Brainwave.ai", fill="#ffffff80")
+
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return buf.getvalue()
