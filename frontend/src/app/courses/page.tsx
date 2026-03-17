@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { courseApi } from "@/lib/api";
 import { CourseCard } from "@/components/course/CourseCard";
@@ -16,6 +16,7 @@ import {
   ArrowUpDown,
 } from "lucide-react";
 import { FadeIn } from "@/components/ui/fade-in";
+import { GradientText } from "@/components/ui/gradient-text";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -82,19 +83,24 @@ export default function CoursesPage() {
   const hasFilters = search || category || level;
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-[#030014]">
       <Navbar />
 
       <main className="flex-1 w-full">
-        {/* Hero Header */}
+        {/* Dark Hero Header */}
         <FadeIn>
-          <section className="relative overflow-hidden bg-gradient-to-r from-primary-600 via-primary-500 to-indigo-600">
-            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djItSDJ2LTJoMzR6bTAtMzBWNkgyVjRoMzR6TTIgMzR2LTJoMzR2Mkg0MHYySDJ6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30" />
-            <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12">
-              <h1 className="text-2xl md:text-4xl font-bold text-white">
-                Browse Courses
+          <section className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-[#030014]">
+              <div className="absolute top-0 left-1/3 h-[400px] w-[500px] rounded-full bg-indigo-600/15 blur-[120px]" />
+              <div className="absolute top-0 right-1/4 h-[300px] w-[400px] rounded-full bg-purple-600/10 blur-[100px]" />
+            </div>
+            <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-14">
+              <h1 className="text-3xl md:text-5xl font-bold text-white">
+                <GradientText className="text-3xl md:text-5xl font-bold">
+                  Browse Courses
+                </GradientText>
               </h1>
-              <p className="text-primary-100 mt-2 text-base md:text-lg">
+              <p className="text-gray-400 mt-3 text-base md:text-lg">
                 {total.toLocaleString()} courses available to fuel your learning
               </p>
             </div>
@@ -106,7 +112,7 @@ export default function CoursesPage() {
           <FadeIn delay={0.1}>
             <div className="flex gap-3">
               <div className="flex-1 relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
                 <Input
                   type="text"
                   value={search}
@@ -115,17 +121,21 @@ export default function CoursesPage() {
                     setPage(1);
                   }}
                   placeholder="Search courses, topics, teachers..."
-                  className="pl-11 pr-4 h-12 rounded-xl text-base shadow-sm border-muted bg-background"
+                  className="pl-11 pr-4 h-12 rounded-xl text-base bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-indigo-500/50 focus:ring-indigo-500/20"
                 />
               </div>
               <Select value={sort} onValueChange={(val) => setSort(val)}>
-                <SelectTrigger className="w-[180px] h-12 rounded-xl shadow-sm">
-                  <ArrowUpDown className="h-4 w-4 mr-2 text-muted-foreground" />
+                <SelectTrigger className="w-[180px] h-12 rounded-xl bg-white/5 border-white/10 text-gray-300 focus:ring-indigo-500/20">
+                  <ArrowUpDown className="h-4 w-4 mr-2 text-gray-500" />
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-gray-900 border-white/10 text-gray-300">
                   {SORT_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
+                    <SelectItem
+                      key={opt.value}
+                      value={opt.value}
+                      className="focus:bg-white/10 focus:text-white"
+                    >
                       {opt.label}
                     </SelectItem>
                   ))}
@@ -137,16 +147,16 @@ export default function CoursesPage() {
           {/* Category Filter Pills */}
           <FadeIn delay={0.15}>
             <div className="space-y-3">
-              <p className="text-sm font-medium text-muted-foreground">
+              <p className="text-sm font-medium text-gray-500">
                 Categories
               </p>
               <div className="flex flex-wrap gap-2">
                 <Badge
                   className={cn(
-                    "cursor-pointer px-3 py-1.5 text-sm transition-all select-none",
+                    "cursor-pointer px-3 py-1.5 text-sm transition-all select-none border",
                     !category
-                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                      ? "bg-indigo-600 text-white border-indigo-500 hover:bg-indigo-700"
+                      : "bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-gray-300"
                   )}
                   onClick={() => {
                     setCategory("");
@@ -159,10 +169,10 @@ export default function CoursesPage() {
                   <Badge
                     key={c}
                     className={cn(
-                      "cursor-pointer px-3 py-1.5 text-sm transition-all select-none",
+                      "cursor-pointer px-3 py-1.5 text-sm transition-all select-none border",
                       category === c
-                        ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                        : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                        ? "bg-indigo-600 text-white border-indigo-500 hover:bg-indigo-700"
+                        : "bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-gray-300"
                     )}
                     onClick={() => {
                       setCategory(category === c ? "" : c);
@@ -179,14 +189,14 @@ export default function CoursesPage() {
           {/* Level Filter Pills */}
           <FadeIn delay={0.2}>
             <div className="space-y-3">
-              <p className="text-sm font-medium text-muted-foreground">Level</p>
+              <p className="text-sm font-medium text-gray-500">Level</p>
               <div className="flex flex-wrap gap-2">
                 <Badge
                   className={cn(
-                    "cursor-pointer px-3 py-1.5 text-sm transition-all select-none",
+                    "cursor-pointer px-3 py-1.5 text-sm transition-all select-none border",
                     !level
-                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                      ? "bg-indigo-600 text-white border-indigo-500 hover:bg-indigo-700"
+                      : "bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-gray-300"
                   )}
                   onClick={() => {
                     setLevel("");
@@ -199,10 +209,10 @@ export default function CoursesPage() {
                   <Badge
                     key={l}
                     className={cn(
-                      "cursor-pointer px-3 py-1.5 text-sm transition-all select-none",
+                      "cursor-pointer px-3 py-1.5 text-sm transition-all select-none border",
                       level === l
-                        ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                        : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                        ? "bg-indigo-600 text-white border-indigo-500 hover:bg-indigo-700"
+                        : "bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-gray-300"
                     )}
                     onClick={() => {
                       setLevel(level === l ? "" : l);
@@ -220,13 +230,13 @@ export default function CoursesPage() {
           {hasFilters && (
             <FadeIn delay={0.25}>
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm text-muted-foreground font-medium">
+                <span className="text-sm text-gray-500 font-medium">
                   Active filters:
                 </span>
                 {search && (
                   <Badge
                     variant="outline"
-                    className="gap-1.5 pr-1.5 cursor-pointer hover:bg-destructive/10"
+                    className="gap-1.5 pr-1.5 cursor-pointer border-white/10 text-gray-300 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400"
                     onClick={() => {
                       setSearch("");
                       setPage(1);
@@ -239,7 +249,7 @@ export default function CoursesPage() {
                 {category && (
                   <Badge
                     variant="outline"
-                    className="gap-1.5 pr-1.5 cursor-pointer hover:bg-destructive/10"
+                    className="gap-1.5 pr-1.5 cursor-pointer border-white/10 text-gray-300 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400"
                     onClick={() => {
                       setCategory("");
                       setPage(1);
@@ -252,7 +262,7 @@ export default function CoursesPage() {
                 {level && (
                   <Badge
                     variant="outline"
-                    className="gap-1.5 pr-1.5 cursor-pointer hover:bg-destructive/10"
+                    className="gap-1.5 pr-1.5 cursor-pointer border-white/10 text-gray-300 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400"
                     onClick={() => {
                       setLevel("");
                       setPage(1);
@@ -265,7 +275,7 @@ export default function CoursesPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-destructive hover:text-destructive h-7 px-2"
+                  className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-7 px-2"
                   onClick={clearFilters}
                 >
                   Clear all
@@ -279,21 +289,21 @@ export default function CoursesPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="space-y-3">
-                  <Skeleton className="h-44 w-full rounded-xl" />
+                  <Skeleton className="h-44 w-full rounded-xl bg-white/5" />
                   <div className="space-y-2 px-1">
-                    <Skeleton className="h-3 w-20" />
-                    <Skeleton className="h-5 w-3/4" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-3 w-1/3" />
+                    <Skeleton className="h-3 w-20 bg-white/5" />
+                    <Skeleton className="h-5 w-3/4 bg-white/5" />
+                    <Skeleton className="h-4 w-full bg-white/5" />
+                    <Skeleton className="h-3 w-1/3 bg-white/5" />
                     <div className="flex gap-3 pt-1">
-                      <Skeleton className="h-3 w-12" />
-                      <Skeleton className="h-3 w-12" />
-                      <Skeleton className="h-3 w-12" />
+                      <Skeleton className="h-3 w-12 bg-white/5" />
+                      <Skeleton className="h-3 w-12 bg-white/5" />
+                      <Skeleton className="h-3 w-12 bg-white/5" />
                     </div>
-                    <Skeleton className="h-px w-full mt-2" />
+                    <Skeleton className="h-px w-full mt-2 bg-white/5" />
                     <div className="flex justify-between pt-1">
-                      <Skeleton className="h-6 w-16" />
-                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-6 w-16 bg-white/5" />
+                      <Skeleton className="h-4 w-20 bg-white/5" />
                     </div>
                   </div>
                 </div>
@@ -301,14 +311,17 @@ export default function CoursesPage() {
             </div>
           ) : courses.length === 0 ? (
             <FadeIn>
-              <div className="text-center py-20 rounded-2xl border-2 border-dashed border-muted">
-                <div className="mx-auto mb-6 h-24 w-24 rounded-full bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/40 dark:to-primary-800/40 flex items-center justify-center">
-                  <BookOpen className="h-12 w-12 text-primary-500" />
+              <div className="text-center py-20 rounded-2xl border border-white/10 bg-gray-900/30">
+                <div className="relative mx-auto mb-6 h-24 w-24">
+                  <div className="absolute inset-0 bg-indigo-500/20 rounded-full blur-xl" />
+                  <div className="relative h-24 w-24 rounded-full bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center">
+                    <BookOpen className="h-12 w-12 text-indigo-400" />
+                  </div>
                 </div>
-                <h3 className="text-lg font-semibold text-foreground">
+                <h3 className="text-lg font-semibold text-white">
                   No courses found
                 </h3>
-                <p className="text-muted-foreground mt-1 mb-6 max-w-sm mx-auto">
+                <p className="text-gray-400 mt-1 mb-6 max-w-sm mx-auto">
                   Try adjusting your search or filters to discover more courses.
                 </p>
                 {hasFilters && (
@@ -341,7 +354,7 @@ export default function CoursesPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="rounded-lg gap-1"
+                  className="rounded-lg gap-1 bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:text-white disabled:opacity-30"
                   disabled={page === 1}
                   onClick={() => setPage(page - 1)}
                 >
@@ -364,7 +377,9 @@ export default function CoursesPage() {
                     size="sm"
                     className={cn(
                       "rounded-lg w-9 h-9 p-0",
-                      p === page && "pointer-events-none"
+                      p === page
+                        ? "bg-indigo-600 text-white border-indigo-500 pointer-events-none"
+                        : "bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:text-white"
                     )}
                     onClick={() => setPage(p)}
                   >
@@ -375,7 +390,7 @@ export default function CoursesPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="rounded-lg gap-1"
+                  className="rounded-lg gap-1 bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:text-white disabled:opacity-30"
                   disabled={page === pages}
                   onClick={() => setPage(page + 1)}
                 >

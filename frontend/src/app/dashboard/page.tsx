@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FadeIn } from "@/components/ui/fade-in";
+import { GradientText } from "@/components/ui/gradient-text";
+import { RippleEffect } from "@/components/ui/ripple-effect";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -46,21 +48,29 @@ export default function StudentDashboard() {
   const certificates = certData?.certificates || [];
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-[#030014]">
       <Navbar />
       <main className="flex-1 w-full">
-        {/* Gradient Welcome Banner */}
+        {/* Dark Hero Section */}
         <FadeIn>
-          <section className="relative overflow-hidden bg-gradient-to-r from-primary-600 via-primary-500 to-indigo-600">
-            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djItSDJ2LTJoMzR6bTAtMzBWNkgyVjRoMzR6TTIgMzR2LTJoMzR2Mkg0MHYySDJ6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30" />
-            <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl md:text-4xl font-bold text-white">
-                  Welcome back, {user?.full_name?.split(" ")[0]}!
-                </h1>
-                <span className="text-3xl md:text-4xl animate-bounce inline-block">👋</span>
-              </div>
-              <p className="text-primary-100 mt-2 text-base md:text-lg max-w-xl">
+          <section className="relative overflow-hidden">
+            {/* Mesh gradient background */}
+            <div className="absolute inset-0 bg-[#030014]">
+              <div className="absolute top-0 left-1/4 h-[400px] w-[500px] rounded-full bg-indigo-600/15 blur-[120px]" />
+              <div className="absolute top-0 right-1/4 h-[300px] w-[400px] rounded-full bg-purple-600/10 blur-[100px]" />
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[200px] w-[600px] rounded-full bg-indigo-500/5 blur-[80px]" />
+            </div>
+
+            <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+              <p className="text-gray-400 text-sm mb-2">Welcome back</p>
+              <h1 className="text-3xl md:text-5xl font-bold text-white leading-tight">
+                Hello,{" "}
+                <GradientText className="text-3xl md:text-5xl font-bold">
+                  {user?.full_name?.split(" ")[0] || "Learner"}
+                </GradientText>
+                <span className="ml-3 inline-block animate-bounce text-3xl md:text-4xl">👋</span>
+              </h1>
+              <p className="text-gray-400 mt-3 text-base md:text-lg max-w-xl">
                 Continue your learning journey and track your progress across all enrolled courses.
               </p>
             </div>
@@ -70,106 +80,103 @@ export default function StudentDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
           {/* Stats Cards */}
           <FadeIn delay={0.1}>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 -mt-12 relative z-10">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 -mt-6 relative z-10">
               {/* Enrolled Courses */}
-              <Card className="border-0 shadow-lg bg-white dark:bg-gray-900 overflow-hidden">
-                <CardContent className="p-5 flex items-center gap-4">
-                  <div className="relative">
-                    <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-lg shadow-primary-500/25">
-                      <BookOpen className="h-7 w-7 text-white" />
-                    </div>
+              <div className="group bg-gray-900/50 backdrop-blur-sm border border-white/10 rounded-2xl p-5 flex items-center gap-4 hover:border-indigo-500/30 transition-all duration-300">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-indigo-500/20 rounded-2xl blur-xl group-hover:bg-indigo-500/30 transition-all" />
+                  <div className="relative h-14 w-14 rounded-2xl bg-indigo-600/20 border border-indigo-500/20 flex items-center justify-center">
+                    <BookOpen className="h-7 w-7 text-indigo-400" />
                   </div>
-                  <div>
-                    <p className="text-3xl font-bold text-foreground">{courses.length}</p>
-                    <p className="text-sm text-muted-foreground font-medium">Enrolled Courses</p>
-                  </div>
-                </CardContent>
-              </Card>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-white">{courses.length}</p>
+                  <p className="text-sm text-gray-400 font-medium">Enrolled Courses</p>
+                </div>
+              </div>
 
               {/* Certificates */}
-              <Card className="border-0 shadow-lg bg-white dark:bg-gray-900 overflow-hidden">
-                <CardContent className="p-5 flex items-center gap-4">
-                  <div className="relative">
-                    <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/25">
-                      <Award className="h-7 w-7 text-white" />
-                    </div>
+              <div className="group bg-gray-900/50 backdrop-blur-sm border border-white/10 rounded-2xl p-5 flex items-center gap-4 hover:border-amber-500/30 transition-all duration-300">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-amber-500/20 rounded-2xl blur-xl group-hover:bg-amber-500/30 transition-all" />
+                  <div className="relative h-14 w-14 rounded-2xl bg-amber-600/20 border border-amber-500/20 flex items-center justify-center">
+                    <Award className="h-7 w-7 text-amber-400" />
                   </div>
-                  <div>
-                    <p className="text-3xl font-bold text-foreground">{certificates.length}</p>
-                    <p className="text-sm text-muted-foreground font-medium">Certificates Earned</p>
-                  </div>
-                </CardContent>
-              </Card>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-white">{certificates.length}</p>
+                  <p className="text-sm text-gray-400 font-medium">Certificates Earned</p>
+                </div>
+              </div>
 
               {/* In Progress */}
-              <Card className="border-0 shadow-lg bg-white dark:bg-gray-900 overflow-hidden">
-                <CardContent className="p-5 flex items-center gap-4">
-                  <div className="relative">
-                    <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
-                      <TrendingUp className="h-7 w-7 text-white" />
-                    </div>
+              <div className="group bg-gray-900/50 backdrop-blur-sm border border-white/10 rounded-2xl p-5 flex items-center gap-4 hover:border-emerald-500/30 transition-all duration-300">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-emerald-500/20 rounded-2xl blur-xl group-hover:bg-emerald-500/30 transition-all" />
+                  <div className="relative h-14 w-14 rounded-2xl bg-emerald-600/20 border border-emerald-500/20 flex items-center justify-center">
+                    <TrendingUp className="h-7 w-7 text-emerald-400" />
                   </div>
-                  <div>
-                    <p className="text-3xl font-bold text-foreground">
-                      {courses.filter((c: any) => c.course?.enrolled_count > 0).length}
-                    </p>
-                    <p className="text-sm text-muted-foreground font-medium">In Progress</p>
-                  </div>
-                </CardContent>
-              </Card>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-white">
+                    {courses.filter((c: any) => c.course?.enrolled_count > 0).length}
+                  </p>
+                  <p className="text-sm text-gray-400 font-medium">In Progress</p>
+                </div>
+              </div>
             </div>
           </FadeIn>
 
-          {/* Quick Actions Bar */}
+          {/* Quick Actions */}
           <FadeIn delay={0.2}>
             <div className="flex flex-wrap gap-3">
               <Button
                 variant="outline"
-                className="gap-2 rounded-xl"
+                className="gap-2 rounded-xl bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:text-white hover:border-indigo-500/30"
                 onClick={() => router.push("/courses")}
               >
-                <Compass className="h-4 w-4" />
+                <Compass className="h-4 w-4 text-indigo-400" />
                 Browse Courses
               </Button>
               <Button
                 variant="outline"
-                className="gap-2 rounded-xl"
+                className="gap-2 rounded-xl bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:text-white hover:border-amber-500/30"
                 onClick={() => {
                   const el = document.getElementById("certificates-section");
                   el?.scrollIntoView({ behavior: "smooth" });
                 }}
               >
-                <Award className="h-4 w-4" />
+                <Award className="h-4 w-4 text-amber-400" />
                 My Certificates
               </Button>
               <Button
                 variant="outline"
-                className="gap-2 rounded-xl"
+                className="gap-2 rounded-xl bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:text-white hover:border-purple-500/30"
                 onClick={() => router.push("/notifications")}
               >
-                <Bell className="h-4 w-4" />
+                <Bell className="h-4 w-4 text-purple-400" />
                 Notifications
               </Button>
               <Button
                 variant="outline"
-                className="gap-2 rounded-xl"
+                className="gap-2 rounded-xl bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:text-white hover:border-emerald-500/30"
                 onClick={() => router.push("/profile")}
               >
-                <User className="h-4 w-4" />
+                <User className="h-4 w-4 text-emerald-400" />
                 Profile
               </Button>
             </div>
           </FadeIn>
 
-          <Separator />
+          <div className="border-t border-white/5" />
 
           {/* My Courses */}
           <FadeIn delay={0.3}>
             <div>
               <div className="flex justify-between items-center mb-6">
                 <div>
-                  <h2 className="text-xl font-bold text-foreground">My Courses</h2>
-                  <p className="text-sm text-muted-foreground mt-0.5">
+                  <h2 className="text-xl font-bold text-white">My Courses</h2>
+                  <p className="text-sm text-gray-400 mt-0.5">
                     {courses.length > 0
                       ? `You have ${courses.length} enrolled course${courses.length !== 1 ? "s" : ""}`
                       : "Start your learning journey today"}
@@ -177,7 +184,7 @@ export default function StudentDashboard() {
                 </div>
                 <Button
                   variant="ghost"
-                  className="gap-1 text-primary-600 hover:text-primary-700 font-semibold"
+                  className="gap-1 text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 font-semibold"
                   onClick={() => router.push("/courses")}
                 >
                   Browse more
@@ -189,33 +196,38 @@ export default function StudentDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {[1, 2, 3].map((i) => (
                     <div key={i} className="space-y-3">
-                      <Skeleton className="h-44 w-full rounded-xl" />
-                      <Skeleton className="h-4 w-3/4" />
-                      <Skeleton className="h-4 w-1/2" />
-                      <Skeleton className="h-10 w-full rounded-lg" />
+                      <Skeleton className="h-44 w-full rounded-xl bg-white/5" />
+                      <Skeleton className="h-4 w-3/4 bg-white/5" />
+                      <Skeleton className="h-4 w-1/2 bg-white/5" />
+                      <Skeleton className="h-10 w-full rounded-lg bg-white/5" />
                     </div>
                   ))}
                 </div>
               ) : courses.length === 0 ? (
-                <div className="text-center py-16 rounded-2xl border-2 border-dashed border-muted">
-                  <div className="mx-auto mb-6 h-24 w-24 rounded-full bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/40 dark:to-primary-800/40 flex items-center justify-center">
-                    <Sparkles className="h-12 w-12 text-primary-500" />
+                <div className="relative text-center py-16 rounded-2xl border border-white/10 bg-gray-900/30 overflow-hidden">
+                  <div className="absolute inset-0">
+                    <RippleEffect color="rgba(99,102,241,0.06)" count={3} />
                   </div>
-                  <h3 className="text-lg font-semibold text-foreground">
-                    No courses yet
-                  </h3>
-                  <p className="text-muted-foreground mt-1 mb-6 max-w-sm mx-auto">
-                    Explore our catalog and start learning with India&apos;s best teachers today!
-                  </p>
-                  <Button
-                    variant="shimmer"
-                    size="lg"
-                    className="rounded-xl"
-                    onClick={() => router.push("/courses")}
-                  >
-                    <Compass className="h-5 w-5 mr-2" />
-                    Browse Courses
-                  </Button>
+                  <div className="relative z-10">
+                    <div className="mx-auto mb-6 h-24 w-24 rounded-full bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center">
+                      <Sparkles className="h-12 w-12 text-indigo-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-white">
+                      No courses yet
+                    </h3>
+                    <p className="text-gray-400 mt-1 mb-6 max-w-sm mx-auto">
+                      Explore our catalog and start learning with India&apos;s best teachers today!
+                    </p>
+                    <Button
+                      variant="shimmer"
+                      size="lg"
+                      className="rounded-xl"
+                      onClick={() => router.push("/courses")}
+                    >
+                      <Compass className="h-5 w-5 mr-2" />
+                      Browse Courses
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -225,7 +237,7 @@ export default function StudentDashboard() {
                         <CourseCard course={item.course} />
                         <div className="mt-2">
                           <Button
-                            className="w-full rounded-lg font-semibold"
+                            className="w-full rounded-lg font-semibold bg-indigo-600 hover:bg-indigo-700 text-white"
                             onClick={() => router.push(`/learn/${item.course.slug}`)}
                           >
                             Continue Learning →
@@ -243,30 +255,33 @@ export default function StudentDashboard() {
           {certificates.length > 0 && (
             <FadeIn delay={0.4}>
               <div id="certificates-section">
-                <Separator className="mb-8" />
+                <div className="border-t border-white/5 mb-8" />
                 <div className="mb-6">
-                  <h2 className="text-xl font-bold text-foreground">My Certificates</h2>
-                  <p className="text-sm text-muted-foreground mt-0.5">
+                  <h2 className="text-xl font-bold text-white">My Certificates</h2>
+                  <p className="text-sm text-gray-400 mt-0.5">
                     You&apos;ve earned {certificates.length} certificate{certificates.length !== 1 ? "s" : ""}
                   </p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {certificates.map((cert: any, idx: number) => (
                     <FadeIn key={cert.id} delay={idx * 0.05}>
-                      <Card className="overflow-hidden border-0 shadow-md bg-gradient-to-br from-amber-50 via-white to-orange-50 dark:from-amber-950/30 dark:via-gray-900 dark:to-orange-950/30 ring-1 ring-amber-200/50 dark:ring-amber-800/30">
-                        <CardContent className="p-5">
+                      <div className="group bg-gray-900/50 backdrop-blur-sm border border-white/10 rounded-2xl overflow-hidden hover:border-amber-500/30 transition-all duration-300">
+                        <div className="p-5">
                           <div className="flex items-start gap-3">
-                            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-amber-500/20">
-                              <Award className="h-6 w-6 text-white" />
+                            <div className="relative flex-shrink-0">
+                              <div className="absolute inset-0 bg-amber-500/20 rounded-xl blur-lg group-hover:bg-amber-500/30 transition-all" />
+                              <div className="relative h-12 w-12 rounded-xl bg-amber-600/20 border border-amber-500/20 flex items-center justify-center">
+                                <Award className="h-6 w-6 text-amber-400" />
+                              </div>
                             </div>
                             <div className="min-w-0 flex-1">
-                              <h3 className="font-semibold text-foreground truncate">
+                              <h3 className="font-semibold text-white truncate">
                                 {cert.course_name}
                               </h3>
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-sm text-gray-400">
                                 by {cert.teacher_name}
                               </p>
-                              <p className="text-xs text-muted-foreground mt-1">
+                              <p className="text-xs text-gray-500 mt-1">
                                 {new Date(cert.issued_at).toLocaleDateString()}
                               </p>
                             </div>
@@ -274,7 +289,7 @@ export default function StudentDashboard() {
                           <div className="flex gap-2 mt-4">
                             <Button
                               size="sm"
-                              className="flex-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg"
+                              className="flex-1 bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border border-amber-500/20 rounded-lg"
                               onClick={() => router.push(`/verify/${cert.id}`)}
                             >
                               <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
@@ -284,7 +299,7 @@ export default function StudentDashboard() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="flex-1 border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-900/30 rounded-lg"
+                                className="flex-1 border-white/10 text-gray-300 hover:bg-white/5 rounded-lg"
                                 asChild
                               >
                                 <a
@@ -298,8 +313,8 @@ export default function StudentDashboard() {
                               </Button>
                             )}
                           </div>
-                        </CardContent>
-                      </Card>
+                        </div>
+                      </div>
                     </FadeIn>
                   ))}
                 </div>
