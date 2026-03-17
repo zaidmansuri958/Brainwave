@@ -4,8 +4,12 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { authApi, teacherApi } from "@/lib/api";
 import { useAuthStore } from "@/stores/authStore";
 import { Navbar } from "@/components/layout/Navbar";
-import { User, Save, Loader2, Shield, BookOpen } from "lucide-react";
+import { Footer } from "@/components/layout/Footer";
+import { User, Save, Loader2, Shield, BookOpen, X, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 
 export default function ProfilePage() {
   const { user, setUser } = useAuthStore();
@@ -52,7 +56,6 @@ export default function ProfilePage() {
       if (isTeacher) {
         return teacherApi.updateProfile(form);
       }
-      // For students, update name only
       return authApi.me();
     },
     onSuccess: () => {
@@ -74,135 +77,130 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950">
+    <div className="min-h-screen flex flex-col">
       <Navbar />
 
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold text-white mb-8">My Profile</h1>
+      <main className="flex-1 max-w-2xl mx-auto px-4 py-10 w-full">
+        <h1 className="text-2xl font-bold text-foreground mb-8">My Profile</h1>
 
-        {/* Avatar */}
-        <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800 mb-6 flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-primary-700 flex items-center justify-center text-2xl font-bold text-white">
+        <div className="glass-card p-6 mb-6 flex items-center gap-4">
+          <div className="h-16 w-16 rounded-2xl gradient-bg flex items-center justify-center text-2xl font-bold text-white shadow-glow">
             {user?.full_name?.[0]?.toUpperCase() || "?"}
           </div>
           <div>
-            <p className="text-white font-semibold text-lg">{user?.full_name}</p>
-            <p className="text-gray-400 text-sm">{user?.email}</p>
-            <div className="flex items-center gap-2 mt-1">
-              <span className={`text-xs px-2 py-0.5 rounded-full ${
-                user?.role === "teacher" ? "bg-primary-900 text-primary-400" :
-                user?.role === "admin" ? "bg-red-900 text-red-400" :
-                "bg-gray-800 text-gray-400"
-              }`}>
+            <p className="text-foreground font-semibold text-lg">{user?.full_name}</p>
+            <p className="text-muted-foreground text-sm">{user?.email}</p>
+            <div className="flex items-center gap-2 mt-1.5">
+              <Badge variant={user?.role === "teacher" ? "default" : "secondary"}>
                 {user?.role}
-              </span>
+              </Badge>
               {user?.is_verified && (
-                <span className="flex items-center gap-0.5 text-xs text-green-400">
+                <Badge variant="success" className="gap-1">
                   <Shield className="h-3 w-3" /> Verified
-                </span>
+                </Badge>
               )}
             </div>
           </div>
         </div>
 
-        <form onSubmit={(e) => { e.preventDefault(); updateProfile.mutate(); }} className="space-y-5">
-          {/* Basic Info */}
-          <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800 space-y-4">
-            <h2 className="text-white font-semibold">Basic Information</h2>
+        <form onSubmit={(e) => { e.preventDefault(); updateProfile.mutate(); }} className="space-y-6">
+          <div className="glass-card p-6 space-y-5">
+            <h2 className="text-foreground font-semibold flex items-center gap-2">
+              <User className="h-4 w-4 text-primary-500" />
+              Basic Information
+            </h2>
             <div>
-              <label className="text-sm text-gray-400 mb-1 block">Full Name</label>
-              <input
+              <label className="text-sm text-muted-foreground mb-2 block font-medium">Full Name</label>
+              <Input
                 value={form.full_name}
                 onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-                className="w-full bg-gray-800 text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                variant="glass"
               />
             </div>
             <div>
-              <label className="text-sm text-gray-400 mb-1 block">Email</label>
-              <input
+              <label className="text-sm text-muted-foreground mb-2 block font-medium">Email</label>
+              <Input
                 value={user?.email || ""}
                 disabled
-                className="w-full bg-gray-800/50 text-gray-400 rounded-xl px-4 py-3 text-sm cursor-not-allowed"
+                variant="glass"
+                className="opacity-60 cursor-not-allowed"
               />
             </div>
           </div>
 
-          {/* Teacher-only */}
           {isTeacher && (
             <>
-              <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800 space-y-4">
-                <h2 className="text-white font-semibold">Teacher Profile</h2>
+              <div className="glass-card p-6 space-y-5">
+                <h2 className="text-foreground font-semibold flex items-center gap-2">
+                  <BookOpen className="h-4 w-4 text-primary-500" />
+                  Teacher Profile
+                </h2>
                 <div>
-                  <label className="text-sm text-gray-400 mb-1 block">Bio</label>
+                  <label className="text-sm text-muted-foreground mb-2 block font-medium">Bio</label>
                   <textarea
                     value={form.bio}
                     onChange={(e) => setForm({ ...form, bio: e.target.value })}
                     rows={4}
                     placeholder="Tell students about your background, expertise, and teaching style..."
-                    className="w-full bg-gray-800 text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary-500 text-sm resize-none"
+                    className="w-full glass-input rounded-xl px-4 py-3 text-sm resize-none"
                   />
                 </div>
                 <div>
-                  <label className="text-sm text-gray-400 mb-1 block">Expertise Areas</label>
-                  <div className="flex gap-2 mb-2">
-                    <input
+                  <label className="text-sm text-muted-foreground mb-2 block font-medium">Expertise Areas</label>
+                  <div className="flex gap-2 mb-3">
+                    <Input
                       value={newExpertise}
                       onChange={(e) => setNewExpertise(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addExpertise())}
                       placeholder="e.g., Machine Learning"
-                      className="flex-1 bg-gray-800 text-white rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                      variant="glass"
                     />
-                    <button
-                      type="button"
-                      onClick={addExpertise}
-                      className="bg-primary-600 text-white px-3 py-2 rounded-xl text-sm hover:bg-primary-700"
-                    >
-                      Add
-                    </button>
+                    <Button type="button" onClick={addExpertise} variant="gradient" size="md">
+                      <Plus className="h-4 w-4" />
+                    </Button>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {form.expertise_areas.map((area, i) => (
-                      <span
-                        key={i}
-                        className="flex items-center gap-1 bg-primary-900/40 text-primary-400 text-xs px-3 py-1.5 rounded-full"
-                      >
+                      <Badge key={i} variant="default" className="gap-1.5 py-1.5 px-3">
                         {area}
-                        <button type="button" onClick={() => removeExpertise(i)} className="ml-1 hover:text-white">×</button>
-                      </span>
+                        <button type="button" onClick={() => removeExpertise(i)} className="hover:text-foreground">
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
                     ))}
                   </div>
                 </div>
               </div>
 
-              <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800 space-y-4">
-                <h2 className="text-white font-semibold">Payout Details</h2>
-                <p className="text-gray-400 text-sm">Add your bank details to receive earnings from courses</p>
+              <div className="glass-card p-6 space-y-5">
+                <h2 className="text-foreground font-semibold">Payout Details</h2>
+                <p className="text-muted-foreground text-sm">Add your bank details to receive earnings</p>
                 <div>
-                  <label className="text-sm text-gray-400 mb-1 block">UPI ID</label>
-                  <input
+                  <label className="text-sm text-muted-foreground mb-2 block font-medium">UPI ID</label>
+                  <Input
                     value={form.payout_upi_id}
                     onChange={(e) => setForm({ ...form, payout_upi_id: e.target.value })}
                     placeholder="yourname@upi"
-                    className="w-full bg-gray-800 text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                    variant="glass"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm text-gray-400 mb-1 block">Bank Account Number</label>
-                    <input
+                    <label className="text-sm text-muted-foreground mb-2 block font-medium">Bank Account</label>
+                    <Input
                       value={form.payout_bank_account}
                       onChange={(e) => setForm({ ...form, payout_bank_account: e.target.value })}
                       placeholder="Account number"
-                      className="w-full bg-gray-800 text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                      variant="glass"
                     />
                   </div>
                   <div>
-                    <label className="text-sm text-gray-400 mb-1 block">IFSC Code</label>
-                    <input
+                    <label className="text-sm text-muted-foreground mb-2 block font-medium">IFSC Code</label>
+                    <Input
                       value={form.payout_ifsc}
                       onChange={(e) => setForm({ ...form, payout_ifsc: e.target.value })}
                       placeholder="SBIN0001234"
-                      className="w-full bg-gray-800 text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                      variant="glass"
                     />
                   </div>
                 </div>
@@ -210,16 +208,19 @@ export default function ProfilePage() {
             </>
           )}
 
-          <button
+          <Button
             type="submit"
-            disabled={updateProfile.isPending}
-            className="w-full flex items-center justify-center gap-2 bg-primary-600 text-white py-3 rounded-xl hover:bg-primary-700 disabled:opacity-50 transition-colors font-medium"
+            variant="gradient"
+            size="lg"
+            loading={updateProfile.isPending}
+            className="w-full rounded-2xl"
           >
-            {updateProfile.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            <Save className="h-4 w-4" />
             Save Changes
-          </button>
+          </Button>
         </form>
-      </div>
+      </main>
+      <Footer />
     </div>
   );
 }

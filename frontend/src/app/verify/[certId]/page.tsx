@@ -1,6 +1,6 @@
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { CheckCircle, XCircle, Award } from "lucide-react";
+import { CheckCircle, XCircle, Award, Download, ExternalLink } from "lucide-react";
 import { Metadata } from "next";
 
 async function getCertificate(certId: string) {
@@ -33,24 +33,28 @@ export default async function CertificateVerifyPage({ params }: { params: { cert
       <main className="flex-1 flex items-center justify-center py-12 px-4">
         <div className="max-w-xl w-full">
           {cert.valid ? (
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-green-200 dark:border-green-800 overflow-hidden">
-              {/* Header */}
-              <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 text-white text-center">
-                <CheckCircle className="h-16 w-16 mx-auto mb-3" />
-                <h1 className="text-2xl font-bold">Certificate Verified ✓</h1>
-                <p className="text-green-100 mt-1">This certificate is authentic and issued by Brainwave.ai</p>
+            <div className="glass-card rounded-3xl overflow-hidden shadow-glass-lg">
+              <div className="relative gradient-bg p-8 md:p-10 text-white text-center overflow-hidden">
+                <div className="absolute top-0 left-0 w-40 h-40 bg-white/10 rounded-full blur-[60px] -translate-x-1/2 -translate-y-1/2" />
+                <div className="absolute bottom-0 right-0 w-56 h-56 bg-white/10 rounded-full blur-[80px] translate-x-1/2 translate-y-1/2" />
+                <div className="relative">
+                  <div className="h-16 w-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle className="h-8 w-8 text-white" />
+                  </div>
+                  <h1 className="text-2xl font-bold">Certificate Verified</h1>
+                  <p className="text-white/80 mt-1">This certificate is authentic and issued by Brainwave.ai</p>
+                </div>
               </div>
 
-              {/* Certificate Details */}
-              <div className="p-6 space-y-4">
-                <div className="text-center border-b border-gray-100 dark:border-gray-700 pb-4">
-                  <Award className="h-10 w-10 text-amber-500 mx-auto mb-2" />
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                    Certificate of Completion
-                  </h2>
+              <div className="p-6 md:p-8 space-y-5">
+                <div className="text-center border-b border-border/50 pb-5">
+                  <div className="h-12 w-12 rounded-2xl bg-amber-500/10 flex items-center justify-center mx-auto mb-3">
+                    <Award className="h-6 w-6 text-amber-500" />
+                  </div>
+                  <h2 className="text-xl font-bold text-foreground">Certificate of Completion</h2>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <InfoRow label="Student Name" value={cert.student_name} />
                   <InfoRow label="Course" value={cert.course_name} />
                   <InfoRow label="Instructor" value={cert.teacher_name} />
@@ -70,21 +74,23 @@ export default async function CertificateVerifyPage({ params }: { params: { cert
                     href={cert.pdf_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full flex items-center justify-center gap-2 bg-primary-600 text-white py-3 rounded-xl font-semibold hover:bg-primary-700 transition-colors mt-4"
+                    className="w-full flex items-center justify-center gap-2 gradient-bg text-white py-3.5 rounded-2xl font-semibold hover:opacity-90 active:scale-[0.98] transition-all duration-200 shadow-glow mt-6"
                   >
-                    Download Certificate PDF
+                    <Download className="h-4 w-4" /> Download Certificate PDF
                   </a>
                 )}
               </div>
             </div>
           ) : (
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-red-200 dark:border-red-800 overflow-hidden">
-              <div className="bg-gradient-to-r from-red-500 to-rose-600 p-6 text-white text-center">
-                <XCircle className="h-16 w-16 mx-auto mb-3" />
+            <div className="glass-card rounded-3xl overflow-hidden">
+              <div className="bg-gradient-to-br from-red-500 to-rose-600 p-8 md:p-10 text-white text-center">
+                <div className="h-16 w-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-4">
+                  <XCircle className="h-8 w-8 text-white" />
+                </div>
                 <h1 className="text-2xl font-bold">Invalid Certificate</h1>
-                <p className="text-red-100 mt-1">This certificate could not be verified</p>
+                <p className="text-white/80 mt-1">This certificate could not be verified</p>
               </div>
-              <div className="p-6 text-center text-gray-500">
+              <div className="p-6 md:p-8 text-center text-muted-foreground">
                 <p>This certificate may be expired, revoked, or the ID is incorrect.</p>
               </div>
             </div>
@@ -99,8 +105,8 @@ export default async function CertificateVerifyPage({ params }: { params: { cert
 function InfoRow({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="flex justify-between items-start">
-      <span className="text-sm text-gray-500 dark:text-gray-400">{label}:</span>
-      <span className={`text-sm font-semibold text-gray-900 dark:text-white max-w-xs text-right ${mono ? "font-mono" : ""}`}>
+      <span className="text-sm text-muted-foreground">{label}:</span>
+      <span className={`text-sm font-semibold text-foreground max-w-xs text-right ${mono ? "font-mono" : ""}`}>
         {value}
       </span>
     </div>

@@ -4,8 +4,11 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
 import { CourseCard } from "@/components/course/CourseCard";
 import { Search, SlidersHorizontal, X, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 const LEVELS = ["beginner", "intermediate", "advanced"];
 const SORT_OPTIONS = [
@@ -62,51 +65,49 @@ function SearchPageContent() {
   const total = data?.total || courses.length;
 
   return (
-    <div className="min-h-screen bg-gray-950">
+    <div className="min-h-screen flex flex-col">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Search Header */}
-        <div className="mb-6">
+      <main className="flex-1 max-w-7xl mx-auto px-4 py-10 w-full">
+        <div className="mb-8">
           <div className="flex gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <input
+              <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search courses, topics, skills..."
-                className="w-full bg-gray-900 text-white placeholder-gray-400 rounded-xl pl-12 pr-4 py-3 outline-none focus:ring-2 focus:ring-primary-500 border border-gray-800"
+                variant="glass"
+                icon={<Search className="h-4 w-4" />}
+                className="h-12"
               />
               {query && (
                 <button
                   onClick={() => setQuery("")}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <X className="h-4 w-4" />
                 </button>
               )}
             </div>
-            <button
+            <Button
+              variant={showFilters ? "default" : "glass"}
               onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-colors ${
-                showFilters ? "bg-primary-600 border-primary-500 text-white" : "bg-gray-900 border-gray-800 text-gray-400 hover:text-white"
-              }`}
+              className="gap-2 h-12"
             >
-              <SlidersHorizontal className="h-5 w-5" />
+              <SlidersHorizontal className="h-4 w-4" />
               Filters
-            </button>
+            </Button>
           </div>
 
-          {/* Filters */}
           {showFilters && (
-            <div className="mt-4 bg-gray-900 rounded-xl border border-gray-800 p-4">
+            <div className="mt-4 glass-card p-5 animate-slide-up">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
-                  <label className="text-xs text-gray-400 mb-1.5 block font-medium">Level</label>
+                  <label className="text-xs text-muted-foreground mb-1.5 block font-semibold uppercase tracking-wider">Level</label>
                   <select
                     value={level}
                     onChange={(e) => setLevel(e.target.value)}
-                    className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full glass-input rounded-xl px-3 py-2.5 text-sm outline-none"
                   >
                     <option value="">All Levels</option>
                     {LEVELS.map((l) => (
@@ -115,31 +116,31 @@ function SearchPageContent() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs text-gray-400 mb-1.5 block font-medium">Category</label>
-                  <input
+                  <label className="text-xs text-muted-foreground mb-1.5 block font-semibold uppercase tracking-wider">Category</label>
+                  <Input
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
                     placeholder="e.g., Programming"
-                    className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-500"
+                    variant="glass"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-gray-400 mb-1.5 block font-medium">Max Price (INR)</label>
-                  <input
+                  <label className="text-xs text-muted-foreground mb-1.5 block font-semibold uppercase tracking-wider">Max Price</label>
+                  <Input
                     type="number"
                     value={maxPrice}
                     onChange={(e) => setMaxPrice(e.target.value)}
                     placeholder="No limit"
                     min={0}
-                    className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-500"
+                    variant="glass"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-gray-400 mb-1.5 block font-medium">Sort By</label>
+                  <label className="text-xs text-muted-foreground mb-1.5 block font-semibold uppercase tracking-wider">Sort By</label>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full glass-input rounded-xl px-3 py-2.5 text-sm outline-none"
                   >
                     {SORT_OPTIONS.map((opt) => (
                       <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -150,7 +151,7 @@ function SearchPageContent() {
               {(level || category || maxPrice) && (
                 <button
                   onClick={() => { setLevel(""); setCategory(""); setMaxPrice(""); }}
-                  className="mt-3 text-xs text-primary-400 hover:text-primary-300 transition-colors"
+                  className="mt-3 text-xs text-primary-500 hover:text-primary-400 transition-colors font-semibold"
                 >
                   Clear filters
                 </button>
@@ -159,11 +160,10 @@ function SearchPageContent() {
           )}
         </div>
 
-        {/* Results */}
         {query || level || category ? (
           <>
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-gray-400 text-sm">
+            <div className="flex items-center justify-between mb-6">
+              <p className="text-muted-foreground text-sm">
                 {isFetching ? (
                   <span className="flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" /> Searching...
@@ -176,15 +176,19 @@ function SearchPageContent() {
 
             {isLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                  <div key={i} className="h-72 bg-gray-900 rounded-2xl animate-pulse" />
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="glass-card h-72 animate-pulse">
+                    <div className="h-full bg-gradient-to-br from-muted/50 to-muted/20 rounded-xl" />
+                  </div>
                 ))}
               </div>
             ) : courses.length === 0 ? (
-              <div className="text-center py-24">
-                <Search className="h-16 w-16 text-gray-700 mx-auto mb-4" />
-                <p className="text-gray-400 text-lg font-semibold">No courses found</p>
-                <p className="text-gray-500 text-sm mt-1">Try different keywords or remove some filters</p>
+              <div className="text-center py-24 glass-card rounded-3xl">
+                <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
+                  <Search className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <p className="text-foreground text-lg font-semibold">No courses found</p>
+                <p className="text-muted-foreground text-sm mt-1">Try different keywords or remove some filters</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -195,13 +199,16 @@ function SearchPageContent() {
             )}
           </>
         ) : (
-          <div className="text-center py-24">
-            <Search className="h-16 w-16 text-gray-700 mx-auto mb-4" />
-            <p className="text-gray-400 text-lg font-semibold">Start searching</p>
-            <p className="text-gray-500 text-sm mt-1">Type a keyword to find courses, topics, or skills</p>
+          <div className="text-center py-24 glass-card rounded-3xl">
+            <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
+              <Search className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <p className="text-foreground text-lg font-semibold">Start searching</p>
+            <p className="text-muted-foreground text-sm mt-1">Type a keyword to find courses, topics, or skills</p>
           </div>
         )}
-      </div>
+      </main>
+      <Footer />
     </div>
   );
 }
@@ -209,7 +216,7 @@ function SearchPageContent() {
 export default function SearchPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
       </div>
     }>

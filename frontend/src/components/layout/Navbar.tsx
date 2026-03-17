@@ -2,16 +2,26 @@
 import Link from "next/link";
 import { useAuthStore } from "@/stores/authStore";
 import { useNotificationStore } from "@/stores/notificationStore";
-import { Bell, BookOpen, GraduationCap, LogOut, Menu, User, X } from "lucide-react";
-import { useState } from "react";
+import { Bell, BookOpen, GraduationCap, LogOut, Menu, User, X, Search, ChevronDown } from "lucide-react";
+import { useState, useEffect } from "react";
 import { notifApi } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export function Navbar() {
   const { user, logout, isAuthenticated } = useAuthStore();
   const { unreadCount, setNotifications } = useNotificationStore();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useQuery({
     queryKey: ["notifications"],
@@ -32,135 +42,197 @@ export function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm">
+    <nav className={cn(
+      "sticky top-0 z-50 transition-all duration-300",
+      scrolled
+        ? "glass-navbar shadow-lg"
+        : "bg-background/50 backdrop-blur-sm border-b border-transparent"
+    )}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 font-bold text-xl text-primary-600">
-            <GraduationCap className="h-7 w-7" />
-            <span>Brainwave.ai</span>
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="h-9 w-9 rounded-xl gradient-bg flex items-center justify-center shadow-glow group-hover:shadow-glow-lg transition-shadow">
+              <GraduationCap className="h-5 w-5 text-white" />
+            </div>
+            <span className="font-bold text-xl tracking-tight">
+              <span className="gradient-text">Brainwave</span>
+              <span className="text-muted-foreground">.ai</span>
+            </span>
           </Link>
 
-          {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-6">
-            <Link href="/courses" className="text-gray-600 hover:text-primary-600 dark:text-gray-300 font-medium transition-colors">
+          <div className="hidden md:flex items-center gap-1">
+            <Link
+              href="/courses"
+              className="px-4 py-2 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200"
+            >
               Courses
             </Link>
+            <Link
+              href="/search"
+              className="px-4 py-2 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200"
+            >
+              <Search className="h-4 w-4 inline-block mr-1.5" />
+              Search
+            </Link>
             {isAuthenticated() && (
-              <Link href={getDashboardLink()} className="text-gray-600 hover:text-primary-600 dark:text-gray-300 font-medium transition-colors">
+              <Link
+                href={getDashboardLink()}
+                className="px-4 py-2 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200"
+              >
                 Dashboard
               </Link>
             )}
             {user?.role === "teacher" && (
-              <Link href="/teacher/courses/new" className="text-gray-600 hover:text-primary-600 dark:text-gray-300 font-medium transition-colors">
+              <Link
+                href="/teacher/courses/new"
+                className="px-4 py-2 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200"
+              >
                 Create Course
               </Link>
             )}
           </div>
 
-          {/* Right Actions */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-2">
+            <ThemeToggle />
+
             {isAuthenticated() ? (
               <>
-                {/* Notifications */}
-                <Link href="/notifications" className="relative p-2 text-gray-500 hover:text-primary-600 transition-colors">
-                  <Bell className="h-5 w-5" />
+                <Link
+                  href="/notifications"
+                  className="relative h-10 w-10 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200"
+                >
+                  <Bell className="h-[1.2rem] w-[1.2rem]" />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                    <span className="absolute -top-0.5 -right-0.5 gradient-bg text-white text-[10px] rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-glow">
                       {unreadCount > 9 ? "9+" : unreadCount}
                     </span>
                   )}
                 </Link>
 
-                {/* Profile Dropdown */}
                 <div className="relative">
                   <button
                     onClick={() => setProfileOpen(!profileOpen)}
-                    className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    className="flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-accent transition-all duration-200"
                   >
                     {user?.avatar_url ? (
-                      <img src={user.avatar_url} alt={user.full_name} className="h-8 w-8 rounded-full object-cover" />
+                      <img src={user.avatar_url} alt={user.full_name} className="h-8 w-8 rounded-lg object-cover" />
                     ) : (
-                      <div className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center">
-                        <span className="text-primary-600 font-semibold text-sm">
+                      <div className="h-8 w-8 rounded-lg gradient-bg flex items-center justify-center">
+                        <span className="text-white font-semibold text-sm">
                           {user?.full_name?.charAt(0)?.toUpperCase()}
                         </span>
                       </div>
                     )}
+                    <ChevronDown className={cn(
+                      "h-3.5 w-3.5 text-muted-foreground transition-transform duration-200",
+                      profileOpen && "rotate-180"
+                    )} />
                   </button>
 
                   {profileOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
-                      <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{user?.full_name}</p>
-                        <p className="text-xs text-gray-500">{user?.email}</p>
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
+                      <div className="absolute right-0 mt-2 w-56 glass-card rounded-2xl shadow-glass-lg py-2 z-50 animate-slide-up">
+                        <div className="px-4 py-3 border-b border-border/50">
+                          <p className="text-sm font-semibold text-foreground">{user?.full_name}</p>
+                          <p className="text-xs text-muted-foreground">{user?.email}</p>
+                        </div>
+                        <div className="p-1">
+                          <Link
+                            href="/profile"
+                            className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-xl transition-colors"
+                            onClick={() => setProfileOpen(false)}
+                          >
+                            <User className="h-4 w-4" /> Profile
+                          </Link>
+                          <Link
+                            href={getDashboardLink()}
+                            className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-xl transition-colors"
+                            onClick={() => setProfileOpen(false)}
+                          >
+                            <BookOpen className="h-4 w-4" /> Dashboard
+                          </Link>
+                        </div>
+                        <div className="border-t border-border/50 p-1">
+                          <button
+                            onClick={() => { logout(); setProfileOpen(false); window.location.href = "/"; }}
+                            className="flex items-center gap-2.5 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 w-full rounded-xl transition-colors"
+                          >
+                            <LogOut className="h-4 w-4" /> Sign Out
+                          </button>
+                        </div>
                       </div>
-                      <Link
-                        href="/profile"
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                        onClick={() => setProfileOpen(false)}
-                      >
-                        <User className="h-4 w-4" /> Profile
-                      </Link>
-                      <button
-                        onClick={() => { logout(); setProfileOpen(false); window.location.href = "/"; }}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full"
-                      >
-                        <LogOut className="h-4 w-4" /> Sign Out
-                      </button>
-                    </div>
+                    </>
                   )}
                 </div>
               </>
             ) : (
-              <>
-                <Link href="/login" className="text-gray-600 hover:text-primary-600 font-medium transition-colors">
-                  Log In
+              <div className="flex items-center gap-2">
+                <Link href="/login">
+                  <Button variant="ghost" size="sm">Log In</Button>
                 </Link>
-                <Link
-                  href="/register"
-                  className="bg-primary-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-primary-700 transition-colors"
-                >
-                  Get Started
+                <Link href="/register">
+                  <Button variant="gradient" size="sm">Get Started</Button>
                 </Link>
-              </>
+              </div>
             )}
           </div>
 
-          {/* Mobile hamburger */}
-          <button
-            className="md:hidden p-2 text-gray-500"
-            onClick={() => setMobileOpen(!mobileOpen)}
-          >
-            {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
+          <div className="flex items-center gap-2 md:hidden">
+            <ThemeToggle />
+            <button
+              className="h-10 w-10 rounded-xl flex items-center justify-center text-muted-foreground hover:bg-accent transition-colors"
+              onClick={() => setMobileOpen(!mobileOpen)}
+            >
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
         </div>
 
-        {/* Mobile Menu */}
         {mobileOpen && (
-          <div className="md:hidden py-4 border-t border-gray-100 dark:border-gray-800 space-y-2">
-            <Link href="/courses" className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg">
-              Courses
+          <div className="md:hidden py-4 border-t border-border/50 space-y-1 animate-slide-up">
+            <Link
+              href="/courses"
+              className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground hover:bg-accent rounded-xl transition-colors"
+              onClick={() => setMobileOpen(false)}
+            >
+              <BookOpen className="h-4 w-4" /> Courses
+            </Link>
+            <Link
+              href="/search"
+              className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground hover:bg-accent rounded-xl transition-colors"
+              onClick={() => setMobileOpen(false)}
+            >
+              <Search className="h-4 w-4" /> Search
             </Link>
             {isAuthenticated() && (
-              <Link href={getDashboardLink()} className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg">
+              <Link
+                href={getDashboardLink()}
+                className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-foreground hover:bg-accent rounded-xl transition-colors"
+                onClick={() => setMobileOpen(false)}
+              >
                 Dashboard
               </Link>
             )}
-            {!isAuthenticated() && (
-              <>
-                <Link href="/login" className="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">Log In</Link>
-                <Link href="/register" className="block mx-4 py-2 bg-primary-600 text-white text-center rounded-lg font-medium">Get Started</Link>
-              </>
-            )}
-            {isAuthenticated() && (
-              <button
-                onClick={() => { logout(); window.location.href = "/"; }}
-                className="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg"
-              >
-                Sign Out
-              </button>
-            )}
+            <div className="pt-2 border-t border-border/50 mt-2">
+              {!isAuthenticated() ? (
+                <div className="flex flex-col gap-2 px-4">
+                  <Link href="/login" onClick={() => setMobileOpen(false)}>
+                    <Button variant="outline" className="w-full">Log In</Button>
+                  </Link>
+                  <Link href="/register" onClick={() => setMobileOpen(false)}>
+                    <Button variant="gradient" className="w-full">Get Started</Button>
+                  </Link>
+                </div>
+              ) : (
+                <button
+                  onClick={() => { logout(); window.location.href = "/"; }}
+                  className="flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-500/10 w-full rounded-xl transition-colors"
+                >
+                  <LogOut className="h-4 w-4" /> Sign Out
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>

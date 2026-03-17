@@ -5,15 +5,14 @@ import { courseApi, lessonApi } from "@/lib/api";
 import { Navbar } from "@/components/layout/Navbar";
 import { useAuthStore } from "@/stores/authStore";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
-  Play, CheckCircle, BookOpen, MessageSquare, Users, ChevronLeft, ChevronRight
+  Play, CheckCircle, BookOpen, MessageSquare, Users, ChevronLeft, ChevronRight, Sparkles
 } from "lucide-react";
 import { useCourseStore } from "@/stores/courseStore";
+import { Button } from "@/components/ui/button";
 
 export default function CoursePlayerPage({ params }: { params: { slug: string } }) {
   const { user } = useAuthStore();
-  const router = useRouter();
   const { currentLesson, setCurrentLesson, progress } = useCourseStore();
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
 
@@ -34,7 +33,6 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
     enabled: !!course?.id,
   });
 
-  // Auto-select first lesson
   useEffect(() => {
     if (course?.chapters?.[0]?.lessons?.[0]?.id && !activeLessonId) {
       setActiveLessonId(course.chapters[0].lessons[0].id);
@@ -61,44 +59,38 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <div className="flex-1 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-600 border-t-transparent" />
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-900">
-      {/* Top bar */}
-      <div className="bg-gray-900 border-b border-gray-800 py-3 px-4 flex items-center gap-4">
-        <Link href="/dashboard" className="text-gray-400 hover:text-white">
+    <div className="min-h-screen flex flex-col bg-background">
+      <div className="glass-navbar py-3 px-4 flex items-center gap-4 sticky top-0 z-50">
+        <Link href="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors">
           <ChevronLeft className="h-5 w-5" />
         </Link>
-        <h1 className="text-white font-semibold truncate flex-1">{course?.title}</h1>
-        <div className="text-sm text-gray-400 hidden md:block">
-          {completedCount}/{totalLessons} lessons · {overallProgress}%
+        <h1 className="text-foreground font-semibold truncate flex-1">{course?.title}</h1>
+        <div className="text-sm text-muted-foreground hidden md:block">
+          {completedCount}/{totalLessons} lessons &middot; {overallProgress}%
         </div>
-        {/* Tab Navigation */}
-        <div className="flex items-center gap-2">
-          <Link
-            href={`/learn/${params.slug}/chat`}
-            className="flex items-center gap-1 text-xs text-gray-400 hover:text-white px-3 py-1.5 rounded-lg hover:bg-gray-800 transition-colors"
-          >
-            <MessageSquare className="h-4 w-4" /> AI Chat
+        <div className="flex items-center gap-1">
+          <Link href={`/learn/${params.slug}/chat`}>
+            <Button variant="ghost" size="sm" className="gap-1.5 text-xs">
+              <MessageSquare className="h-3.5 w-3.5" /> AI Chat
+            </Button>
           </Link>
-          <Link
-            href={`/learn/${params.slug}/community`}
-            className="flex items-center gap-1 text-xs text-gray-400 hover:text-white px-3 py-1.5 rounded-lg hover:bg-gray-800 transition-colors"
-          >
-            <Users className="h-4 w-4" /> Community
+          <Link href={`/learn/${params.slug}/community`}>
+            <Button variant="ghost" size="sm" className="gap-1.5 text-xs">
+              <Users className="h-3.5 w-3.5" /> Community
+            </Button>
           </Link>
         </div>
       </div>
 
       <div className="flex-1 flex overflow-hidden">
-        {/* Main Video Area */}
         <div className="flex-1 flex flex-col">
-          {/* Video Player */}
           <div className="bg-black aspect-video flex items-center justify-center">
             {lessonData?.video_url ? (
               <video
@@ -118,69 +110,57 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
                 }}
               />
             ) : (
-              <div className="text-center text-gray-400">
+              <div className="text-center text-muted-foreground">
                 <Play className="h-16 w-16 mx-auto mb-4 opacity-30" />
                 <p>{lessonData ? "No video for this lesson" : "Select a lesson to start"}</p>
               </div>
             )}
           </div>
 
-          {/* Lesson Info */}
           {lessonData && (
-            <div className="bg-gray-800 p-4">
-              <h2 className="text-white font-bold text-lg">{lessonData.title}</h2>
+            <div className="glass p-5 border-t border-border/30">
+              <h2 className="text-foreground font-bold text-lg">{lessonData.title}</h2>
               {lessonData.ai_summary && (
-                <div className="mt-3 p-3 bg-gray-700 rounded-xl">
-                  <p className="text-xs text-gray-400 font-semibold mb-1">AI Summary</p>
-                  <p className="text-sm text-gray-200">{lessonData.ai_summary}</p>
+                <div className="mt-3 glass rounded-2xl p-4">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Sparkles className="h-3.5 w-3.5 text-primary-500" />
+                    <span className="text-xs text-muted-foreground font-semibold">AI Summary</span>
+                  </div>
+                  <p className="text-sm text-foreground/80 leading-relaxed">{lessonData.ai_summary}</p>
                 </div>
               )}
-
-              {/* Prev/Next Navigation */}
               <div className="flex gap-3 mt-4">
                 {prevLesson && (
-                  <button
-                    onClick={() => setActiveLessonId(prevLesson.id)}
-                    className="flex items-center gap-2 text-sm text-gray-400 hover:text-white px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors"
-                  >
+                  <Button variant="ghost" size="sm" onClick={() => setActiveLessonId(prevLesson.id)} className="gap-1.5">
                     <ChevronLeft className="h-4 w-4" /> Previous
-                  </button>
+                  </Button>
                 )}
                 {nextLesson && (
-                  <button
-                    onClick={() => setActiveLessonId(nextLesson.id)}
-                    className="ml-auto flex items-center gap-2 text-sm text-white bg-primary-600 px-3 py-2 rounded-lg hover:bg-primary-700 transition-colors"
-                  >
+                  <Button variant="gradient" size="sm" onClick={() => setActiveLessonId(nextLesson.id)} className="ml-auto gap-1.5">
                     Next <ChevronRight className="h-4 w-4" />
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
           )}
         </div>
 
-        {/* Sidebar */}
-        <div className="w-72 lg:w-80 bg-gray-800 border-l border-gray-700 flex flex-col overflow-hidden hidden md:flex">
-          {/* Progress */}
-          <div className="p-4 border-b border-gray-700">
-            <div className="flex justify-between text-sm text-gray-400 mb-2">
+        <div className="w-72 lg:w-80 glass border-l border-border/30 flex flex-col overflow-hidden hidden md:flex">
+          <div className="p-4 border-b border-border/30">
+            <div className="flex justify-between text-sm text-muted-foreground mb-2">
               <span>Your Progress</span>
-              <span className="font-semibold text-white">{overallProgress}%</span>
+              <span className="font-bold text-foreground">{overallProgress}%</span>
             </div>
-            <div className="bg-gray-700 rounded-full h-2">
-              <div
-                className="bg-primary-500 h-2 rounded-full transition-all"
-                style={{ width: `${overallProgress}%` }}
-              />
+            <div className="bg-muted/50 rounded-full h-2.5 overflow-hidden">
+              <div className="gradient-bg h-2.5 rounded-full transition-all" style={{ width: `${overallProgress}%` }} />
             </div>
           </div>
 
-          {/* Chapter/Lesson List */}
           <div className="flex-1 overflow-y-auto">
             {chapters.map((chapter: any) => (
               <div key={chapter.id}>
-                <div className="px-4 py-2 bg-gray-700 sticky top-0">
-                  <p className="text-xs font-semibold text-gray-300 uppercase tracking-wide">{chapter.title}</p>
+                <div className="px-4 py-2.5 glass sticky top-0 border-b border-border/20">
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{chapter.title}</p>
                 </div>
                 {(chapter.lessons || []).map((lesson: any) => {
                   const lessonProgress = progressMap[lesson.id];
@@ -191,25 +171,25 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
                     <button
                       key={lesson.id}
                       onClick={() => setActiveLessonId(lesson.id)}
-                      className={`w-full flex items-start gap-3 px-4 py-3 hover:bg-gray-700 transition-colors text-left ${
-                        isActive ? "bg-primary-900/30 border-l-2 border-primary-500" : ""
+                      className={`w-full flex items-start gap-3 px-4 py-3 hover:bg-accent/50 transition-colors text-left ${
+                        isActive ? "bg-primary-500/10 border-l-2 border-primary-500" : ""
                       }`}
                     >
                       <div className="flex-shrink-0 mt-0.5">
                         {isDone ? (
-                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          <CheckCircle className="h-4 w-4 text-emerald-500" />
                         ) : isActive ? (
-                          <Play className="h-4 w-4 text-primary-400" />
+                          <Play className="h-4 w-4 text-primary-500" />
                         ) : (
-                          <div className="h-4 w-4 rounded-full border-2 border-gray-500" />
+                          <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30" />
                         )}
                       </div>
                       <div>
-                        <p className={`text-sm font-medium ${isActive ? "text-primary-400" : isDone ? "text-gray-300" : "text-gray-400"}`}>
+                        <p className={`text-sm font-medium ${isActive ? "text-primary-500" : isDone ? "text-muted-foreground" : "text-foreground/70"}`}>
                           {lesson.title}
                         </p>
                         {lesson.duration_seconds && (
-                          <p className="text-xs text-gray-500">{Math.floor(lesson.duration_seconds / 60)}m</p>
+                          <p className="text-xs text-muted-foreground">{Math.floor(lesson.duration_seconds / 60)}m</p>
                         )}
                       </div>
                     </button>

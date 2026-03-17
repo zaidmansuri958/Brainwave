@@ -3,9 +3,12 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { courseApi } from "@/lib/api";
 import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
 import { useDropzone } from "react-dropzone";
-import { Upload, CheckCircle, Loader2, X, FileVideo, FileText, Mic } from "lucide-react";
+import { Upload, CheckCircle, Loader2, X, FileVideo, FileText, Mic, ArrowRight, Sparkles } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 const STEPS = ["Basic Info", "Upload Materials", "AI Processing", "Review & Publish"];
 
@@ -38,7 +41,6 @@ export default function CreateCoursePage() {
   const [completedSteps, setCompletedSteps] = useState<string[]>([]);
   const [aiDone, setAiDone] = useState(false);
 
-  // Dropzone
   const onDrop = useCallback((accepted: File[]) => {
     setFiles((prev) => [...prev, ...accepted]);
   }, []);
@@ -50,12 +52,12 @@ export default function CreateCoursePage() {
       "audio/*": [".mp3", ".wav", ".m4a"],
       "application/pdf": [".pdf"],
     },
-    maxSize: 2 * 1024 * 1024 * 1024, // 2GB
+    maxSize: 2 * 1024 * 1024 * 1024,
   });
 
   const getFileIcon = (file: File) => {
     if (file.type.startsWith("video/")) return <FileVideo className="h-5 w-5 text-blue-500" />;
-    if (file.type.startsWith("audio/")) return <Mic className="h-5 w-5 text-green-500" />;
+    if (file.type.startsWith("audio/")) return <Mic className="h-5 w-5 text-emerald-500" />;
     return <FileText className="h-5 w-5 text-red-500" />;
   };
 
@@ -126,62 +128,60 @@ export default function CreateCoursePage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-1 max-w-3xl mx-auto px-4 py-8 w-full">
-        {/* Progress Steps */}
-        <div className="flex items-center mb-8">
+      <main className="flex-1 max-w-3xl mx-auto px-4 py-10 w-full">
+        <div className="flex items-center mb-10">
           {STEPS.map((s, i) => (
             <div key={s} className="flex items-center flex-1">
-              <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold border-2 transition-all ${
-                i < step ? "bg-primary-600 border-primary-600 text-white"
-                : i === step ? "border-primary-600 text-primary-600"
-                : "border-gray-300 text-gray-400"
+              <div className={`flex items-center justify-center w-9 h-9 rounded-xl text-sm font-bold transition-all ${
+                i < step ? "gradient-bg text-white shadow-glow"
+                : i === step ? "border-2 border-primary-500 text-primary-500"
+                : "border-2 border-border text-muted-foreground"
               }`}>
                 {i < step ? <CheckCircle className="h-5 w-5" /> : i + 1}
               </div>
-              <span className={`ml-1 text-xs hidden sm:block ${i === step ? "text-primary-600 font-semibold" : "text-gray-400"}`}>
+              <span className={`ml-2 text-xs hidden sm:block ${i === step ? "text-primary-500 font-semibold" : "text-muted-foreground"}`}>
                 {s}
               </span>
               {i < STEPS.length - 1 && (
-                <div className={`flex-1 h-0.5 mx-2 ${i < step ? "bg-primary-600" : "bg-gray-200"}`} />
+                <div className={`flex-1 h-0.5 mx-3 rounded-full ${i < step ? "gradient-bg" : "bg-border"}`} />
               )}
             </div>
           ))}
         </div>
 
-        {/* Step 0: Basic Info */}
         {step === 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Course Basic Info</h2>
-            <div className="space-y-4">
+          <div className="glass-card p-6 md:p-8 rounded-3xl">
+            <h2 className="text-xl font-bold text-foreground mb-6">Course Basic Info</h2>
+            <div className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Course Title *</label>
-                <input
+                <label className="block text-sm font-medium text-foreground mb-2">Course Title *</label>
+                <Input
                   type="text"
                   value={basicInfo.title}
                   onChange={(e) => setBasicInfo({ ...basicInfo, title: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 dark:text-white outline-none focus:ring-2 focus:ring-primary-500"
+                  variant="glass"
                   placeholder="e.g., Complete Physics Course for JEE"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                <label className="block text-sm font-medium text-foreground mb-2">Description</label>
                 <textarea
                   value={basicInfo.description}
                   onChange={(e) => setBasicInfo({ ...basicInfo, description: e.target.value })}
                   rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 dark:text-white outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+                  className="w-full glass-input rounded-xl px-4 py-3 text-sm resize-none"
                   placeholder="AI will enhance this description from your materials..."
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+                  <label className="block text-sm font-medium text-foreground mb-2">Category</label>
                   <select
                     value={basicInfo.category}
                     onChange={(e) => setBasicInfo({ ...basicInfo, category: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 dark:text-white outline-none"
+                    className="w-full glass-input rounded-xl px-4 py-3 text-sm"
                   >
                     <option value="">Select Category</option>
                     {["Mathematics", "Physics", "Chemistry", "Biology", "Programming", "English", "History", "Commerce"].map((c) => (
@@ -190,24 +190,24 @@ export default function CreateCoursePage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Price (₹)</label>
-                  <input
+                  <label className="block text-sm font-medium text-foreground mb-2">Price (INR)</label>
+                  <Input
                     type="number"
                     value={basicInfo.price}
                     onChange={(e) => setBasicInfo({ ...basicInfo, price: e.target.value })}
                     min="0"
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 dark:text-white outline-none focus:ring-2 focus:ring-primary-500"
+                    variant="glass"
                     placeholder="0 = Free"
                   />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Difficulty Level</label>
+                  <label className="block text-sm font-medium text-foreground mb-2">Difficulty Level</label>
                   <select
                     value={basicInfo.difficulty_level}
                     onChange={(e) => setBasicInfo({ ...basicInfo, difficulty_level: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 dark:text-white outline-none"
+                    className="w-full glass-input rounded-xl px-4 py-3 text-sm"
                   >
                     <option value="beginner">Beginner</option>
                     <option value="intermediate">Intermediate</option>
@@ -215,11 +215,11 @@ export default function CreateCoursePage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Language</label>
+                  <label className="block text-sm font-medium text-foreground mb-2">Language</label>
                   <select
                     value={basicInfo.language}
                     onChange={(e) => setBasicInfo({ ...basicInfo, language: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl dark:bg-gray-700 dark:text-white outline-none"
+                    className="w-full glass-input rounded-xl px-4 py-3 text-sm"
                   >
                     {["English", "Hindi", "Gujarati", "Tamil", "Telugu", "Marathi", "Bengali"].map((l) => (
                       <option key={l} value={l}>{l}</option>
@@ -227,107 +227,110 @@ export default function CreateCoursePage() {
                   </select>
                 </div>
               </div>
-              <button
+              <Button
                 onClick={handleCreateCourse}
                 disabled={!basicInfo.title}
-                className="w-full bg-primary-600 text-white py-3 rounded-xl font-bold hover:bg-primary-700 disabled:opacity-50 transition-colors min-h-[48px]"
+                variant="gradient"
+                size="lg"
+                className="w-full rounded-2xl"
               >
-                Continue to Upload →
-              </button>
+                Continue to Upload <ArrowRight className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         )}
 
-        {/* Step 1: Upload Materials */}
         {step === 1 && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Upload Course Materials</h2>
-            <p className="text-gray-500 mb-6">Just record yourself teaching! Our AI will do the rest.</p>
+          <div className="glass-card p-6 md:p-8 rounded-3xl">
+            <h2 className="text-xl font-bold text-foreground mb-2">Upload Course Materials</h2>
+            <p className="text-muted-foreground mb-6">Just record yourself teaching! Our AI will do the rest.</p>
 
-            {/* Dropzone */}
             <div
               {...getRootProps()}
-              className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
+              className={`border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all duration-200 ${
                 isDragActive
-                  ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
-                  : "border-gray-300 dark:border-gray-600 hover:border-primary-400"
+                  ? "border-primary-500 bg-primary-500/5"
+                  : "border-border hover:border-primary-400 hover:bg-accent/30"
               }`}
             >
               <input {...getInputProps()} />
-              <Upload className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-700 dark:text-gray-300 font-semibold text-lg">
-                {isDragActive ? "Drop files here..." : "Drag & drop your videos, PDFs, or audio files here"}
+              <div className="h-14 w-14 rounded-2xl gradient-bg flex items-center justify-center mx-auto mb-4">
+                <Upload className="h-6 w-6 text-white" />
+              </div>
+              <p className="text-foreground font-semibold text-lg">
+                {isDragActive ? "Drop files here..." : "Drag & drop your videos, PDFs, or audio files"}
               </p>
-              <p className="text-gray-500 text-sm mt-2">Or tap to browse</p>
-              <p className="text-gray-400 text-xs mt-3">Supported: MP4, PDF, MP3, WAV, MOV · Max 2GB per file</p>
+              <p className="text-muted-foreground text-sm mt-2">Or click to browse</p>
+              <p className="text-muted-foreground/60 text-xs mt-3">Supported: MP4, PDF, MP3, WAV, MOV &middot; Max 2GB per file</p>
             </div>
 
-            {/* File List */}
             {files.length > 0 && (
               <div className="mt-4 space-y-2">
                 {files.map((file, i) => (
-                  <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                  <div key={i} className="flex items-center gap-3 p-3 glass rounded-xl">
                     {getFileIcon(file)}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{file.name}</p>
-                      <p className="text-xs text-gray-400">{(file.size / 1024 / 1024).toFixed(1)} MB</p>
+                      <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
+                      <p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(1)} MB</p>
                     </div>
                     <button onClick={() => setFiles(files.filter((_, j) => j !== i))}>
-                      <X className="h-4 w-4 text-gray-400 hover:text-red-500" />
+                      <X className="h-4 w-4 text-muted-foreground hover:text-red-500 transition-colors" />
                     </button>
                   </div>
                 ))}
               </div>
             )}
 
-            <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-              <p className="text-blue-700 dark:text-blue-300 text-sm">
-                💡 <strong>Tip:</strong> Just record yourself teaching on your phone! Our AI will transcribe, create chapters, generate quizzes, and build a beautiful course automatically.
+            <div className="mt-6 glass rounded-2xl p-4">
+              <p className="text-sm text-muted-foreground flex items-start gap-2">
+                <Sparkles className="h-4 w-4 text-primary-500 flex-shrink-0 mt-0.5" />
+                <span><strong>Tip:</strong> Just record yourself teaching on your phone! Our AI will transcribe, create chapters, generate quizzes, and build a beautiful course automatically.</span>
               </p>
             </div>
 
-            <button
+            <Button
               onClick={handleUpload}
               disabled={files.length === 0 || uploading}
-              className="w-full mt-4 bg-primary-600 text-white py-3 rounded-xl font-bold hover:bg-primary-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2 min-h-[48px]"
+              loading={uploading}
+              variant="gradient"
+              size="lg"
+              className="w-full mt-4 rounded-2xl"
             >
-              {uploading && <Loader2 className="h-5 w-5 animate-spin" />}
-              {uploading ? "Uploading..." : `Upload ${files.length} file${files.length > 1 ? "s" : ""} & Start AI Processing`}
-            </button>
+              {uploading ? "Uploading..." : `Upload ${files.length} file${files.length > 1 ? "s" : ""} & Start AI`}
+            </Button>
           </div>
         )}
 
-        {/* Step 2: AI Processing */}
         {step === 2 && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 text-center">
-            <div className="text-4xl mb-4">⚙️</div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">AI is building your course...</h2>
-            <p className="text-gray-500 mb-6">This takes 5-10 minutes. We'll send you an email when it's ready!</p>
+          <div className="glass-card p-8 md:p-10 rounded-3xl text-center">
+            <div className="h-16 w-16 rounded-2xl gradient-bg flex items-center justify-center mx-auto mb-5 animate-glow-pulse">
+              <Sparkles className="h-7 w-7 text-white" />
+            </div>
+            <h2 className="text-xl font-bold text-foreground mb-2">AI is building your course...</h2>
+            <p className="text-muted-foreground mb-8">This takes 5-10 minutes. We&apos;ll send you an email when it&apos;s ready!</p>
 
-            {/* Progress Bar */}
-            <div className="bg-gray-200 dark:bg-gray-700 rounded-full h-3 mb-4">
+            <div className="bg-muted/50 rounded-full h-3 mb-3 overflow-hidden">
               <div
-                className="bg-primary-600 h-3 rounded-full transition-all duration-500"
+                className="gradient-bg h-3 rounded-full transition-all duration-500"
                 style={{ width: `${aiProgress}%` }}
               />
             </div>
-            <p className="text-sm text-primary-600 font-semibold mb-6">{aiProgress}%</p>
+            <p className="text-sm text-primary-500 font-bold mb-8">{aiProgress}%</p>
 
-            {/* Step Checklist */}
-            <div className="space-y-3 text-left">
+            <div className="space-y-3 text-left max-w-sm mx-auto">
               {AI_STEPS.map((s) => {
                 const done = completedSteps.includes(s.id);
                 const current = !done && completedSteps.length > 0 && AI_STEPS.findIndex((st) => st.id === s.id) === completedSteps.length;
                 return (
                   <div key={s.id} className="flex items-center gap-3">
                     {done ? (
-                      <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+                      <CheckCircle className="h-5 w-5 text-emerald-500 flex-shrink-0" />
                     ) : current ? (
-                      <Loader2 className="h-5 w-5 text-primary-600 animate-spin flex-shrink-0" />
+                      <Loader2 className="h-5 w-5 text-primary-500 animate-spin flex-shrink-0" />
                     ) : (
-                      <div className="h-5 w-5 rounded-full border-2 border-gray-300 flex-shrink-0" />
+                      <div className="h-5 w-5 rounded-full border-2 border-border flex-shrink-0" />
                     )}
-                    <span className={`text-sm ${done ? "text-green-700 dark:text-green-400" : current ? "text-primary-600" : "text-gray-400"}`}>
+                    <span className={`text-sm ${done ? "text-emerald-500" : current ? "text-primary-500 font-medium" : "text-muted-foreground"}`}>
                       {s.label}
                     </span>
                   </div>
@@ -337,32 +340,38 @@ export default function CreateCoursePage() {
           </div>
         )}
 
-        {/* Step 3: Review & Publish */}
         {step === 3 && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
-            <div className="text-center mb-6">
-              <div className="text-4xl mb-3">🎉</div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Your course is ready!</h2>
-              <p className="text-gray-500 mt-1">AI has created chapters, lessons, quizzes, and a thumbnail.</p>
+          <div className="glass-card p-8 md:p-10 rounded-3xl">
+            <div className="text-center mb-8">
+              <div className="h-16 w-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="h-8 w-8 text-emerald-500" />
+              </div>
+              <h2 className="text-xl font-bold text-foreground">Your course is ready!</h2>
+              <p className="text-muted-foreground mt-1">AI has created chapters, lessons, quizzes, and a thumbnail.</p>
             </div>
 
             <div className="space-y-3">
-              <button
+              <Button
                 onClick={() => router.push(`/teacher/courses/${courseId}/review`)}
-                className="w-full border-2 border-primary-600 text-primary-600 py-3 rounded-xl font-bold hover:bg-primary-50 transition-colors min-h-[48px]"
+                variant="outline"
+                size="lg"
+                className="w-full rounded-2xl"
               >
                 Review AI-Generated Structure
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handlePublish}
-                className="w-full bg-primary-600 text-white py-3 rounded-xl font-bold hover:bg-primary-700 transition-colors min-h-[48px]"
+                variant="gradient"
+                size="lg"
+                className="w-full rounded-2xl"
               >
-                Publish Course Now →
-              </button>
+                Publish Course Now <ArrowRight className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         )}
       </main>
+      <Footer />
     </div>
   );
 }

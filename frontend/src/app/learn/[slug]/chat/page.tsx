@@ -5,7 +5,8 @@ import { courseApi } from "@/lib/api";
 import { useAuthStore } from "@/stores/authStore";
 import { Navbar } from "@/components/layout/Navbar";
 import Link from "next/link";
-import { Send, Bot, User, Loader2, ChevronLeft } from "lucide-react";
+import { Send, Bot, User, Loader2, ChevronLeft, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface Message {
   role: "user" | "assistant";
@@ -43,7 +44,6 @@ export default function CourseChatPage({ params }: { params: { slug: string } })
     setIsStreaming(true);
 
     let assistantContent = "";
-    const msgIndex = messages.length + 1;
 
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
@@ -92,10 +92,7 @@ export default function CourseChatPage({ params }: { params: { slug: string } })
     } catch (error) {
       setMessages((prev) => [
         ...prev,
-        {
-          role: "assistant",
-          content: "Sorry, I couldn't process your question. Please try again.",
-        },
+        { role: "assistant", content: "Sorry, I couldn't process your question. Please try again." },
       ]);
     } finally {
       setIsStreaming(false);
@@ -110,42 +107,40 @@ export default function CourseChatPage({ params }: { params: { slug: string } })
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-900">
-      <Navbar />
-
-      {/* Header */}
-      <div className="bg-gray-800 border-b border-gray-700 px-4 py-3 flex items-center gap-3">
-        <Link href={`/learn/${params.slug}`} className="text-gray-400 hover:text-white">
+    <div className="min-h-screen flex flex-col">
+      <div className="glass-navbar px-4 py-3 flex items-center gap-3 sticky top-0 z-50">
+        <Link href={`/learn/${params.slug}`} className="text-muted-foreground hover:text-foreground transition-colors">
           <ChevronLeft className="h-5 w-5" />
         </Link>
-        <Bot className="h-6 w-6 text-primary-400" />
+        <div className="h-8 w-8 rounded-xl gradient-bg flex items-center justify-center">
+          <Sparkles className="h-4 w-4 text-white" />
+        </div>
         <div>
-          <h1 className="text-white font-semibold text-sm">AI Assistant</h1>
-          <p className="text-gray-400 text-xs">{course?.title || "Course"}</p>
+          <h1 className="text-foreground font-semibold text-sm">AI Assistant</h1>
+          <p className="text-muted-foreground text-xs">{course?.title || "Course"}</p>
         </div>
       </div>
 
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((msg, i) => (
           <div key={i} className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
-            <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-              msg.role === "user" ? "bg-primary-600" : "bg-gray-700"
+            <div className={`flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center ${
+              msg.role === "user" ? "gradient-bg" : "glass"
             }`}>
-              {msg.role === "user" ? <User className="h-4 w-4 text-white" /> : <Bot className="h-4 w-4 text-primary-400" />}
+              {msg.role === "user" ? <User className="h-4 w-4 text-white" /> : <Bot className="h-4 w-4 text-primary-500" />}
             </div>
-            <div className={`max-w-2xl ${msg.role === "user" ? "items-end" : "items-start"} flex flex-col`}>
+            <div className={`max-w-2xl flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}>
               <div className={`rounded-2xl px-4 py-3 text-sm ${
                 msg.role === "user"
-                  ? "bg-primary-600 text-white rounded-tr-sm"
-                  : "bg-gray-800 text-gray-200 rounded-tl-sm"
+                  ? "gradient-bg text-white rounded-tr-md"
+                  : "glass text-foreground rounded-tl-md"
               }`}>
                 {msg.content || (isStreaming && i === messages.length - 1 ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin text-primary-500" />
                 ) : "")}
               </div>
               {msg.sources && msg.sources.length > 0 && (
-                <div className="mt-2 text-xs text-gray-400">
+                <div className="mt-1.5 text-xs text-muted-foreground">
                   Sources: {msg.sources.length} passage{msg.sources.length > 1 ? "s" : ""} from course
                 </div>
               )}
@@ -155,8 +150,7 @@ export default function CourseChatPage({ params }: { params: { slug: string } })
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
-      <div className="bg-gray-800 border-t border-gray-700 p-4">
+      <div className="glass border-t border-border/30 p-4">
         <div className="flex gap-3 max-w-4xl mx-auto">
           <textarea
             value={input}
@@ -164,18 +158,20 @@ export default function CourseChatPage({ params }: { params: { slug: string } })
             onKeyDown={handleKeyDown}
             placeholder="Ask anything about the course..."
             rows={1}
-            className="flex-1 bg-gray-700 text-white placeholder-gray-400 rounded-xl px-4 py-3 resize-none outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+            className="flex-1 glass-input rounded-xl px-4 py-3 resize-none text-sm"
           />
-          <button
+          <Button
             onClick={sendMessage}
             disabled={!input.trim() || isStreaming}
-            className="bg-primary-600 text-white p-3 rounded-xl hover:bg-primary-700 disabled:opacity-50 transition-colors flex-shrink-0 min-w-[48px] min-h-[48px] flex items-center justify-center"
+            variant="gradient"
+            size="icon"
+            className="rounded-xl flex-shrink-0"
           >
             {isStreaming ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
-          </button>
+          </Button>
         </div>
-        <p className="text-center text-xs text-gray-500 mt-2">
-          AI answers are based on course content only. For off-topic questions, use the community group.
+        <p className="text-center text-xs text-muted-foreground mt-2">
+          AI answers are based on course content only.
         </p>
       </div>
     </div>

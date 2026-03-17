@@ -2,12 +2,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { teacherApi } from "@/lib/api";
 import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
 import Link from "next/link";
 import {
   Users, BookOpen, DollarSign, AlertTriangle, Plus,
-  TrendingUp, Bell, CheckCircle
+  TrendingUp, Bell, CheckCircle, ArrowRight
 } from "lucide-react";
 import { formatPrice, getRiskEmoji } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 export default function TeacherDashboard() {
   const { data, isLoading } = useQuery({
@@ -19,10 +22,12 @@ export default function TeacherDashboard() {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <div className="flex-1 max-w-7xl mx-auto px-4 py-8 w-full">
+        <div className="flex-1 max-w-7xl mx-auto px-4 py-10 w-full">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="bg-gray-100 rounded-xl h-24 animate-pulse" />
+              <div key={i} className="glass-card h-28 animate-pulse">
+                <div className="h-full bg-gradient-to-br from-muted/50 to-muted/20 rounded-xl" />
+              </div>
             ))}
           </div>
         </div>
@@ -31,65 +36,64 @@ export default function TeacherDashboard() {
   }
 
   const stats = [
-    { label: "My Earnings", value: formatPrice(data?.my_earnings || 0), icon: <DollarSign />, color: "text-green-600 bg-green-50" },
-    { label: "Total Students", value: (data?.total_students || 0).toLocaleString(), icon: <Users />, color: "text-blue-600 bg-blue-50" },
-    { label: "Active Courses", value: data?.active_courses || 0, icon: <BookOpen />, color: "text-primary-600 bg-primary-50" },
-    { label: "Pending Payout", value: formatPrice(data?.pending_payout || 0), icon: <TrendingUp />, color: "text-amber-600 bg-amber-50" },
+    { label: "My Earnings", value: formatPrice(data?.my_earnings || 0), icon: <DollarSign className="h-5 w-5" />, gradient: "from-emerald-500 to-green-600" },
+    { label: "Total Students", value: (data?.total_students || 0).toLocaleString(), icon: <Users className="h-5 w-5" />, gradient: "from-blue-500 to-cyan-500" },
+    { label: "Active Courses", value: data?.active_courses || 0, icon: <BookOpen className="h-5 w-5" />, gradient: "from-violet-500 to-purple-600" },
+    { label: "Pending Payout", value: formatPrice(data?.pending_payout || 0), icon: <TrendingUp className="h-5 w-5" />, gradient: "from-amber-500 to-orange-500" },
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Teacher Dashboard</h1>
-          <Link
-            href="/teacher/courses/new"
-            className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2.5 rounded-xl font-semibold hover:bg-primary-700 transition-colors"
-          >
-            <Plus className="h-5 w-5" /> New Course
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">Teacher Dashboard</h1>
+            <p className="text-muted-foreground mt-1">Manage your courses and students</p>
+          </div>
+          <Link href="/teacher/courses/new">
+            <Button variant="gradient" className="gap-2 rounded-2xl">
+              <Plus className="h-4 w-4" /> New Course
+            </Button>
           </Link>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
           {stats.map((stat) => (
-            <div key={stat.label} className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
-              <div className={`inline-flex p-2 rounded-lg mb-3 ${stat.color}`}>
-                <span className="h-5 w-5">{stat.icon}</span>
+            <div key={stat.label} className="glass-card p-5 card-hover">
+              <div className={`inline-flex h-10 w-10 rounded-xl bg-gradient-to-br ${stat.gradient} items-center justify-center text-white mb-3`}>
+                {stat.icon}
               </div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
-              <p className="text-sm text-gray-500 mt-0.5">{stat.label}</p>
+              <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+              <p className="text-sm text-muted-foreground mt-0.5">{stat.label}</p>
             </div>
           ))}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* At-Risk Students */}
           {data?.at_risk_students?.length > 0 && (
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-red-200 dark:border-red-800 p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <AlertTriangle className="h-5 w-5 text-red-500" />
-                <h2 className="font-bold text-gray-900 dark:text-white">Students At Risk</h2>
-                <span className="ml-auto text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-semibold">
-                  {data.at_risk_students.length}
-                </span>
+            <div className="glass-card p-6 border-red-500/20">
+              <div className="flex items-center gap-2 mb-5">
+                <div className="h-8 w-8 rounded-lg bg-red-500/10 flex items-center justify-center">
+                  <AlertTriangle className="h-4 w-4 text-red-500" />
+                </div>
+                <h2 className="font-bold text-foreground">Students At Risk</h2>
+                <Badge variant="danger" className="ml-auto">{data.at_risk_students.length}</Badge>
               </div>
               <div className="space-y-3">
                 {data.at_risk_students.slice(0, 5).map((student: any) => (
-                  <div key={student.student_id} className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                  <div key={student.student_id} className="flex items-center justify-between p-3 rounded-xl bg-red-500/5 hover:bg-red-500/10 transition-colors">
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-white text-sm">{student.student_name}</p>
-                      <p className="text-xs text-gray-500">{student.course_title}</p>
+                      <p className="font-medium text-foreground text-sm">{student.student_name}</p>
+                      <p className="text-xs text-muted-foreground">{student.course_title}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <span>{getRiskEmoji(student.risk_level)}</span>
                       <Link
                         href={`/teacher/courses/${student.course_id}/students`}
-                        className="text-xs text-primary-600 font-semibold hover:underline"
+                        className="text-xs text-primary-500 font-semibold hover:text-primary-400"
                       >
-                        View →
+                        View &rarr;
                       </Link>
                     </div>
                   </div>
@@ -98,24 +102,25 @@ export default function TeacherDashboard() {
             </div>
           )}
 
-          {/* Recent Enrollments */}
           {data?.recent_enrollments?.length > 0 && (
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Bell className="h-5 w-5 text-primary-600" />
-                <h2 className="font-bold text-gray-900 dark:text-white">Recent Enrollments</h2>
+            <div className="glass-card p-6">
+              <div className="flex items-center gap-2 mb-5">
+                <div className="h-8 w-8 rounded-lg bg-primary-500/10 flex items-center justify-center">
+                  <Bell className="h-4 w-4 text-primary-500" />
+                </div>
+                <h2 className="font-bold text-foreground">Recent Enrollments</h2>
               </div>
               <div className="space-y-3">
                 {data.recent_enrollments.slice(0, 8).map((e: any, i: number) => (
-                  <div key={i} className="flex items-center gap-3 py-2 border-b border-gray-50 dark:border-gray-700 last:border-0">
-                    <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-primary-600 font-bold text-sm">{e.student_name?.[0]}</span>
+                  <div key={i} className="flex items-center gap-3 py-2 border-b border-border/30 last:border-0">
+                    <div className="w-8 h-8 rounded-lg gradient-bg flex items-center justify-center flex-shrink-0">
+                      <span className="text-white font-bold text-xs">{e.student_name?.[0]}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{e.student_name}</p>
-                      <p className="text-xs text-gray-500 truncate">enrolled in {e.course_title}</p>
+                      <p className="text-sm font-medium text-foreground truncate">{e.student_name}</p>
+                      <p className="text-xs text-muted-foreground truncate">enrolled in {e.course_title}</p>
                     </div>
-                    <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 text-emerald-500 flex-shrink-0" />
                   </div>
                 ))}
               </div>
@@ -123,25 +128,27 @@ export default function TeacherDashboard() {
           )}
         </div>
 
-        {/* Quick Links */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
           {[
-            { href: "/teacher/courses", label: "My Courses", icon: "📚" },
-            { href: "/teacher/courses/new", label: "Create Course", icon: "➕" },
-            { href: "/teacher/earnings", label: "Earnings", icon: "💰" },
-            { href: "/teacher/doubt-sessions", label: "Doubt Sessions", icon: "🎯" },
+            { href: "/teacher/courses", label: "My Courses", icon: <BookOpen className="h-5 w-5" />, gradient: "from-violet-500 to-purple-600" },
+            { href: "/teacher/courses/new", label: "Create Course", icon: <Plus className="h-5 w-5" />, gradient: "from-blue-500 to-cyan-500" },
+            { href: "/teacher/live-sessions", label: "Live Sessions", icon: <Users className="h-5 w-5" />, gradient: "from-emerald-500 to-green-600" },
+            { href: "/teacher/doubt-sessions", label: "Doubt Sessions", icon: <Bell className="h-5 w-5" />, gradient: "from-amber-500 to-orange-500" },
           ].map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-center hover:shadow-md transition-shadow"
+              className="glass-card p-5 text-center card-hover group"
             >
-              <div className="text-2xl mb-2">{link.icon}</div>
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">{link.label}</p>
+              <div className={`h-12 w-12 rounded-2xl bg-gradient-to-br ${link.gradient} flex items-center justify-center text-white mx-auto mb-3 group-hover:scale-110 transition-transform`}>
+                {link.icon}
+              </div>
+              <p className="text-sm font-semibold text-foreground">{link.label}</p>
             </Link>
           ))}
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

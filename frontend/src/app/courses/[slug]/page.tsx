@@ -2,6 +2,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { CourseDetailClient } from "./CourseDetailClient";
 import { Metadata } from "next";
+import { BookOpen } from "lucide-react";
 
 async function getCourse(slug: string) {
   try {
@@ -38,9 +39,12 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <main className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900">Course Not Found</h1>
-            <p className="text-gray-500 mt-2">This course may have been removed or the URL is incorrect.</p>
+          <div className="text-center glass-card p-12 rounded-3xl max-w-md mx-auto">
+            <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
+              <BookOpen className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h1 className="text-2xl font-bold text-foreground">Course Not Found</h1>
+            <p className="text-muted-foreground mt-2">This course may have been removed or the URL is incorrect.</p>
           </div>
         </main>
         <Footer />

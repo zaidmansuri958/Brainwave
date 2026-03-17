@@ -2,10 +2,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminApi } from "@/lib/api";
 import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
 import {
   Users, BookOpen, DollarSign, TrendingUp, CheckCircle, XCircle, Star, Loader2
 } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 export default function AdminDashboardPage() {
   const queryClient = useQueryClient();
@@ -38,18 +40,21 @@ export default function AdminDashboardPage() {
   });
 
   const statCards = [
-    { label: "Total Users", value: stats?.total_users || 0, icon: Users, color: "text-blue-400", bg: "bg-blue-900/30" },
-    { label: "Total Courses", value: stats?.total_courses || 0, icon: BookOpen, color: "text-purple-400", bg: "bg-purple-900/30" },
-    { label: "Total Revenue", value: formatPrice(stats?.total_revenue || 0), icon: DollarSign, color: "text-green-400", bg: "bg-green-900/30" },
-    { label: "Enrollments", value: stats?.total_enrollments || 0, icon: TrendingUp, color: "text-yellow-400", bg: "bg-yellow-900/30" },
+    { label: "Total Users", value: stats?.total_users || 0, icon: Users, gradient: "from-blue-500 to-cyan-500" },
+    { label: "Total Courses", value: stats?.total_courses || 0, icon: BookOpen, gradient: "from-violet-500 to-purple-600" },
+    { label: "Total Revenue", value: formatPrice(stats?.total_revenue || 0), icon: DollarSign, gradient: "from-emerald-500 to-green-600" },
+    { label: "Enrollments", value: stats?.total_enrollments || 0, icon: TrendingUp, gradient: "from-amber-500 to-orange-500" },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-950">
+    <div className="min-h-screen flex flex-col">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold text-white mb-8">Admin Dashboard</h1>
+      <main className="flex-1 max-w-7xl mx-auto px-4 py-10 w-full">
+        <div className="mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Admin Dashboard</h1>
+          <p className="text-muted-foreground mt-1">Platform overview and management</p>
+        </div>
 
         {isLoading ? (
           <div className="flex items-center justify-center py-24">
@@ -57,53 +62,55 @@ export default function AdminDashboardPage() {
           </div>
         ) : (
           <>
-            {/* Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
               {statCards.map((card) => (
-                <div key={card.label} className={`bg-gray-900 rounded-2xl p-5 border border-gray-800`}>
-                  <div className={`inline-flex p-2.5 rounded-xl ${card.bg} mb-3`}>
-                    <card.icon className={`h-5 w-5 ${card.color}`} />
+                <div key={card.label} className="glass-card p-5 card-hover">
+                  <div className={`inline-flex h-10 w-10 rounded-xl bg-gradient-to-br ${card.gradient} items-center justify-center text-white mb-3`}>
+                    <card.icon className="h-5 w-5" />
                   </div>
-                  <p className="text-2xl font-bold text-white">{card.value}</p>
-                  <p className="text-sm text-gray-400 mt-0.5">{card.label}</p>
+                  <p className="text-2xl font-bold text-foreground">{card.value}</p>
+                  <p className="text-sm text-muted-foreground mt-0.5">{card.label}</p>
                 </div>
               ))}
             </div>
 
             <div className="grid lg:grid-cols-2 gap-6">
-              {/* Pending Teachers */}
-              <div className="bg-gray-900 rounded-2xl border border-gray-800">
-                <div className="p-5 border-b border-gray-800">
-                  <h2 className="text-white font-semibold">Pending Teacher Verifications</h2>
-                  <p className="text-gray-400 text-sm">{pendingTeachers?.length || 0} pending</p>
+              <div className="glass-card overflow-hidden">
+                <div className="p-5 border-b border-border/50">
+                  <h2 className="text-foreground font-bold">Pending Teacher Verifications</h2>
+                  <p className="text-muted-foreground text-sm">{pendingTeachers?.length || 0} pending</p>
                 </div>
-                <div className="divide-y divide-gray-800">
+                <div className="divide-y divide-border/30">
                   {!pendingTeachers?.length ? (
-                    <div className="p-8 text-center text-gray-500 text-sm">No pending verifications</div>
+                    <div className="p-8 text-center text-muted-foreground text-sm">No pending verifications</div>
                   ) : (
                     pendingTeachers.map((teacher: any) => (
-                      <div key={teacher.id} className="p-4 flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-primary-700 flex items-center justify-center text-white font-semibold flex-shrink-0">
+                      <div key={teacher.id} className="p-4 flex items-center gap-4 hover:bg-accent/30 transition-colors">
+                        <div className="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center text-white font-semibold flex-shrink-0">
                           {teacher.user?.full_name?.[0] || "?"}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-white truncate">{teacher.user?.full_name}</p>
-                          <p className="text-xs text-gray-400 truncate">{teacher.user?.email}</p>
+                          <p className="text-sm font-semibold text-foreground truncate">{teacher.user?.full_name}</p>
+                          <p className="text-xs text-muted-foreground truncate">{teacher.user?.email}</p>
                           {teacher.expertise_areas?.length > 0 && (
-                            <p className="text-xs text-gray-500 mt-0.5">{teacher.expertise_areas.join(", ")}</p>
+                            <div className="flex gap-1 mt-1 flex-wrap">
+                              {teacher.expertise_areas.slice(0, 3).map((area: string) => (
+                                <Badge key={area} variant="default" className="text-[10px] py-0 px-1.5">{area}</Badge>
+                              ))}
+                            </div>
                           )}
                         </div>
                         <div className="flex gap-2 flex-shrink-0">
                           <button
                             onClick={() => verifyTeacher.mutate({ teacherId: teacher.id, status: "approved" })}
-                            className="p-2 bg-green-900/30 hover:bg-green-900 rounded-lg text-green-400 transition-colors"
+                            className="h-9 w-9 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 flex items-center justify-center text-emerald-500 transition-colors"
                             title="Approve"
                           >
                             <CheckCircle className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => verifyTeacher.mutate({ teacherId: teacher.id, status: "rejected" })}
-                            className="p-2 bg-red-900/30 hover:bg-red-900 rounded-lg text-red-400 transition-colors"
+                            className="h-9 w-9 rounded-xl bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center text-red-500 transition-colors"
                             title="Reject"
                           >
                             <XCircle className="h-4 w-4" />
@@ -115,41 +122,40 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
 
-              {/* Pending Courses */}
-              <div className="bg-gray-900 rounded-2xl border border-gray-800">
-                <div className="p-5 border-b border-gray-800">
-                  <h2 className="text-white font-semibold">Published Courses Management</h2>
-                  <p className="text-gray-400 text-sm">Feature or manage visibility</p>
+              <div className="glass-card overflow-hidden">
+                <div className="p-5 border-b border-border/50">
+                  <h2 className="text-foreground font-bold">Published Courses Management</h2>
+                  <p className="text-muted-foreground text-sm">Feature or manage visibility</p>
                 </div>
-                <div className="divide-y divide-gray-800">
+                <div className="divide-y divide-border/30">
                   {!pendingCourses?.length ? (
-                    <div className="p-8 text-center text-gray-500 text-sm">No courses available</div>
+                    <div className="p-8 text-center text-muted-foreground text-sm">No courses available</div>
                   ) : (
                     pendingCourses.slice(0, 8).map((course: any) => (
-                      <div key={course.id} className="p-4 flex items-center gap-4">
-                        <div className="w-12 h-8 rounded-lg bg-gray-800 overflow-hidden flex-shrink-0">
+                      <div key={course.id} className="p-4 flex items-center gap-4 hover:bg-accent/30 transition-colors">
+                        <div className="w-12 h-8 rounded-lg bg-muted overflow-hidden flex-shrink-0">
                           {course.thumbnail_url ? (
                             <img src={course.thumbnail_url} alt={course.title} className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
-                              <BookOpen className="h-4 w-4 text-gray-500" />
+                              <BookOpen className="h-4 w-4 text-muted-foreground" />
                             </div>
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-white truncate">{course.title}</p>
-                          <p className="text-xs text-gray-400">by {course.teacher?.full_name}</p>
+                          <p className="text-sm font-semibold text-foreground truncate">{course.title}</p>
+                          <p className="text-xs text-muted-foreground">by {course.teacher?.full_name}</p>
                         </div>
                         <button
                           onClick={() => featureCourse.mutate({ courseId: course.id, featured: !course.is_featured })}
-                          className={`p-2 rounded-lg transition-colors ${
+                          className={`h-9 w-9 rounded-xl flex items-center justify-center transition-colors ${
                             course.is_featured
-                              ? "bg-yellow-900/40 text-yellow-400 hover:bg-yellow-900"
-                              : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                              ? "bg-amber-500/10 text-amber-500 hover:bg-amber-500/20"
+                              : "bg-muted text-muted-foreground hover:bg-accent"
                           }`}
                           title={course.is_featured ? "Unfeature" : "Feature"}
                         >
-                          <Star className="h-4 w-4" />
+                          <Star className={`h-4 w-4 ${course.is_featured ? "fill-amber-500" : ""}`} />
                         </button>
                       </div>
                     ))
@@ -158,30 +164,25 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            {/* Additional Stats */}
             {stats && (
-              <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800 text-center">
-                  <p className="text-2xl font-bold text-white">{stats.active_teachers || 0}</p>
-                  <p className="text-xs text-gray-400 mt-1">Active Teachers</p>
-                </div>
-                <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800 text-center">
-                  <p className="text-2xl font-bold text-white">{stats.active_students || 0}</p>
-                  <p className="text-xs text-gray-400 mt-1">Active Students</p>
-                </div>
-                <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800 text-center">
-                  <p className="text-2xl font-bold text-white">{stats.certificates_issued || 0}</p>
-                  <p className="text-xs text-gray-400 mt-1">Certificates Issued</p>
-                </div>
-                <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800 text-center">
-                  <p className="text-2xl font-bold text-white">{stats.pending_refunds || 0}</p>
-                  <p className="text-xs text-gray-400 mt-1">Pending Refunds</p>
-                </div>
+              <div className="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {[
+                  { label: "Active Teachers", value: stats.active_teachers || 0 },
+                  { label: "Active Students", value: stats.active_students || 0 },
+                  { label: "Certificates Issued", value: stats.certificates_issued || 0 },
+                  { label: "Pending Refunds", value: stats.pending_refunds || 0 },
+                ].map((item) => (
+                  <div key={item.label} className="glass-card p-5 text-center card-hover">
+                    <p className="text-2xl font-bold text-foreground">{item.value}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{item.label}</p>
+                  </div>
+                ))}
               </div>
             )}
           </>
         )}
-      </div>
+      </main>
+      <Footer />
     </div>
   );
 }

@@ -4,8 +4,11 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authApi } from "@/lib/api";
 import { useAuthStore } from "@/stores/authStore";
-import { GraduationCap, Loader2 } from "lucide-react";
+import { GraduationCap, Loader2, User, Mail, Lock, ArrowRight, BookOpen, GraduationCap as TeachIcon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 function RegisterPageContent() {
   const router = useRouter();
@@ -44,96 +47,115 @@ function RegisterPageContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-md p-8">
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 text-primary-600 font-bold text-2xl">
-            <GraduationCap className="h-8 w-8" />
-            <span>Brainwave.ai</span>
-          </Link>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mt-4">Create your account</h1>
-          <p className="text-gray-500 mt-1">Start your learning journey today</p>
-        </div>
+    <div className="min-h-screen relative flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-hero-pattern dark:bg-hero-pattern-dark" />
+      <div className="absolute top-20 right-10 w-72 h-72 bg-violet-500/20 rounded-full blur-[100px]" />
+      <div className="absolute bottom-10 left-10 w-96 h-96 bg-primary-500/15 rounded-full blur-[120px]" />
 
-        {/* Role Toggle */}
-        <div className="flex rounded-xl border border-gray-200 dark:border-gray-700 p-1 mb-6">
-          <button
-            type="button"
-            onClick={() => setFormData({ ...formData, role: "student" })}
-            className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors ${
-              formData.role === "student"
-                ? "bg-primary-600 text-white"
-                : "text-gray-500 hover:text-gray-900"
-            }`}
-          >
-            I want to Learn
-          </button>
-          <button
-            type="button"
-            onClick={() => setFormData({ ...formData, role: "teacher" })}
-            className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors ${
-              formData.role === "teacher"
-                ? "bg-primary-600 text-white"
-                : "text-gray-500 hover:text-gray-900"
-            }`}
-          >
-            I want to Teach
-          </button>
-        </div>
-
-        <form onSubmit={handleRegister} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name</label>
-            <input
-              type="text"
-              value={formData.full_name}
-              onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-              required
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white outline-none transition-all"
-              placeholder="Your full name"
-            />
+      <div className="relative w-full max-w-md animate-slide-up">
+        <div className="glass-card p-8 md:p-10 rounded-3xl">
+          <div className="text-center mb-8">
+            <Link href="/" className="inline-flex items-center gap-2.5 mb-6">
+              <div className="h-10 w-10 rounded-xl gradient-bg flex items-center justify-center shadow-glow">
+                <GraduationCap className="h-5 w-5 text-white" />
+              </div>
+              <span className="font-bold text-xl">
+                <span className="gradient-text">Brainwave</span>
+                <span className="text-muted-foreground">.ai</span>
+              </span>
+            </Link>
+            <h1 className="text-2xl font-bold text-foreground">Create your account</h1>
+            <p className="text-muted-foreground mt-1">Start your learning journey today</p>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-            <input
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              required
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white outline-none transition-all"
-              placeholder="you@example.com"
-            />
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, role: "student" })}
+              className={cn(
+                "flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-semibold transition-all duration-200",
+                formData.role === "student"
+                  ? "gradient-bg text-white shadow-glow"
+                  : "glass hover:shadow-md text-muted-foreground"
+              )}
+            >
+              <BookOpen className="h-4 w-4" />
+              I want to Learn
+            </button>
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, role: "teacher" })}
+              className={cn(
+                "flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-semibold transition-all duration-200",
+                formData.role === "teacher"
+                  ? "gradient-bg text-white shadow-glow"
+                  : "glass hover:shadow-md text-muted-foreground"
+              )}
+            >
+              <TeachIcon className="h-4 w-4" />
+              I want to Teach
+            </button>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
-            <input
-              type="password"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              required
-              minLength={8}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white outline-none transition-all"
-              placeholder="Min. 8 characters"
-            />
+          <form onSubmit={handleRegister} className="space-y-5">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">Full Name</label>
+              <Input
+                type="text"
+                value={formData.full_name}
+                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                required
+                variant="glass"
+                icon={<User className="h-4 w-4" />}
+                placeholder="Your full name"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">Email</label>
+              <Input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                required
+                variant="glass"
+                icon={<Mail className="h-4 w-4" />}
+                placeholder="you@example.com"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">Password</label>
+              <Input
+                type="password"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                required
+                minLength={8}
+                variant="glass"
+                icon={<Lock className="h-4 w-4" />}
+                placeholder="Min. 8 characters"
+              />
+            </div>
+
+            <Button
+              type="submit"
+              variant="gradient"
+              size="lg"
+              loading={loading}
+              className="w-full rounded-2xl"
+            >
+              {loading ? "Creating account..." : `Create ${formData.role === "teacher" ? "Teacher" : "Student"} Account`}
+              {!loading && <ArrowRight className="h-4 w-4" />}
+            </Button>
+          </form>
+
+          <div className="text-center mt-6 text-sm text-muted-foreground">
+            Already have an account?{" "}
+            <Link href="/login" className="text-primary-500 font-semibold hover:text-primary-600 transition-colors">
+              Sign in
+            </Link>
           </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-primary-600 text-white py-3 rounded-xl font-semibold hover:bg-primary-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2 min-h-[48px]"
-          >
-            {loading && <Loader2 className="h-5 w-5 animate-spin" />}
-            {loading ? "Creating account..." : `Create ${formData.role === "teacher" ? "Teacher" : "Student"} Account`}
-          </button>
-        </form>
-
-        <div className="text-center mt-6 text-sm text-gray-500">
-          Already have an account?{" "}
-          <Link href="/login" className="text-primary-600 font-semibold hover:underline">
-            Sign in
-          </Link>
         </div>
       </div>
     </div>
@@ -143,8 +165,9 @@ function RegisterPageContent() {
 export default function RegisterPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+      <div className="min-h-screen relative flex items-center justify-center">
+        <div className="absolute inset-0 bg-hero-pattern dark:bg-hero-pattern-dark" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
       </div>
     }>
       <RegisterPageContent />
