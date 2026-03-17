@@ -34,6 +34,7 @@ module.exports = {
           700: "#4338ca",
           800: "#3730a3",
           900: "#312e81",
+          950: "#1e1b4b",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -59,8 +60,20 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        success: "#10B981",
-        warning: "#F59E0B",
+        success: {
+          DEFAULT: "#10B981",
+          50: "#ecfdf5",
+          100: "#d1fae5",
+          500: "#10b981",
+          600: "#059669",
+        },
+        warning: {
+          DEFAULT: "#F59E0B",
+          50: "#fffbeb",
+          100: "#fef3c7",
+          500: "#f59e0b",
+          600: "#d97706",
+        },
         danger: "#EF4444",
       },
       borderRadius: {
@@ -84,11 +97,46 @@ module.exports = {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
         },
+        float: {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-20px)" },
+        },
+        "pulse-glow": {
+          "0%, 100%": { boxShadow: "0 0 20px rgba(79, 70, 229, 0.1)" },
+          "50%": { boxShadow: "0 0 40px rgba(79, 70, 229, 0.3)" },
+        },
+        "gradient-shift": {
+          "0%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+          "100%": { backgroundPosition: "0% 50%" },
+        },
+        marquee: {
+          from: { transform: "translateX(0)" },
+          to: { transform: "translateX(calc(-50%))" },
+        },
+        "slide-up": {
+          from: { opacity: 0, transform: "translateY(16px)" },
+          to: { opacity: 1, transform: "translateY(0)" },
+        },
+        "fade-in": {
+          from: { opacity: 0 },
+          to: { opacity: 1 },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         shimmer: "shimmer 1.5s infinite",
+        float: "float 6s ease-in-out infinite",
+        "pulse-glow": "pulse-glow 3s ease-in-out infinite",
+        "gradient-shift": "gradient-shift 4s ease infinite",
+        marquee: "marquee var(--duration, 30s) linear infinite",
+        "slide-up": "slide-up 0.5s ease-out",
+        "fade-in": "fade-in 0.3s ease-out",
+      },
+      backgroundImage: {
+        "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
+        "hero-pattern": "linear-gradient(135deg, #4F46E5 0%, #7C3AED 25%, #4F46E5 50%, #6366F1 75%, #4F46E5 100%)",
       },
     },
   },
