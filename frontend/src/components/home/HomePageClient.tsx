@@ -255,7 +255,7 @@ export function HomePageClient({ featuredCourses }: HomePageClientProps) {
                   variant="outline"
                   size="lg"
                   asChild
-                  className="border-white/20 text-white hover:bg-white/10 hover:text-white"
+                  className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
                 >
                   <Link
                     href="/register?role=teacher"
