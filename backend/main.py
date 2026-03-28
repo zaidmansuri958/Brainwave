@@ -1,3 +1,14 @@
+# Patch bcrypt 4.x incompatibility with passlib (passlib reads __about__.__version__)
+import sys as _sys
+try:
+    import bcrypt as _bcrypt
+    if not hasattr(_bcrypt, '__about__'):
+        _about = type(_sys)('bcrypt.__about__')
+        _about.__version__ = _bcrypt.__version__
+        _bcrypt.__about__ = _about
+except Exception:
+    pass
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse

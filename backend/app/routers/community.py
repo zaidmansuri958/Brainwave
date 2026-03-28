@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 from app.database import get_db
 from app.models.community import CommunityPost, CommunityReply
 from app.models.enrollment import Enrollment
@@ -11,12 +12,19 @@ from typing import Optional
 router = APIRouter(prefix="/community", tags=["Community"])
 
 
+class PostCreate(BaseModel):
+    content: str
+    post_type: str = "discussion"
+
+
+class ReplyCreate(BaseModel):
+    content: str
+
+
 def check_course_access(db: Session, user: User, course_id: str):
-    if user.role == "teacher":
-        from app.models.course import Course
-        course = db.query(Course).filter(Course.id == course_id, Course.teacher_id == user.id).first()
-        if course:
-            return True
+    # All teachers can access any course community (to help students)
+    if user.role in ("teacher", "admin"):
+        return True
     enrollment = db.query(Enrollment).filter(
         Enrollment.student_id == user.id,
         Enrollment.course_id == course_id,
@@ -55,16 +63,28 @@ async def get_posts(
             "content": post.content,
             "post_type": post.post_type,
             "is_pinned": post.is_pinned,
-            "upvotes": post.upvotes,
+            "upvote_count": post.upvotes,
             "created_at": post.created_at.isoformat(),
-            "author": {
+            "user": {
                 "id": str(post.author_id),
                 "full_name": post.author.full_name if post.author else "Unknown",
                 "avatar_url": post.author.avatar_url if post.author else None,
                 "role": post.author.role if post.author else "student"
             },
-            "replies_count": len(post.replies),
-            "attachments": post.attachments
+            "replies": [
+                {
+                    "id": str(r.id),
+                    "content": r.content,
+                    "is_official_answer": r.is_official_answer,
+                    "created_at": r.created_at.isoformat(),
+                    "user": {
+                        "id": str(r.author_id),
+                        "full_name": r.author.full_name if r.author else "Unknown",
+                        "role": r.author.role if r.author else "student"
+                    }
+                }
+                for r in post.replies
+            ]
         })
 
     return {"posts": result, "total": total}
@@ -73,8 +93,7 @@ async def get_posts(
 @router.post("/{course_id}/posts")
 async def create_post(
     course_id: str,
-    content: str,
-    post_type: str = "discussion",
+    body: PostCreate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -83,15 +102,14 @@ async def create_post(
     post = CommunityPost(
         course_id=course_id,
         author_id=current_user.id,
-        content=content,
-        post_type=post_type
+        content=body.content,
+        post_type=body.post_type
     )
     db.add(post)
     db.commit()
     db.refresh(post)
 
-    # Notify teacher if it's a doubt
-    if post_type == "doubt":
+    if body.post_type == "doubt":
         from app.models.course import Course
         course = db.query(Course).filter(Course.id == course_id).first()
         if course:
@@ -114,20 +132,23 @@ async def create_post(
 async def create_reply(
     course_id: str,
     post_id: str,
-    content: str,
+    body: ReplyCreate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     check_course_access(db, current_user, course_id)
 
-    post = db.query(CommunityPost).filter(CommunityPost.id == post_id, CommunityPost.course_id == course_id).first()
+    post = db.query(CommunityPost).filter(
+        CommunityPost.id == post_id,
+        CommunityPost.course_id == course_id
+    ).first()
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
 
     reply = CommunityReply(
         post_id=post_id,
         author_id=current_user.id,
-        content=content
+        content=body.content
     )
     db.add(reply)
     db.commit()
@@ -162,7 +183,7 @@ async def get_replies(
                 "is_ai_response": r.is_ai_response,
                 "upvotes": r.upvotes,
                 "created_at": r.created_at.isoformat(),
-                "author": {
+                "user": {
                     "id": str(r.author_id),
                     "full_name": r.author.full_name if r.author else "Unknown",
                     "role": r.author.role if r.author else "student"
@@ -183,7 +204,10 @@ async def mark_official_answer(
     if current_user.role != "teacher":
         raise HTTPException(status_code=403, detail="Teachers only")
 
-    reply = db.query(CommunityReply).filter(CommunityReply.id == reply_id, CommunityReply.post_id == post_id).first()
+    reply = db.query(CommunityReply).filter(
+        CommunityReply.id == reply_id,
+        CommunityReply.post_id == post_id
+    ).first()
     if not reply:
         raise HTTPException(status_code=404, detail="Reply not found")
 
@@ -201,7 +225,7 @@ async def upvote_post(
     post = db.query(CommunityPost).filter(CommunityPost.id == post_id).first()
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
-    post.upvotes += 1
+    post.upvotes = (post.upvotes or 0) + 1
     db.commit()
     return {"upvotes": post.upvotes}
 

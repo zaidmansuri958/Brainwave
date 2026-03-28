@@ -9,16 +9,14 @@ OLLAMA_URL = os.getenv("OLLAMA_URL", "http://ollama:11434")
 
 qdrant = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
 
-RAG_PROMPT = """You are an AI teaching assistant for the course: "{course_name}".
-Answer the student's question using ONLY the provided course materials below.
-If the answer is not in the materials, say: "This topic isn't covered in the course material. Please ask in the community group."
+RAG_PROMPT = """Course: {course_name}
 
-Course Materials:
+Material:
 {context}
 
-Student Question: {question}
+Question: {question}
 
-Answer clearly and helpfully:"""
+Answer:"""
 
 
 async def chat(course_id: str, course_name: str, question: str) -> dict:
@@ -85,11 +83,11 @@ async def chat(course_id: str, course_name: str, question: str) -> dict:
     )
 
     try:
-        async with httpx.AsyncClient(timeout=90) as client:
+        async with httpx.AsyncClient(timeout=120) as client:
             resp = await client.post(
                 f"{OLLAMA_URL}/api/generate",
                 json={
-                    "model": "llama3:8b",
+                    "model": "llama3.2:1b",
                     "prompt": prompt,
                     "stream": False
                 }

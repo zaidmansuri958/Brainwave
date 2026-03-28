@@ -10,7 +10,7 @@ venv/
 env/
 .env.local
 .env.*.local
-
+.claude/
 # Environment
 .env
 !.env.example

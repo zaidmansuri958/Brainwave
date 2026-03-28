@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 @layer base {
   :root {
@@ -12,7 +12,7 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 243 75% 59%;
+    --primary: 220 90% 63%;
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -24,30 +24,31 @@
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 243 75% 59%;
-    --radius: 0.5rem;
+    --ring: 220 90% 63%;
+    --radius: 0.75rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
+    /* Deep dark navy blue theme */
+    --background: 222 47% 4%;
+    --foreground: 215 25% 95%;
+    --card: 222 40% 6%;
+    --card-foreground: 215 25% 95%;
+    --popover: 222 40% 6%;
+    --popover-foreground: 215 25% 95%;
+    --primary: 220 90% 63%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 222 35% 11%;
+    --secondary-foreground: 215 25% 80%;
+    --muted: 222 35% 10%;
+    --muted-foreground: 215 20% 55%;
+    --accent: 222 35% 11%;
+    --accent-foreground: 215 25% 95%;
+    --destructive: 0 62.8% 45%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --border: 222 35% 12%;
+    --input: 222 35% 12%;
+    --ring: 220 90% 63%;
   }
 }
 
@@ -56,39 +57,94 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground font-sans antialiased;
   }
 }
 
-/* Video.js custom styles */
+/* ─── Gradient text utility ─── */
+@layer utilities {
+  .text-gradient-blue {
+    @apply bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent;
+  }
+  .text-gradient-cyan {
+    @apply bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent;
+  }
+  .glass-card {
+    @apply border border-white/5 bg-white/[0.03] backdrop-blur-xl;
+  }
+  .glass-card-hover {
+    @apply hover:border-white/10 hover:bg-white/[0.05] transition-all duration-300;
+  }
+}
+
+/* ─── Grid dot background pattern ─── */
+.bg-grid-pattern {
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+
+/* ─── Noise overlay ─── */
+.bg-noise::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── Marquee pause on hover ─── */
+.marquee-container:hover .animate-marquee-left {
+  animation-play-state: paused;
+}
+
+/* ─── Video.js ─── */
 .video-js {
   width: 100%;
   height: 100%;
 }
 
-/* Shimmer loading effect */
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #060B18;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e3a5f;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2d5a8e;
+}
+
+/* ─── Selection ─── */
+::selection {
+  background: rgba(79, 142, 247, 0.3);
+  color: #fff;
+}
+
+/* ─── Smooth scroll ─── */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ─── Focus ring ─── */
+:focus-visible {
+  outline: 2px solid rgba(79, 142, 247, 0.7);
+  outline-offset: 2px;
+}
+
+/* ─── Shimmer ─── */
 .shimmer {
   background: linear-gradient(
     90deg,
     rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0.06) 50%,
     rgba(255, 255, 255, 0) 100%
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
 }
