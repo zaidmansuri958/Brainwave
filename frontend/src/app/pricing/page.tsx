@@ -1,51 +1,12 @@
 "use client";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { Check, X, Zap, Users, BookOpen, TrendingUp, Shield, ArrowRight } from "lucide-react";
+import { Check, Zap, Users, BookOpen, TrendingUp, Shield, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
-
-const studentPlans = [
-  {
-    name:        "Free",
-    price:       "₹0",
-    period:      "forever",
-    description: "Start learning at no cost, no card needed.",
-    cta:         "Get started free",
-    href:        "/register",
-    highlight:   false,
-    features: [
-      { text: "50+ free courses",             included: true  },
-      { text: "AI Tutor (10 queries/day)",     included: true  },
-      { text: "Community forums",              included: true  },
-      { text: "Basic progress tracking",       included: true  },
-      { text: "Paid course access",            included: false },
-      { text: "Live sessions",                 included: false },
-      { text: "Blockchain certificates",       included: false },
-      { text: "Unlimited AI Tutor",            included: false },
-    ],
-  },
-  {
-    name:        "Pro Student",
-    price:       "₹799",
-    period:      "per month",
-    description: "The complete learning experience, unlocked.",
-    cta:         "Start 7-day free trial",
-    href:        "/register?plan=pro",
-    highlight:   true,
-    badge:       "Most Popular",
-    features: [
-      { text: "All 500+ courses",              included: true },
-      { text: "Unlimited AI Tutor",            included: true },
-      { text: "Live session attendance",       included: true },
-      { text: "Advanced progress analytics",   included: true },
-      { text: "Blockchain certificates",       included: true },
-      { text: "Doubt session booking",         included: true },
-      { text: "Offline video downloads",       included: true },
-      { text: "Priority support",              included: true },
-    ],
-  },
-];
+import { useAuthStore } from "@/stores/authStore";
 
 const commissionTiers = [
   {
@@ -116,10 +77,6 @@ const faqs = [
     a: "Contact our teacher partnerships team once you cross 500 enrolled students. We review your growth trajectory and audience size, then offer a custom rate. It's a simple conversation — no lock-in contracts.",
   },
   {
-    q: "Is the student Free plan really free forever?",
-    a: "Yes. Free never expires. You get 50+ courses and 10 AI tutor queries daily with no credit card required.",
-  },
-  {
     q: "When do teachers get paid?",
     a: "Payouts process every 2 weeks directly to your bank account via NEFT/IMPS. You can see a full earnings breakdown in your dashboard at any time.",
   },
@@ -141,6 +98,16 @@ const teacherStats = [
 ];
 
 export default function PricingPage() {
+  const router = useRouter();
+  const { isAuthenticated, isTeacher } = useAuthStore();
+
+  // Pricing is for teachers only — redirect logged-in students to their dashboard
+  useEffect(() => {
+    if (isAuthenticated() && !isTeacher()) {
+      router.replace("/dashboard");
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#FAFAF9]">
       <Navbar />
@@ -157,18 +124,6 @@ export default function PricingPage() {
           No monthly fee for teachers. No hidden charges. Just a transparent commission model — starting at 10%, negotiable as you grow.
         </p>
       </section>
-
-      {/* Audience Toggle Labels */}
-      <div className="max-w-6xl mx-auto px-6 lg:px-8 mb-8">
-        <div className="flex gap-3">
-          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-600 text-white text-sm font-semibold">
-            <BookOpen className="w-3.5 h-3.5" /> For Teachers
-          </div>
-          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-gray-200 text-gray-600 text-sm font-semibold">
-            <Users className="w-3.5 h-3.5" /> For Students
-          </div>
-        </div>
-      </div>
 
       {/* ── TEACHER SECTION ── */}
       <section className="max-w-6xl mx-auto px-6 lg:px-8 pb-6">
@@ -235,80 +190,6 @@ export default function PricingPage() {
               </div>
             );
           })}
-        </div>
-      </section>
-
-      {/* ── STUDENT SECTION ── */}
-      <section className="max-w-6xl mx-auto px-6 lg:px-8 py-12">
-        <div className="mb-8">
-          <h2 className="font-display font-bold text-gray-900 text-2xl mb-1">Student Plans</h2>
-          <p className="text-gray-500 text-sm">Start free. Upgrade when you want the full experience.</p>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-6 max-w-3xl">
-          {studentPlans.map((plan) => (
-            <div
-              key={plan.name}
-              className={`rounded-2xl p-8 flex flex-col shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-300 ${
-                plan.highlight
-                  ? "bg-indigo-600 text-white ring-2 ring-indigo-600"
-                  : "bg-white border border-gray-200"
-              }`}
-            >
-              {plan.badge && (
-                <div className="flex items-center gap-1.5 mb-4">
-                  <Zap className="w-3.5 h-3.5 fill-white" />
-                  <span className="text-xs font-bold text-white/80 uppercase tracking-wider">{plan.badge}</span>
-                </div>
-              )}
-
-              <h2 className={`font-display font-bold text-xl mb-1 ${plan.highlight ? "text-white" : "text-gray-900"}`}>
-                {plan.name}
-              </h2>
-              <p className={`text-sm mb-5 ${plan.highlight ? "text-indigo-200" : "text-gray-500"}`}>
-                {plan.description}
-              </p>
-
-              <div className="mb-6">
-                <span className={`font-display font-extrabold text-4xl ${plan.highlight ? "text-white" : "text-gray-900"}`}>
-                  {plan.price}
-                </span>
-                <span className={`text-sm ml-1 ${plan.highlight ? "text-indigo-200" : "text-gray-400"}`}>
-                  /{plan.period}
-                </span>
-              </div>
-
-              <Link
-                href={plan.href}
-                className={`block text-center px-6 py-3 rounded-xl font-semibold text-sm mb-7 transition-colors ${
-                  plan.highlight
-                    ? "bg-white text-indigo-700 hover:bg-indigo-50"
-                    : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-button-indigo"
-                }`}
-              >
-                {plan.cta}
-              </Link>
-
-              <ul className="space-y-3 flex-1">
-                {plan.features.map((f, i) => (
-                  <li key={i} className="flex items-start gap-2.5">
-                    {f.included ? (
-                      <Check className={`w-4 h-4 mt-0.5 flex-shrink-0 ${plan.highlight ? "text-indigo-200" : "text-indigo-600"}`} strokeWidth={2.5} />
-                    ) : (
-                      <X className={`w-4 h-4 mt-0.5 flex-shrink-0 ${plan.highlight ? "text-white/30" : "text-gray-300"}`} />
-                    )}
-                    <span className={`text-sm ${
-                      f.included
-                        ? plan.highlight ? "text-white" : "text-gray-700"
-                        : plan.highlight ? "text-white/40" : "text-gray-400"
-                    }`}>
-                      {f.text}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
         </div>
       </section>
 

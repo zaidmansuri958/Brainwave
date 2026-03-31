@@ -106,10 +106,10 @@ export default function StudentDashboard() {
             <p className="text-xs text-gray-500 mt-0.5">Ask anything about your enrolled courses — available 24/7.</p>
           </div>
           <Link
-            href="/learn"
+            href="/courses"
             className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 flex-shrink-0"
           >
-            Open tutor <ArrowRight className="w-3.5 h-3.5" />
+            Browse courses <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 

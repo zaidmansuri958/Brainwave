@@ -1,251 +1,167 @@
 "use client";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { ArrowRight, Upload, Check, Play, Sparkles, BarChart2, Award } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
-const exams = ["JEE Advanced", "NEET", "CA Foundation", "UPSC", "GATE", "MBA CAT"];
-
-const fadeUp = (delay = 0) => ({
-  initial:    { opacity: 0, y: 28 },
-  animate:    { opacity: 1, y: 0 },
-  transition: { duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] as const },
+const up = (delay = 0) => ({
+  initial:    { opacity: 0, y: 24 },
+  animate:    { opacity: 1, y: 0  },
+  transition: { duration: 0.65, delay, ease: [0.22, 1, 0.36, 1] as any },
 });
-
-const lessons = [
-  { title: "Backpropagation Explained",  done: true  },
-  { title: "Building Your First Model",   done: true  },
-  { title: "Overfitting & Regularisation",done: false },
-];
 
 export function HeroSection() {
   return (
-    <section className="relative min-h-[92vh] flex items-center bg-[#FAFAF9] overflow-hidden">
-
-      {/* Background grid */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(0,0,0,0.028) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.028) 1px, transparent 1px)",
-          backgroundSize: "56px 56px",
-        }}
-      />
-      {/* Accent blooms */}
-      <div className="absolute -top-32 right-0 w-[700px] h-[600px] pointer-events-none"
-        style={{ background: "radial-gradient(ellipse at 70% 30%, rgba(99,102,241,0.09) 0%, transparent 65%)" }} />
-      <div className="absolute bottom-0 -left-24 w-[500px] h-[400px] pointer-events-none"
-        style={{ background: "radial-gradient(ellipse at 30% 70%, rgba(124,58,237,0.07) 0%, transparent 65%)" }} />
-
-      <div className="relative max-w-7xl mx-auto px-6 lg:px-8 py-16 w-full">
-        <div className="grid lg:grid-cols-2 gap-16 xl:gap-24 items-center">
+    <section style={{ background: "#FCF8F1" }} className="py-10 sm:py-16 lg:py-24 overflow-hidden">
+      <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <div className="grid items-center grid-cols-1 gap-12 lg:grid-cols-2">
 
           {/* ── LEFT ── */}
           <div>
-            {/* Badge */}
-            <motion.div {...fadeUp(0)}>
-              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-gray-200 shadow-sm text-[11px] font-bold tracking-wide text-gray-600 mb-8 uppercase">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-dot-pulse" />
-                AI-powered · Live classes · Verified certificates
-              </span>
-            </motion.div>
-
-            {/* Headline */}
-            <motion.h1
-              {...fadeUp(0.07)}
-              className="font-display font-extrabold text-gray-950 leading-[1.02] tracking-[-0.03em] mb-6"
-              style={{ fontSize: "clamp(2.8rem, 6.5vw, 5rem)" }}
-            >
-              The classroom
-              <br />
-              for India&apos;s
-              <br />
-              <span style={{
-                background: "linear-gradient(125deg, #4338CA 0%, #7C3AED 60%, #6366F1 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}>
-                next million.
-              </span>
-            </motion.h1>
-
-            {/* Subtext */}
-            <motion.p
-              {...fadeUp(0.15)}
-              className="text-gray-500 leading-relaxed mb-10 max-w-[480px]"
-              style={{ fontSize: "clamp(1rem, 1.7vw, 1.15rem)" }}
-            >
-              Teachers upload their lectures — our AI builds the full course: chapters, quizzes, summaries and a personal tutor for every student. No setup required.
+            <motion.p {...up(0)} className="text-base font-semibold tracking-wider text-indigo-600 uppercase">
+              AI-powered learning &amp; teaching platform
             </motion.p>
 
-            {/* CTAs */}
-            <motion.div {...fadeUp(0.22)} className="flex flex-col sm:flex-row gap-3 mb-12">
-              <Link href="/register">
-                <button className="group inline-flex items-center gap-2.5 bg-gray-950 text-white px-7 py-3.5 rounded-xl font-bold text-sm hover:bg-[#1a1f35] active:scale-[0.98] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.25)]">
-                  Start for free
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                </button>
+            <motion.h1
+              {...up(0.07)}
+              className="mt-4 lg:mt-8 font-display font-bold text-black"
+              style={{ fontSize: "clamp(2.6rem, 7vw, 6rem)", lineHeight: 1.05, letterSpacing: "-0.02em" }}
+            >
+              Learn smarter,<br />teach better.
+            </motion.h1>
+
+            <motion.p {...up(0.14)} className="mt-4 lg:mt-8 text-base sm:text-xl text-gray-600 max-w-md leading-relaxed">
+              Upload your lectures — our AI builds chapters, quizzes, summaries
+              and a personal tutor for every student. In minutes.
+            </motion.p>
+
+            <motion.div {...up(0.22)}>
+              <Link
+                href="/register"
+                className="inline-flex items-center gap-4 px-7 py-4 mt-8 lg:mt-16 font-semibold text-black transition-all duration-200 rounded-full hover:opacity-90 active:scale-[0.97]"
+                style={{ background: "#FBBF24" }}
+              >
+                Join for free
+                <ArrowRight className="w-6 h-6" />
               </Link>
-              <Link href="/register?role=teacher">
-                <button className="inline-flex items-center gap-2.5 bg-white text-gray-700 px-7 py-3.5 rounded-xl font-bold text-sm border border-gray-200 hover:border-indigo-300 hover:text-indigo-700 hover:bg-indigo-50/60 active:scale-[0.98] transition-all">
-                  <Upload className="w-4 h-4" />
-                  Teach on Brainwave
-                </button>
+            </motion.div>
+
+            <motion.p {...up(0.28)} className="mt-5 text-gray-500 text-sm">
+              Already a member?{" "}
+              <Link href="/login" className="text-black font-semibold transition-all duration-200 hover:underline underline-offset-2">
+                Sign in
               </Link>
-            </motion.div>
-
-            {/* Social proof */}
-            <motion.div {...fadeUp(0.3)} className="flex flex-col sm:flex-row sm:items-center gap-5 mb-10">
-              <div className="flex items-center gap-3">
-                <div className="flex -space-x-2.5">
-                  {["#4F46E5","#7C3AED","#DB2777","#D97706","#059669"].map((c, i) => (
-                    <div key={i} className="w-9 h-9 rounded-full border-2 border-[#FAFAF9] flex items-center justify-center text-[11px] font-bold text-white"
-                      style={{ backgroundColor: c }}>
-                      {["A","R","S","P","M"][i]}
-                    </div>
-                  ))}
-                </div>
-                <div>
-                  <div className="flex gap-0.5 mb-0.5">
-                    {[...Array(5)].map((_, i) => (
-                      <svg key={i} className="w-3 h-3 fill-amber-400" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    ))}
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    <span className="font-bold text-gray-900">50,000+</span> learners across India
-                  </p>
-                </div>
-              </div>
-
-              <div className="hidden sm:block w-px h-8 bg-gray-200" />
-
-              <div className="flex items-center gap-5 text-xs text-gray-500">
-                {[{ v:"500+",l:"Courses"},{v:"1,200+",l:"Teachers"},{v:"98%",l:"Completion"}].map(({v,l})=>(
-                  <div key={l}>
-                    <span className="block font-bold text-gray-900 text-sm">{v}</span>
-                    <span>{l}</span>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-
-            {/* Exam tags */}
-            <motion.div {...fadeUp(0.37)}>
-              <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-gray-400 mb-3">Courses for</p>
-              <div className="flex flex-wrap gap-2">
-                {exams.map((e) => (
-                  <span key={e} className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-[11px] font-semibold text-gray-500 shadow-sm hover:border-indigo-200 hover:text-indigo-600 transition-colors cursor-default">
-                    {e}
-                  </span>
-                ))}
-              </div>
-            </motion.div>
+            </motion.p>
           </div>
 
-          {/* ── RIGHT — genuine product preview ── */}
+          {/* ── RIGHT — illustration, not a card ── */}
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.85, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.9, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
             className="hidden lg:block relative"
           >
-            {/* Main course card */}
-            <motion.div
-              animate={{ y: [0, -6, 0] }}
-              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-              className="bg-white rounded-3xl border border-gray-100 overflow-hidden"
-              style={{ boxShadow: "0 24px 64px rgba(0,0,0,0.10), 0 4px 16px rgba(0,0,0,0.06)" }}
-            >
-              {/* Course header */}
-              <div className="bg-gradient-to-r from-indigo-600 to-violet-600 px-6 pt-6 pb-10">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-[10px] font-bold tracking-widest uppercase text-indigo-200">Machine Learning</span>
-                  <span className="flex items-center gap-1.5 text-[10px] font-bold text-white/80 bg-white/15 px-2.5 py-1 rounded-full">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />Live now
-                  </span>
-                </div>
-                <h3 className="font-display font-extrabold text-white text-xl leading-snug">
-                  Deep Learning<br />Fundamentals
-                </h3>
-                <p className="text-indigo-200 text-xs mt-1.5">Dr. Amit Kumar · 42 lessons</p>
-              </div>
+            {/* Main blob */}
+            <div
+              className="absolute inset-0 rounded-full opacity-20 blur-3xl"
+              style={{ background: "radial-gradient(circle at 60% 40%, #6366f1 0%, #8b5cf6 50%, transparent 75%)" }}
+            />
 
-              {/* Progress */}
-              <div className="px-6 -mt-6">
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-                  <div className="flex justify-between text-[11px] text-gray-500 mb-1.5">
-                    <span className="font-semibold">Your progress</span>
-                    <span className="font-bold text-indigo-600">68%</span>
-                  </div>
-                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <motion.div
-                      className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full"
-                      initial={{ width: 0 }}
-                      animate={{ width: "68%" }}
-                      transition={{ duration: 1.6, delay: 0.8, ease: "easeOut" }}
-                    />
-                  </div>
-                </div>
-              </div>
+            {/* Illustration SVG */}
+            <svg viewBox="0 0 520 480" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto relative">
 
-              {/* Lessons */}
-              <div className="px-6 pt-4 pb-4">
-                {lessons.map((l, i) => (
-                  <div key={i} className="flex items-center gap-3 py-2.5 border-b border-gray-50 last:border-0">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${l.done ? "bg-indigo-600" : "border-2 border-gray-200 bg-white"}`}>
-                      {l.done
-                        ? <Check className="w-3 h-3 text-white" strokeWidth={3} />
-                        : <Play className="w-2.5 h-2.5 text-gray-300 fill-gray-300" />}
-                    </div>
-                    <span className={`text-xs leading-snug ${l.done ? "text-gray-400 line-through decoration-gray-300" : "text-gray-800 font-semibold"}`}>
-                      {l.title}
-                    </span>
-                  </div>
-                ))}
-              </div>
+              {/* Background circle */}
+              <circle cx="280" cy="240" r="200" fill="#F0EDFF" opacity="0.6" />
+              <circle cx="280" cy="240" r="155" fill="#E8E4FF" opacity="0.5" />
 
-              {/* AI Tutor strip */}
-              <div className="mx-4 mb-4 bg-indigo-50 border border-indigo-100 rounded-2xl p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-                  <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">AI Tutor</span>
-                </div>
-                <p className="text-[11px] text-indigo-700/80 leading-relaxed">
-                  "Backpropagation computes gradients layer by layer using the chain rule — think of it as tracing credit backwards through each neuron."
-                </p>
-              </div>
-            </motion.div>
+              {/* Central glow */}
+              <circle cx="280" cy="240" r="110" fill="url(#centerGlow)" opacity="0.9" />
 
-            {/* Floating: Teacher earnings */}
-            <motion.div
-              animate={{ y: [0, 8, 0] }}
-              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
-              className="absolute -left-12 top-16 bg-white rounded-2xl border border-gray-100 px-4 py-3.5 shadow-[0_8px_32px_rgba(0,0,0,0.10)]"
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <BarChart2 className="w-3.5 h-3.5 text-emerald-600" />
-                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">This month</span>
-              </div>
-              <p className="font-display font-extrabold text-xl text-gray-900">₹84,200</p>
-              <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">+18% from last month</p>
-            </motion.div>
+              {/* Book / Course card — main element */}
+              <rect x="170" y="155" width="220" height="170" rx="16" fill="white" filter="url(#cardShadow)" />
+              {/* Card header strip */}
+              <rect x="170" y="155" width="220" height="52" rx="16" fill="url(#headerGrad)" />
+              <rect x="170" y="187" width="220" height="20" fill="url(#headerGrad)" />
+              {/* Title text lines */}
+              <rect x="188" y="168" width="120" height="8" rx="4" fill="white" opacity="0.9" />
+              <rect x="188" y="182" width="80" height="6" rx="3" fill="white" opacity="0.55" />
+              {/* Progress bar */}
+              <rect x="188" y="222" width="184" height="6" rx="3" fill="#F3F4F6" />
+              <rect x="188" y="222" width="115" height="6" rx="3" fill="url(#progressGrad)" />
+              {/* Lesson rows */}
+              <circle cx="198" cy="248" r="8" fill="#6366f1" />
+              <path d="M195 248l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <rect x="212" y="244" width="100" height="6" rx="3" fill="#E5E7EB" />
+              <circle cx="198" cy="270" r="8" fill="#6366f1" />
+              <path d="M195 270l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <rect x="212" y="266" width="80" height="6" rx="3" fill="#E5E7EB" />
+              <circle cx="198" cy="292" r="8" fill="none" stroke="#D1D5DB" strokeWidth="1.5" />
+              <rect x="212" y="288" width="120" height="6" rx="3" fill="#F3F4F6" />
 
-            {/* Floating: Certificate */}
-            <motion.div
-              animate={{ y: [0, -7, 0] }}
-              transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-              className="absolute -right-8 bottom-16 bg-white rounded-2xl border border-gray-100 px-4 py-3 flex items-center gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.10)]"
-            >
-              <div className="w-9 h-9 rounded-xl bg-amber-500 flex items-center justify-center flex-shrink-0">
-                <Award className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <p className="text-xs font-bold text-gray-900">Certificate earned</p>
-                <p className="text-[10px] text-gray-400">Blockchain verified</p>
-              </div>
-            </motion.div>
+              {/* AI bubble — top right */}
+              <rect x="340" y="110" width="140" height="72" rx="14" fill="white" filter="url(#cardShadow)" />
+              <rect x="340" y="110" width="140" height="72" rx="14" fill="url(#aiBubbleGrad)" opacity="0.08" />
+              <circle cx="358" cy="128" r="10" fill="url(#headerGrad)" />
+              <path d="M354 128l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <rect x="374" y="122" width="68" height="7" rx="3.5" fill="#6366f1" opacity="0.15" />
+              <rect x="374" y="133" width="50" height="5" rx="2.5" fill="#6366f1" opacity="0.10" />
+              <rect x="350" y="147" width="112" height="5" rx="2.5" fill="#6B7280" opacity="0.25" />
+              <rect x="350" y="156" width="90" height="5" rx="2.5" fill="#6B7280" opacity="0.18" />
+
+              {/* Teacher card — bottom left */}
+              <rect x="50" y="290" width="148" height="76" rx="14" fill="white" filter="url(#cardShadow)" />
+              <circle cx="76" cy="316" r="16" fill="url(#avatarGrad)" />
+              <text x="70" y="321" fontSize="12" fontWeight="700" fill="white" fontFamily="system-ui">T</text>
+              <rect x="100" y="308" width="80" height="7" rx="3.5" fill="#111827" opacity="0.7" />
+              <rect x="100" y="320" width="56" height="5" rx="2.5" fill="#6B7280" opacity="0.4" />
+              {/* Star rating */}
+              <text x="98" y="352" fontSize="11" fill="#FBBF24" fontFamily="system-ui">★★★★★</text>
+              <text x="143" y="352" fontSize="10" fill="#9CA3AF" fontFamily="system-ui">4.9</text>
+
+              {/* Students joined badge — top left */}
+              <rect x="32" y="148" width="128" height="48" rx="12" fill="white" filter="url(#cardShadow)" />
+              <rect x="44" y="158" width="32" height="28" rx="8" fill="#F0EDFF" />
+              <text x="51" y="177" fontSize="14" fontFamily="system-ui">🎓</text>
+              <rect x="84" y="160" width="60" height="7" rx="3.5" fill="#111827" opacity="0.75" />
+              <rect x="84" y="172" width="44" height="5" rx="2.5" fill="#6366f1" opacity="0.5" />
+
+              {/* Floating dots decoration */}
+              <circle cx="90"  cy="240" r="5" fill="#6366f1" opacity="0.2" />
+              <circle cx="460" cy="200" r="4" fill="#8b5cf6" opacity="0.25" />
+              <circle cx="440" cy="340" r="6" fill="#6366f1" opacity="0.15" />
+              <circle cx="130" cy="390" r="4" fill="#8b5cf6" opacity="0.2" />
+              <circle cx="390" cy="400" r="5" fill="#6366f1" opacity="0.15" />
+
+              {/* Connecting lines */}
+              <line x1="200" y1="228" x2="340" y2="175" stroke="#6366f1" strokeWidth="1" strokeDasharray="4 4" opacity="0.2" />
+              <line x1="195" y1="305" x2="198" y2="305" stroke="#6366f1" strokeWidth="1" opacity="0" />
+
+              {/* Defs */}
+              <defs>
+                <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%"   stopColor="#EDE9FE" />
+                  <stop offset="100%" stopColor="#F5F3FF" stopOpacity="0" />
+                </radialGradient>
+                <linearGradient id="headerGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%"   stopColor="#4f46e5" />
+                  <stop offset="100%" stopColor="#7c3aed" />
+                </linearGradient>
+                <linearGradient id="progressGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%"   stopColor="#6366f1" />
+                  <stop offset="100%" stopColor="#8b5cf6" />
+                </linearGradient>
+                <linearGradient id="avatarGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%"   stopColor="#f59e0b" />
+                  <stop offset="100%" stopColor="#d97706" />
+                </linearGradient>
+                <linearGradient id="aiBubbleGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%"   stopColor="#6366f1" />
+                  <stop offset="100%" stopColor="#8b5cf6" />
+                </linearGradient>
+                <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="130%">
+                  <feDropShadow dx="0" dy="4" stdDeviation="8" floodColor="#000000" floodOpacity="0.07" />
+                </filter>
+              </defs>
+            </svg>
           </motion.div>
 
         </div>
