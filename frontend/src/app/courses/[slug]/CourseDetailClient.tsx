@@ -11,7 +11,7 @@ import {
   ArrowRight, Share2, Heart, BarChart3, FileText,
 } from "lucide-react";
 
-// ─── Razorpay loader ──────────────────────────────────────────────────────────
+// ─── Razorpay loader ───────────────────────────────────────────────────────────
 function loadRazorpay(): Promise<boolean> {
   return new Promise((resolve) => {
     if ((window as any).Razorpay) return resolve(true);
@@ -23,7 +23,7 @@ function loadRazorpay(): Promise<boolean> {
   });
 }
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 interface Lesson {
   id: string;
   title: string;
@@ -72,7 +72,7 @@ interface Course {
   };
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmtSec(seconds: number) {
   if (!seconds) return "";
   const m = Math.floor(seconds / 60);
@@ -100,46 +100,65 @@ function getWYL(course: Course): string[] {
   return map[course.category || ""] || ["Build real-world projects from scratch", "Write clean, professional-grade code", "Understand core concepts deeply", "Apply best practices used in industry", "Debug and solve problems confidently", "Advance your career with marketable skills"];
 }
 
-// ─── Chapter accordion ───────────────────────────────────────────────────────
+// ─── Chapter accordion ────────────────────────────────────────────────────────
 function ChapterRow({ chapter, index, isEnrolled }: { chapter: Chapter; index: number; isEnrolled: boolean }) {
   const [open, setOpen] = useState(index === 0);
   const totalSecs = chapter.lessons.reduce((s, l) => s + (l.duration_seconds || 0), 0);
 
   const typeIcon = (t: string) => {
-    if (t === "quiz") return <FileText className="h-3.5 w-3.5 text-violet-400" />;
-    if (t === "document") return <BookOpen className="h-3.5 w-3.5 text-amber-400" />;
-    return <Play className="h-3.5 w-3.5 text-blue-400" />;
+    if (t === "quiz") return <FileText className="h-3.5 w-3.5 text-violet-500" />;
+    if (t === "document") return <BookOpen className="h-3.5 w-3.5 text-amber-500" />;
+    return <Play className="h-3.5 w-3.5 text-indigo-500" />;
   };
 
   return (
-    <div className="border border-white/[0.06] rounded-xl overflow-hidden">
-      <button onClick={() => setOpen(!open)} className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-white/[0.02] transition-colors">
+    <div className="border border-gray-100 rounded-xl overflow-hidden">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-gray-50 transition-colors"
+      >
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs text-slate-600 font-medium shrink-0">Ch {index + 1}</span>
-            <h4 className="text-white font-semibold text-sm">{chapter.title}</h4>
+            <span className="text-xs text-gray-400 font-medium shrink-0">Ch {index + 1}</span>
+            <h4 className="text-gray-900 font-semibold text-sm">{chapter.title}</h4>
             {chapter.is_free_preview && (
-              <span className="shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">Preview</span>
+              <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
+                Preview
+              </span>
             )}
           </div>
-          <p className="text-slate-600 text-xs mt-0.5">{chapter.lessons.length} lessons{totalSecs ? ` • ${fmtSec(totalSecs)}` : ""}</p>
+          <p className="text-gray-400 text-xs mt-0.5">
+            {chapter.lessons.length} lessons{totalSecs ? ` · ${fmtSec(totalSecs)}` : ""}
+          </p>
         </div>
-        {open ? <ChevronUp className="h-4 w-4 text-slate-500 shrink-0" /> : <ChevronDown className="h-4 w-4 text-slate-500 shrink-0" />}
+        {open
+          ? <ChevronUp className="h-4 w-4 text-gray-400 shrink-0" />
+          : <ChevronDown className="h-4 w-4 text-gray-400 shrink-0" />}
       </button>
 
       <AnimatePresence initial={false}>
         {open && (
-          <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} transition={{ duration: 0.22 }} className="overflow-hidden">
-            <div className="border-t border-white/[0.05]">
+          <motion.div
+            initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }}
+            transition={{ duration: 0.22 }} className="overflow-hidden"
+          >
+            <div className="border-t border-gray-100">
               {chapter.lessons.map((lesson) => {
                 const canView = chapter.is_free_preview || isEnrolled;
                 return (
-                  <div key={lesson.id} className="flex items-center gap-3 px-5 py-3 border-b border-white/[0.04] last:border-b-0 hover:bg-white/[0.02] transition-colors">
+                  <div
+                    key={lesson.id}
+                    className="flex items-center gap-3 px-5 py-3 border-b border-gray-50 last:border-b-0 hover:bg-gray-50/60 transition-colors"
+                  >
                     <div className="shrink-0">{typeIcon(lesson.lesson_type || "video")}</div>
-                    <span className={`flex-1 text-sm ${canView ? "text-slate-300" : "text-slate-500"}`}>{lesson.title}</span>
+                    <span className={`flex-1 text-sm ${canView ? "text-gray-700" : "text-gray-400"}`}>{lesson.title}</span>
                     <div className="flex items-center gap-2 shrink-0">
-                      {lesson.duration_seconds ? <span className="text-[11px] text-slate-600">{fmtSec(lesson.duration_seconds)}</span> : null}
-                      {canView ? <Unlock className="h-3 w-3 text-emerald-500" /> : <Lock className="h-3 w-3 text-slate-600" />}
+                      {lesson.duration_seconds ? (
+                        <span className="text-[11px] text-gray-400">{fmtSec(lesson.duration_seconds)}</span>
+                      ) : null}
+                      {canView
+                        ? <Unlock className="h-3 w-3 text-emerald-500" />
+                        : <Lock className="h-3 w-3 text-gray-300" />}
                     </div>
                   </div>
                 );
@@ -189,9 +208,8 @@ export function CourseDetailClient({ course }: { course: Course }) {
         setTimeout(() => router.push(`/learn/${course.slug}`), 1000);
         return;
       }
-      // Paid — open Razorpay
       const loaded = await loadRazorpay();
-      if (!loaded) { setEnrollError("Failed to load payment gateway. Please try again."); setEnrollLoading(false); return; }
+      if (!loaded) { setEnrollError("Failed to load payment gateway."); setEnrollLoading(false); return; }
 
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
@@ -201,7 +219,7 @@ export function CourseDetailClient({ course }: { course: Course }) {
         description: data.course_title || course.title,
         order_id: data.razorpay_order_id,
         prefill: { name: user?.full_name || "", email: user?.email || "" },
-        theme: { color: "#4F8EF7" },
+        theme: { color: "#4F46E5" },
         modal: { ondismiss: () => setEnrollLoading(false) },
         handler: async (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
           try {
@@ -222,43 +240,48 @@ export function CourseDetailClient({ course }: { course: Course }) {
       };
       const rzp = new (window as any).Razorpay(options);
       rzp.on("payment.failed", (resp: any) => {
-        setEnrollError(resp.error?.description || "Payment failed. Please try again.");
+        setEnrollError(resp.error?.description || "Payment failed.");
         setEnrollLoading(false);
       });
       rzp.open();
     } catch (err: any) {
-      const msg = err?.response?.data?.detail || "Something went wrong. Please try again.";
+      const msg = err?.response?.data?.detail || "Something went wrong.";
       if (msg === "Already enrolled") { setEnrolled(true); router.push(`/learn/${course.slug}`); }
       else setEnrollError(msg);
       setEnrollLoading(false);
     }
   }
 
-  // ─── Buy card ─────────────────────────────────────────────────────────────
+  // ─── Buy card (light theme) ───────────────────────────────────────────────
   const BuyCard = () => (
-    <div className="rounded-2xl border border-white/[0.08] bg-[#0C1526] overflow-hidden shadow-2xl shadow-black/40">
-      {/* Thumbnail preview */}
-      <div className="relative aspect-video bg-[#080E1D] group cursor-pointer">
+    <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-card">
+      {/* Thumbnail */}
+      <div className="relative aspect-video bg-gray-100">
         {course.thumbnail_url
           ? <img src={course.thumbnail_url} alt={course.title} className="w-full h-full object-cover" />
-          : <div className="w-full h-full flex items-center justify-center"><BookOpen className="h-14 w-14 text-blue-500/30" /></div>
+          : <div className="w-full h-full flex items-center justify-center bg-indigo-50"><BookOpen className="h-14 w-14 text-indigo-300" /></div>
         }
-        <div className="absolute inset-0 flex items-center justify-center bg-black/35">
-          <div className="h-14 w-14 rounded-full bg-white/90 flex items-center justify-center shadow-xl">
-            <Play className="h-6 w-6 text-[#0C1526] ml-1 fill-current" />
+        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+          <div className="h-14 w-14 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
+            <Play className="h-6 w-6 text-indigo-600 ml-0.5 fill-current" />
           </div>
         </div>
       </div>
 
       <div className="p-5">
         <div className="flex items-baseline gap-2 mb-1">
-          <span className={`font-extrabold text-3xl ${isFree ? "text-emerald-400" : "text-white"}`}>{price}</span>
+          <span className={`font-extrabold text-3xl ${isFree ? "text-emerald-600" : "text-gray-900"}`}>{price}</span>
         </div>
-        <p className="text-slate-500 text-xs mb-5">{isFree ? "Free forever. No credit card required." : "One-time payment · Lifetime access."}</p>
+        <p className="text-gray-400 text-xs mb-5">
+          {isFree ? "Free forever. No credit card required." : "One-time payment · Lifetime access."}
+        </p>
 
         <AnimatePresence>
           {enrollSuccess && (
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="mb-4 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm text-center font-medium">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+              className="mb-4 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm text-center font-semibold"
+            >
               <Check className="h-5 w-5 mx-auto mb-1" /> Enrolled! Redirecting…
             </motion.div>
           )}
@@ -266,52 +289,64 @@ export function CourseDetailClient({ course }: { course: Course }) {
 
         {enrolled ? (
           <Link href={`/learn/${course.slug}`}>
-            <motion.button whileHover={{ scale: 1.02, boxShadow: "0 0 30px rgba(16,185,129,0.35)" }} whileTap={{ scale: 0.98 }}
-              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 text-white font-bold text-base shadow-lg flex items-center justify-center gap-2">
-              <Play className="h-5 w-5 fill-current" /> Go to Course
-            </motion.button>
+            <button className="w-full py-3.5 rounded-xl bg-emerald-600 text-white font-bold text-sm hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 shadow-button-indigo">
+              <Play className="h-4 w-4 fill-current" /> Go to Course
+            </button>
           </Link>
         ) : (
-          <motion.button onClick={handleEnroll} disabled={enrollLoading || checkingEnroll}
-            whileHover={!enrollLoading ? { scale: 1.02, boxShadow: "0 0 35px rgba(79,142,247,0.4)" } : {}}
-            whileTap={!enrollLoading ? { scale: 0.98 } : {}}
-            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-blue-500 to-violet-600 text-white font-bold text-base shadow-xl shadow-blue-500/20 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
+          <button
+            onClick={handleEnroll}
+            disabled={enrollLoading || checkingEnroll}
+            className="w-full py-3.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed shadow-button-indigo"
+          >
             {enrollLoading ? (
-              <><svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Processing…</>
-            ) : <>{isFree ? "Enrol for Free" : `Buy for ${price}`}<ArrowRight className="h-4 w-4" /></>}
-          </motion.button>
+              <>
+                <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Processing…
+              </>
+            ) : (
+              <>{isFree ? "Enrol for Free" : `Buy for ${price}`}<ArrowRight className="h-4 w-4" /></>
+            )}
+          </button>
         )}
 
-        {enrollError && <p className="mt-3 text-red-400 text-xs text-center leading-relaxed">{enrollError}</p>}
+        {enrollError && (
+          <p className="mt-3 text-red-500 text-xs text-center leading-relaxed">{enrollError}</p>
+        )}
         {!isAuthenticated() && (
-          <p className="mt-3 text-slate-500 text-xs text-center">
-            <Link href="/login" className="text-blue-400 hover:text-blue-300">Sign in</Link> to enrol
+          <p className="mt-3 text-gray-400 text-xs text-center">
+            <Link href="/login" className="text-indigo-600 hover:text-indigo-700 font-semibold">Sign in</Link> to enrol
           </p>
         )}
 
         <div className="flex gap-2 mt-3">
-          <button onClick={() => setWishlist(!wishlist)}
-            className="flex-1 py-2.5 rounded-xl border border-white/[0.07] text-slate-400 hover:text-white hover:border-white/15 flex items-center justify-center gap-2 text-sm transition-all">
-            <Heart className={`h-4 w-4 ${wishlist ? "fill-red-400 text-red-400" : ""}`} />
+          <button
+            onClick={() => setWishlist(!wishlist)}
+            className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-500 hover:text-indigo-600 hover:border-indigo-200 flex items-center justify-center gap-2 text-sm transition-all"
+          >
+            <Heart className={`h-4 w-4 ${wishlist ? "fill-red-500 text-red-500" : ""}`} />
             {wishlist ? "Saved" : "Wishlist"}
           </button>
-          <button className="flex-1 py-2.5 rounded-xl border border-white/[0.07] text-slate-400 hover:text-white hover:border-white/15 flex items-center justify-center gap-2 text-sm transition-all">
+          <button className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-300 flex items-center justify-center gap-2 text-sm transition-all">
             <Share2 className="h-4 w-4" /> Share
           </button>
         </div>
 
         {/* Includes */}
-        <div className="mt-5 pt-4 border-t border-white/[0.05] space-y-2.5">
-          <p className="text-white font-semibold text-xs uppercase tracking-wide mb-3">This course includes</p>
+        <div className="mt-5 pt-4 border-t border-gray-100 space-y-2.5">
+          <p className="text-gray-900 font-bold text-xs uppercase tracking-wide mb-3">This course includes</p>
           {[
-            { icon: Video, text: `${fmtMin(course.total_duration_minutes)} on-demand video` },
+            { icon: Video,    text: `${fmtMin(course.total_duration_minutes)} on-demand video` },
             { icon: BookOpen, text: `${totalLessons} lessons · ${course.total_chapters} chapters` },
-            { icon: Globe, text: "Full lifetime access" },
-            { icon: Zap, text: "Mobile & desktop access" },
+            { icon: Globe,    text: "Full lifetime access" },
+            { icon: Zap,      text: "Mobile & desktop access" },
             ...(course.certificate_enabled ? [{ icon: Award, text: "Certificate of completion" }] : []),
           ].map(({ icon: Icon, text }) => (
-            <div key={text} className="flex items-center gap-2.5 text-xs text-slate-400">
-              <Icon className="h-3.5 w-3.5 text-slate-500 shrink-0" />{text}
+            <div key={text} className="flex items-center gap-2.5 text-xs text-gray-500">
+              <Icon className="h-3.5 w-3.5 text-gray-400 shrink-0" />{text}
             </div>
           ))}
         </div>
@@ -319,52 +354,72 @@ export function CourseDetailClient({ course }: { course: Course }) {
     </div>
   );
 
+  // ─── Card / Section wrapper component ─────────────────────────────────────
+  const Card = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+    <div className={`bg-white rounded-2xl border border-gray-100 shadow-card p-6 ${className}`}>
+      {children}
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-[#060B18]">
-      {/* Hero */}
-      <div className="relative bg-[#080E1D] border-b border-white/[0.05]">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/[0.05] via-transparent to-violet-600/[0.03]" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="min-h-screen bg-[#FAFAF9]">
+
+      {/* ── Hero strip ── */}
+      <div className="bg-gray-950">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="max-w-3xl">
             {/* Breadcrumb */}
-            <div className="flex items-center gap-2 text-xs text-slate-500 mb-5 flex-wrap">
-              <Link href="/courses" className="hover:text-slate-300 transition-colors">Courses</Link>
-              {course.category && <><span>/</span><span className="text-slate-400">{course.category}</span></>}
-              <span>/</span>
-              <span className="text-slate-300 truncate max-w-[200px]">{course.title}</span>
+            <div className="flex items-center gap-2 text-xs text-gray-500 mb-5 flex-wrap">
+              <Link href="/courses" className="hover:text-gray-300 transition-colors">Courses</Link>
+              {course.category && <><span className="text-gray-700">/</span><span className="text-gray-400">{course.category}</span></>}
+              <span className="text-gray-700">/</span>
+              <span className="text-gray-300 truncate max-w-[200px]">{course.title}</span>
             </div>
 
             {course.category && (
-              <span className="inline-block text-xs font-semibold px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 mb-4">{course.category}</span>
+              <span className="inline-block text-xs font-bold px-3 py-1 rounded-full bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 mb-4">
+                {course.category}
+              </span>
             )}
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white leading-tight tracking-tight mb-4">{course.title}</h1>
-            {course.short_description && <p className="text-slate-400 text-base leading-relaxed mb-6 max-w-2xl">{course.short_description}</p>}
+
+            <h1 className="font-display font-extrabold text-white leading-tight tracking-[-0.02em] mb-4"
+              style={{ fontSize: "clamp(1.75rem, 3.5vw, 2.75rem)" }}>
+              {course.title}
+            </h1>
+
+            {course.short_description && (
+              <p className="text-gray-400 text-base leading-relaxed mb-6 max-w-2xl">{course.short_description}</p>
+            )}
 
             {/* Stats */}
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm mb-6">
               {Number(course.avg_rating) > 0 && (
                 <div className="flex items-center gap-1.5">
-                  {[1,2,3,4,5].map(s => <Star key={s} className={`h-4 w-4 ${s <= Math.round(Number(course.avg_rating)) ? "text-amber-400 fill-amber-400" : "text-slate-600"}`} />)}
+                  {[1,2,3,4,5].map(s => (
+                    <Star key={s} className={`h-4 w-4 ${s <= Math.round(Number(course.avg_rating)) ? "text-amber-400 fill-amber-400" : "text-gray-600"}`} />
+                  ))}
                   <span className="text-amber-400 font-bold ml-1">{Number(course.avg_rating).toFixed(1)}</span>
-                  <span className="text-slate-500">({course.review_count?.toLocaleString()} reviews)</span>
+                  <span className="text-gray-500">({course.review_count?.toLocaleString()} reviews)</span>
                 </div>
               )}
-              <div className="flex items-center gap-1 text-slate-400"><Users className="h-4 w-4" />{course.enrolled_count?.toLocaleString()} students</div>
-              {course.total_duration_minutes > 0 && <div className="flex items-center gap-1 text-slate-400"><Clock className="h-4 w-4" />{fmtMin(course.total_duration_minutes)}</div>}
-              {course.difficulty_level && <div className="flex items-center gap-1 text-slate-400"><BarChart3 className="h-4 w-4" />{course.difficulty_level}</div>}
-              {course.language && <div className="flex items-center gap-1 text-slate-400"><Globe className="h-4 w-4" />{course.language}</div>}
+              <div className="flex items-center gap-1 text-gray-400"><Users className="h-4 w-4" />{course.enrolled_count?.toLocaleString()} students</div>
+              {course.total_duration_minutes > 0 && <div className="flex items-center gap-1 text-gray-400"><Clock className="h-4 w-4" />{fmtMin(course.total_duration_minutes)}</div>}
+              {course.difficulty_level && <div className="flex items-center gap-1 text-gray-400"><BarChart3 className="h-4 w-4" />{course.difficulty_level}</div>}
+              {course.language && <div className="flex items-center gap-1 text-gray-400"><Globe className="h-4 w-4" />{course.language}</div>}
             </div>
 
             {/* Teacher */}
             {course.teacher && (
               <div className="flex items-center gap-2.5">
                 {course.teacher.avatar_url
-                  ? <img src={course.teacher.avatar_url} alt={course.teacher.full_name} className="h-9 w-9 rounded-full object-cover ring-2 ring-blue-500/20" />
-                  : <div className="h-9 w-9 rounded-full bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center"><span className="text-white font-bold text-sm">{course.teacher.full_name.charAt(0)}</span></div>
+                  ? <img src={course.teacher.avatar_url} alt={course.teacher.full_name} className="h-9 w-9 rounded-full object-cover ring-2 ring-indigo-500/30" />
+                  : <div className="h-9 w-9 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center">
+                      <span className="text-white font-bold text-sm">{course.teacher.full_name.charAt(0)}</span>
+                    </div>
                 }
                 <div>
-                  <p className="text-slate-400 text-xs">Created by</p>
-                  <p className="text-blue-400 text-sm font-semibold">{course.teacher.full_name}</p>
+                  <p className="text-gray-500 text-xs">Created by</p>
+                  <p className="text-indigo-400 text-sm font-semibold">{course.teacher.full_name}</p>
                 </div>
               </div>
             )}
@@ -372,152 +427,169 @@ export function CourseDetailClient({ course }: { course: Course }) {
         </div>
       </div>
 
-      {/* Body */}
+      {/* ── Body ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="flex flex-col lg:flex-row gap-8">
 
           {/* Left */}
-          <div className="flex-1 min-w-0 space-y-6 pb-24 lg:pb-0">
+          <div className="flex-1 min-w-0 space-y-5 pb-24 lg:pb-0">
 
             {/* What you'll learn */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
-              className="rounded-2xl border border-white/[0.07] bg-[#0C1526] p-6">
-              <h2 className="text-xl font-bold text-white mb-5">What you&apos;ll learn</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
-                {whatYouLearn.map((item, i) => (
-                  <div key={i} className="flex items-start gap-2.5">
-                    <div className="h-5 w-5 rounded-full bg-blue-500/15 border border-blue-500/25 flex items-center justify-center shrink-0 mt-0.5">
-                      <Check className="h-3 w-3 text-blue-400" strokeWidth={2.5} />
+            <motion.div
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
+            >
+              <Card>
+                <h2 className="font-display font-bold text-xl text-gray-900 mb-5">What you&apos;ll learn</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+                  {whatYouLearn.map((item, i) => (
+                    <div key={i} className="flex items-start gap-2.5">
+                      <div className="h-5 w-5 rounded-full bg-indigo-50 flex items-center justify-center shrink-0 mt-0.5">
+                        <Check className="h-3 w-3 text-indigo-600" strokeWidth={2.5} />
+                      </div>
+                      <span className="text-gray-600 text-sm leading-relaxed">{item}</span>
                     </div>
-                    <span className="text-slate-300 text-sm leading-relaxed">{item}</span>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              </Card>
             </motion.div>
 
             {/* Requirements */}
-            <div className="rounded-2xl border border-white/[0.07] bg-[#0C1526] p-6">
-              <h2 className="text-xl font-bold text-white mb-4">Requirements</h2>
+            <Card>
+              <h2 className="font-display font-bold text-xl text-gray-900 mb-4">Requirements</h2>
               <ul className="space-y-2.5">
                 {(course.difficulty_level === "Beginner"
                   ? ["No prior experience required — we start from zero", "A computer with internet access", "Enthusiasm and willingness to practice daily"]
-                  : ["Basic programming knowledge is recommended", "Familiarity with the language used in this course", "A computer with internet access and a curious mind"]
+                  : ["Basic programming knowledge is recommended", "Familiarity with the language used in this course", "A computer with internet access"]
                 ).map((req, i) => (
-                  <li key={i} className="flex items-start gap-2.5 text-sm text-slate-400">
-                    <span className="text-slate-600 mt-0.5">•</span>{req}
+                  <li key={i} className="flex items-start gap-2.5 text-sm text-gray-500">
+                    <span className="text-gray-300 mt-0.5 text-base leading-none">•</span>{req}
                   </li>
                 ))}
               </ul>
-            </div>
+            </Card>
 
             {/* Description */}
             {course.description && (
-              <div className="rounded-2xl border border-white/[0.07] bg-[#0C1526] p-6">
-                <h2 className="text-xl font-bold text-white mb-4">About this course</h2>
-                <p className="text-slate-400 text-sm leading-relaxed whitespace-pre-line">{course.description}</p>
+              <Card>
+                <h2 className="font-display font-bold text-xl text-gray-900 mb-4">About this course</h2>
+                <p className="text-gray-500 text-sm leading-relaxed whitespace-pre-line">{course.description}</p>
                 {course.tags && course.tags.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-5">
                     {course.tags.map((tag) => (
-                      <span key={tag} className="text-xs px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.07] text-slate-400">#{tag}</span>
+                      <span key={tag} className="text-xs px-3 py-1 rounded-full bg-gray-50 border border-gray-200 text-gray-500">
+                        #{tag}
+                      </span>
                     ))}
                   </div>
                 )}
-              </div>
+              </Card>
             )}
 
             {/* Curriculum */}
             {course.chapters && course.chapters.length > 0 && (
-              <div className="rounded-2xl border border-white/[0.07] bg-[#0C1526] p-6">
+              <Card>
                 <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
-                  <h2 className="text-xl font-bold text-white">Course curriculum</h2>
-                  <span className="text-slate-500 text-xs">{course.chapters.length} chapters · {totalLessons} lessons · {fmtMin(course.total_duration_minutes)}</span>
+                  <h2 className="font-display font-bold text-xl text-gray-900">Course curriculum</h2>
+                  <span className="text-gray-400 text-xs">
+                    {course.chapters.length} chapters · {totalLessons} lessons · {fmtMin(course.total_duration_minutes)}
+                  </span>
                 </div>
                 <div className="space-y-2">
-                  {course.chapters.map((ch, i) => <ChapterRow key={ch.id} chapter={ch} index={i} isEnrolled={enrolled} />)}
+                  {course.chapters.map((ch, i) => (
+                    <ChapterRow key={ch.id} chapter={ch} index={i} isEnrolled={enrolled} />
+                  ))}
                 </div>
-              </div>
+              </Card>
             )}
 
             {/* Instructor */}
             {course.teacher && (
-              <div className="rounded-2xl border border-white/[0.07] bg-[#0C1526] p-6">
-                <h2 className="text-xl font-bold text-white mb-5">Your instructor</h2>
+              <Card>
+                <h2 className="font-display font-bold text-xl text-gray-900 mb-5">Your instructor</h2>
                 <div className="flex items-start gap-5 flex-wrap">
                   {course.teacher.avatar_url
-                    ? <img src={course.teacher.avatar_url} alt={course.teacher.full_name} className="h-20 w-20 rounded-2xl object-cover ring-2 ring-blue-500/20 shrink-0" />
-                    : <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center shrink-0"><span className="text-white font-extrabold text-2xl">{course.teacher.full_name.charAt(0)}</span></div>
+                    ? <img src={course.teacher.avatar_url} alt={course.teacher.full_name} className="h-20 w-20 rounded-2xl object-cover shrink-0" />
+                    : <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0">
+                        <span className="text-white font-extrabold text-2xl">{course.teacher.full_name.charAt(0)}</span>
+                      </div>
                   }
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-white font-bold text-lg">{course.teacher.full_name}</h3>
+                    <h3 className="font-display font-bold text-lg text-gray-900">{course.teacher.full_name}</h3>
                     {course.teacher.teacher_profile?.expertise_areas && (
-                      <p className="text-blue-400 text-sm mb-3">{course.teacher.teacher_profile.expertise_areas.join(", ")}</p>
+                      <p className="text-indigo-600 text-sm mb-3">{course.teacher.teacher_profile.expertise_areas.join(", ")}</p>
                     )}
-                    <div className="flex flex-wrap gap-4 text-xs text-slate-500 mb-4">
+                    <div className="flex flex-wrap gap-4 text-xs text-gray-400 mb-4">
                       {course.teacher.teacher_profile?.credibility_score && (
-                        <span className="flex items-center gap-1"><Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />{Number(course.teacher.teacher_profile.credibility_score).toFixed(1)} instructor rating</span>
+                        <span className="flex items-center gap-1">
+                          <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
+                          {Number(course.teacher.teacher_profile.credibility_score).toFixed(1)} rating
+                        </span>
                       )}
                       <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{course.enrolled_count?.toLocaleString()} students</span>
                       <span className="flex items-center gap-1"><BookOpen className="h-3.5 w-3.5" />Expert verified</span>
                     </div>
                     {course.teacher.teacher_profile?.bio && (
-                      <p className="text-slate-400 text-sm leading-relaxed">{course.teacher.teacher_profile.bio}</p>
+                      <p className="text-gray-500 text-sm leading-relaxed">{course.teacher.teacher_profile.bio}</p>
                     )}
                   </div>
                 </div>
-              </div>
+              </Card>
             )}
 
             {/* Platform features */}
-            <div className="rounded-2xl border border-white/[0.07] bg-[#0C1526] p-6">
-              <h2 className="text-xl font-bold text-white mb-5">Brainwave exclusive features</h2>
+            <Card>
+              <h2 className="font-display font-bold text-xl text-gray-900 mb-5">Brainwave exclusive features</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[
-                  { icon: MessageSquare, title: "AI Tutor", desc: "Answers trained on this exact course — available 24/7", color: "from-blue-500 to-blue-600" },
-                  { icon: Video, title: "Live Doubt Sessions", desc: "Book 1-on-1 video calls with the instructor", color: "from-violet-500 to-violet-600" },
-                  { icon: Users, title: "Course Community", desc: "Discuss, post doubts, and collaborate with peers", color: "from-cyan-500 to-cyan-600" },
-                  { icon: Shield, title: "Progress Monitoring", desc: "AI tracks your pace and keeps you on schedule", color: "from-emerald-500 to-emerald-600" },
+                  { icon: MessageSquare, title: "AI Tutor", desc: "Trained on this exact course — available 24/7", color: "bg-indigo-50 text-indigo-600" },
+                  { icon: Video,         title: "Live Doubt Sessions", desc: "Book 1-on-1 video calls with the instructor", color: "bg-violet-50 text-violet-600" },
+                  { icon: Users,         title: "Course Community", desc: "Discuss doubts and collaborate with peers", color: "bg-sky-50 text-sky-600" },
+                  { icon: Shield,        title: "Progress Monitoring", desc: "AI tracks your pace and keeps you on schedule", color: "bg-emerald-50 text-emerald-600" },
                 ].map(({ icon: Icon, title, desc, color }) => (
-                  <div key={title} className="flex items-start gap-3 p-4 rounded-xl border border-white/[0.05] bg-white/[0.02]">
-                    <div className={`h-9 w-9 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center shrink-0`}>
-                      <Icon className="h-[18px] w-[18px] text-white" />
+                  <div key={title} className="flex items-start gap-3 p-4 rounded-xl border border-gray-100 bg-[#FAFAF9]">
+                    <div className={`h-9 w-9 rounded-xl ${color} flex items-center justify-center shrink-0`}>
+                      <Icon className="h-[18px] w-[18px]" />
                     </div>
                     <div>
-                      <p className="text-white font-semibold text-sm">{title}</p>
-                      <p className="text-slate-500 text-xs mt-0.5 leading-relaxed">{desc}</p>
+                      <p className="font-semibold text-gray-900 text-sm">{title}</p>
+                      <p className="text-gray-400 text-xs mt-0.5 leading-relaxed">{desc}</p>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
+            </Card>
           </div>
 
           {/* Right (sticky) */}
           <div className="hidden lg:block w-[340px] xl:w-[370px] shrink-0">
             <div className="sticky top-[76px]">
               <BuyCard />
-              <div className="mt-4 p-4 rounded-xl border border-white/[0.05] bg-[#0C1526] text-center">
-                <Shield className="h-5 w-5 text-emerald-400 mx-auto mb-2" />
-                <p className="text-white text-sm font-semibold">30-Day Money-Back Guarantee</p>
-                <p className="text-slate-500 text-xs mt-1">Not satisfied? Full refund, no questions asked.</p>
+              <div className="mt-4 p-4 rounded-xl border border-gray-100 bg-white shadow-card text-center">
+                <Shield className="h-5 w-5 text-emerald-600 mx-auto mb-2" />
+                <p className="font-bold text-gray-900 text-sm">30-Day Money-Back Guarantee</p>
+                <p className="text-gray-400 text-xs mt-1">Not satisfied? Full refund, no questions asked.</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Mobile sticky bottom bar */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#080E1D]/95 backdrop-blur-xl border-t border-white/[0.07] px-4 py-3 safe-area-inset-bottom">
+      {/* Mobile sticky bar */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-gray-100 px-4 py-3">
         <div className="flex items-center gap-3 max-w-xl mx-auto">
-          <p className={`font-extrabold text-xl shrink-0 ${isFree ? "text-emerald-400" : "text-white"}`}>{price}</p>
+          <p className={`font-extrabold text-xl shrink-0 ${isFree ? "text-emerald-600" : "text-gray-900"}`}>{price}</p>
           {enrolled ? (
             <Link href={`/learn/${course.slug}`} className="flex-1">
-              <button className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 text-white font-bold flex items-center justify-center gap-2">
+              <button className="w-full py-3 rounded-xl bg-emerald-600 text-white font-bold text-sm flex items-center justify-center gap-2">
                 <Play className="h-4 w-4 fill-current" /> Go to Course
               </button>
             </Link>
           ) : (
-            <button onClick={handleEnroll} disabled={enrollLoading}
-              className="flex-1 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-violet-600 text-white font-bold flex items-center justify-center gap-2 disabled:opacity-60">
+            <button
+              onClick={handleEnroll}
+              disabled={enrollLoading}
+              className="flex-1 py-3 rounded-xl bg-indigo-600 text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+            >
               {enrollLoading ? "Processing…" : isFree ? "Enrol Free" : `Buy ${price}`}
             </button>
           )}

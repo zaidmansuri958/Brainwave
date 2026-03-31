@@ -1,174 +1,126 @@
 "use client";
-import { motion } from "framer-motion";
+import { motion, useInView } from "framer-motion";
+import { useRef, useEffect, useState } from "react";
 import Link from "next/link";
-import { Star, Users, Clock, ArrowRight, BookOpen } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { CourseCard } from "@/components/course/CourseCard";
 
 interface Course {
   id: string;
-  title: string;
   slug: string;
-  description: string;
+  title: string;
   thumbnail_url?: string;
-  price: number;
-  rating_avg?: number;
-  total_ratings?: number;
-  enrolled_count?: number;
-  total_duration_minutes?: number;
-  teacher?: { full_name: string };
+  teacher_name?: string;
+  rating?: number;
+  total_students?: number;
+  total_duration_seconds?: number;
+  price?: number;
   category?: string;
 }
 
-function CourseCard({ course, index }: { course: Course; index: number }) {
-  const price =
-    course.price === 0
-      ? "Free"
-      : `₹${course.price.toLocaleString("en-IN")}`;
+const PLACEHOLDER_COURSES: Course[] = [
+  { id:"1", slug:"ml-fundamentals",      title:"Machine Learning Fundamentals",    category:"Data Science",   teacher_name:"Dr. Amit Kumar",    rating:4.9, total_students:12400, price:999  },
+  { id:"2", slug:"web-dev-bootcamp",     title:"Full-Stack Web Dev Bootcamp",       category:"Programming",    teacher_name:"Priya Sharma",       rating:4.8, total_students:8900,  price:1299 },
+  { id:"3", slug:"jee-advanced-maths",   title:"JEE Advanced Mathematics",          category:"Competitive",    teacher_name:"Prof. R. Gupta",     rating:4.9, total_students:21000, price:799  },
+  { id:"4", slug:"ui-ux-design",         title:"UI/UX Design Masterclass",          category:"Design",         teacher_name:"Sneha Kapoor",       rating:4.7, total_students:5600,  price:1499 },
+  { id:"5", slug:"python-data-science",  title:"Python for Data Science",           category:"Data Science",   teacher_name:"Rahul Verma",        rating:4.8, total_students:15000, price:899  },
+  { id:"6", slug:"ca-foundation",        title:"CA Foundation Complete Course",     category:"Finance",        teacher_name:"CA Anita Singh",     rating:4.9, total_students:9800,  price:1099 },
+];
 
-  const duration = course.total_duration_minutes
-    ? course.total_duration_minutes >= 60
-      ? `${Math.floor(course.total_duration_minutes / 60)}h ${course.total_duration_minutes % 60}m`
-      : `${course.total_duration_minutes}m`
-    : null;
-
+function SkeletonCard() {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 28 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-      whileHover={{ y: -6, transition: { duration: 0.2 } }}
-      className="group relative rounded-2xl border border-white/[0.06] bg-[#0C1526] overflow-hidden hover:border-white/[0.12] hover:shadow-xl hover:shadow-black/40 transition-all duration-300"
-    >
-      {/* Thumbnail */}
-      <div className="relative h-44 bg-gradient-to-br from-[#0F1E3C] to-[#0A1228] overflow-hidden">
-        {course.thumbnail_url ? (
-          <img
-            src={course.thumbnail_url}
-            alt={course.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-blue-500/30 to-violet-500/30 border border-white/10 flex items-center justify-center">
-              <BookOpen className="h-7 w-7 text-blue-400/60" />
-            </div>
-          </div>
-        )}
-        {/* Price badge */}
-        <div className="absolute top-3 right-3">
-          <span
-            className={`text-xs font-bold px-3 py-1 rounded-full ${
-              course.price === 0
-                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/20"
-                : "bg-[#0C1526]/90 text-white border border-white/10 backdrop-blur-sm"
-            }`}
-          >
-            {price}
-          </span>
-        </div>
-        {/* Category */}
-        {course.category && (
-          <div className="absolute top-3 left-3">
-            <span className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/20 backdrop-blur-sm">
-              {course.category}
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="p-5">
-        <h3 className="text-white font-semibold text-sm leading-snug mb-2 line-clamp-2 group-hover:text-blue-100 transition-colors">
-          {course.title}
-        </h3>
-
-        {course.teacher && (
-          <p className="text-slate-600 text-xs mb-3">{course.teacher.full_name}</p>
-        )}
-
-        {/* Stats */}
-        <div className="flex items-center gap-4 text-xs text-slate-500">
-          {course.rating_avg && course.rating_avg > 0 ? (
-            <span className="flex items-center gap-1">
-              <Star className="h-3 w-3 text-yellow-400 fill-current" />
-              <span className="text-slate-300 font-medium">
-                {course.rating_avg.toFixed(1)}
-              </span>
-              {course.total_ratings ? `(${course.total_ratings})` : ""}
-            </span>
-          ) : null}
-          {course.enrolled_count ? (
-            <span className="flex items-center gap-1">
-              <Users className="h-3 w-3" />
-              {course.enrolled_count.toLocaleString()}
-            </span>
-          ) : null}
-          {duration && (
-            <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              {duration}
-            </span>
-          )}
+    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden animate-pulse">
+      <div className="h-44 bg-gray-100" />
+      <div className="p-4 space-y-3">
+        <div className="h-3 bg-gray-100 rounded w-1/4" />
+        <div className="h-4 bg-gray-100 rounded w-3/4" />
+        <div className="h-3 bg-gray-100 rounded w-1/2" />
+        <div className="flex justify-between mt-4">
+          <div className="h-4 bg-gray-100 rounded w-1/4" />
+          <div className="h-4 bg-gray-100 rounded w-1/4" />
         </div>
       </div>
-
-      {/* Hover overlay link */}
-      <Link
-        href={`/courses/${course.slug}`}
-        className="absolute inset-0 z-10"
-        aria-label={course.title}
-      />
-    </motion.div>
+    </div>
   );
 }
 
-export function CoursesPreview({ courses }: { courses: Course[] }) {
-  if (!courses || courses.length === 0) return null;
+export function CoursesPreview() {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
+
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
+    fetch(`${apiBase}/courses?sort=popular&limit=6&status=published`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        const list = data?.courses || [];
+        setCourses(list.length > 0 ? list : PLACEHOLDER_COURSES);
+      })
+      .catch(() => setCourses(PLACEHOLDER_COURSES))
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
-    <section className="py-24 bg-[#080E1D]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section ref={ref} className="bg-[#FAFAF9] py-24 lg:py-32">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="flex items-end justify-between mb-10"
-        >
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
-            <span className="inline-block text-blue-400 text-xs font-semibold tracking-[0.2em] uppercase mb-3">
-              Featured Courses
-            </span>
-            <h2 className="text-3xl lg:text-4xl font-extrabold text-white leading-tight">
-              Start learning today
-            </h2>
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              animate={inView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.45 }}
+              className="eyebrow mb-3"
+            >
+              Top courses
+            </motion.p>
+            <motion.h2
+              initial={{ opacity: 0, y: 16 }}
+              animate={inView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.5, delay: 0.06 }}
+              className="font-display font-extrabold text-gray-900 tracking-[-0.025em] leading-[1.04]"
+              style={{ fontSize: "clamp(2rem, 4vw, 3rem)" }}
+            >
+              Learn from the best.
+            </motion.h2>
           </div>
-          <Link
-            href="/courses"
-            className="hidden sm:flex items-center gap-2 text-sm text-slate-400 hover:text-white font-medium transition-colors group"
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={inView ? { opacity: 1 } : {}}
+            transition={{ duration: 0.5, delay: 0.16 }}
           >
-            View all courses
-            <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-          </Link>
-        </motion.div>
+            <Link
+              href="/courses"
+              className="inline-flex items-center gap-2 text-sm font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
+            >
+              View all courses <ArrowRight className="w-4 h-4" />
+            </Link>
+          </motion.div>
+        </div>
 
         {/* Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {courses.slice(0, 6).map((course, i) => (
-            <CourseCard key={course.id} course={course} index={i} />
-          ))}
-        </div>
-
-        {/* Mobile "view all" link */}
-        <div className="mt-8 text-center sm:hidden">
-          <Link
-            href="/courses"
-            className="inline-flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 font-semibold transition-colors"
-          >
-            View all courses <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
+        {loading ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => <SkeletonCard key={i} />)}
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {courses.map((course, i) => (
+              <motion.div
+                key={course.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={inView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.5, delay: 0.08 + i * 0.07 }}
+              >
+                <CourseCard course={course} />
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

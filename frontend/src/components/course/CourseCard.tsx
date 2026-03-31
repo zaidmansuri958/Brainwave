@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Star, Users, Clock, BookOpen, Play } from "lucide-react";
+import { Star, Users, Clock, BookOpen } from "lucide-react";
 import { formatPrice, formatDuration } from "@/lib/utils";
 
 interface CourseCardProps {
@@ -7,144 +7,91 @@ interface CourseCardProps {
     id: string;
     slug: string;
     title: string;
-    short_description?: string;
     thumbnail_url?: string;
-    price: number;
-    currency: string;
+    teacher_name?: string;
+    rating?: number;
+    total_students?: number;
+    total_duration_seconds?: number;
+    price?: number;
     category?: string;
-    difficulty_level?: string;
-    language?: string;
-    enrolled_count: number;
-    avg_rating: number;
-    review_count: number;
-    total_duration_minutes: number;
-    total_chapters: number;
-    teacher?: { full_name: string; avatar_url?: string };
   };
 }
 
-const levelColors: Record<string, string> = {
-  Beginner: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20",
-  Intermediate: "text-blue-400 bg-blue-400/10 border-blue-400/20",
-  Advanced: "text-violet-400 bg-violet-400/10 border-violet-400/20",
+const CATEGORY_COLORS: Record<string, string> = {
+  "Data Science":  "bg-indigo-50 text-indigo-700",
+  "Programming":   "bg-violet-50 text-violet-700",
+  "Competitive":   "bg-amber-50 text-amber-700",
+  "Design":        "bg-rose-50 text-rose-700",
+  "Finance":       "bg-emerald-50 text-emerald-700",
+  "default":       "bg-gray-100 text-gray-600",
 };
 
 export function CourseCard({ course }: CourseCardProps) {
-  const levelStyle = levelColors[course.difficulty_level || ""] || "text-slate-400 bg-slate-400/10 border-slate-400/20";
-  const price = formatPrice(Number(course.price), course.currency);
-  const isFree = Number(course.price) === 0;
+  const badgeClass = CATEGORY_COLORS[course.category ?? ""] ?? CATEGORY_COLORS["default"];
 
   return (
     <Link href={`/courses/${course.slug}`} className="group block">
-      <div className="relative rounded-2xl border border-white/[0.07] bg-[#0C1526] overflow-hidden transition-all duration-300 hover:border-white/[0.14] hover:shadow-2xl hover:shadow-black/40 hover:-translate-y-1.5">
-
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-300 overflow-hidden">
         {/* Thumbnail */}
-        <div className="relative aspect-video overflow-hidden bg-[#0A1020]">
+        <div className="aspect-video bg-gray-50 relative overflow-hidden">
           {course.thumbnail_url ? (
             <img
               src={course.thumbnail_url}
               alt={course.title}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#0F1E3C] to-[#0A1228]">
-              <BookOpen className="h-10 w-10 text-blue-500/40" />
+            <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+              <BookOpen className="w-8 h-8 text-gray-300" />
             </div>
           )}
-
-          {/* Play overlay on hover */}
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-            <div className="h-12 w-12 rounded-full bg-white/95 flex items-center justify-center shadow-xl transform scale-75 group-hover:scale-100 transition-transform duration-300">
-              <Play className="h-5 w-5 text-[#0C1526] ml-0.5 fill-current" />
-            </div>
-          </div>
-
-          {/* Top badges */}
-          <div className="absolute top-3 left-3 right-3 flex items-start justify-between">
-            {isFree ? (
-              <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-500 text-white shadow-lg">
-                FREE
-              </span>
-            ) : (
-              <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#0C1526]/90 text-white border border-white/10 backdrop-blur-sm">
-                {price}
-              </span>
-            )}
-            {course.difficulty_level && (
-              <span className={`text-[11px] font-medium px-2.5 py-1 rounded-full border backdrop-blur-sm ${levelStyle}`}>
-                {course.difficulty_level}
-              </span>
-            )}
-          </div>
+          {course.category && (
+            <span className={`absolute top-3 left-3 text-[11px] font-semibold px-2.5 py-1 rounded-full ${badgeClass}`}>
+              {course.category}
+            </span>
+          )}
         </div>
 
         {/* Content */}
-        <div className="p-4">
-          {/* Category */}
-          {course.category && (
-            <p className="text-[11px] font-semibold text-blue-400 uppercase tracking-wider mb-2">
-              {course.category}
-            </p>
-          )}
-
-          {/* Title */}
-          <h3 className="font-bold text-sm text-white leading-snug line-clamp-2 group-hover:text-blue-200 transition-colors duration-200 mb-2">
+        <div className="p-5">
+          <h3 className="font-display font-bold text-gray-900 text-base leading-snug mb-1.5 group-hover:text-indigo-700 transition-colors line-clamp-2">
             {course.title}
           </h3>
-
-          {/* Description */}
-          {course.short_description && (
-            <p className="text-xs text-slate-500 line-clamp-2 mb-3 leading-relaxed">
-              {course.short_description}
-            </p>
+          {course.teacher_name && (
+            <p className="text-xs text-gray-400 mb-3">{course.teacher_name}</p>
           )}
 
-          {/* Teacher */}
-          {course.teacher && (
-            <div className="flex items-center gap-2 mb-3">
-              {course.teacher.avatar_url ? (
-                <img src={course.teacher.avatar_url} alt={course.teacher.full_name} className="h-5 w-5 rounded-full object-cover" />
-              ) : (
-                <div className="h-5 w-5 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center flex-shrink-0">
-                  <span className="text-[9px] font-bold text-white">{course.teacher.full_name.charAt(0)}</span>
-                </div>
-              )}
-              <span className="text-xs text-slate-500 truncate">{course.teacher.full_name}</span>
-            </div>
-          )}
-
-          {/* Stats row */}
-          <div className="flex items-center gap-3 text-[11px] text-slate-500">
-            {Number(course.avg_rating) > 0 && (
-              <span className="flex items-center gap-1">
-                <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
-                <span className="text-slate-300 font-semibold">{Number(course.avg_rating).toFixed(1)}</span>
-                <span className="text-slate-600">({course.review_count?.toLocaleString()})</span>
+          {/* Meta row */}
+          <div className="flex items-center gap-3 text-xs text-gray-400 mb-4">
+            {course.rating && (
+              <span className="flex items-center gap-1 text-amber-600 font-semibold">
+                <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+                {course.rating.toFixed(1)}
               </span>
             )}
-            {course.enrolled_count > 0 && (
+            {course.total_students && (
               <span className="flex items-center gap-1">
-                <Users className="h-3 w-3" />
-                {course.enrolled_count >= 1000
-                  ? `${(course.enrolled_count / 1000).toFixed(1)}k`
-                  : course.enrolled_count.toLocaleString()}
+                <Users className="w-3 h-3" />
+                {course.total_students >= 1000
+                  ? `${(course.total_students / 1000).toFixed(0)}k`
+                  : course.total_students}
               </span>
             )}
-            {course.total_duration_minutes > 0 && (
-              <span className="flex items-center gap-1 ml-auto">
-                <Clock className="h-3 w-3" />
-                {formatDuration(course.total_duration_minutes)}
+            {course.total_duration_seconds && (
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                {formatDuration(course.total_duration_seconds)}
               </span>
             )}
           </div>
 
-          {/* Price + chapters footer */}
-          <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/[0.05]">
-            <span className={`font-extrabold text-base ${isFree ? "text-emerald-400" : "text-white"}`}>
-              {isFree ? "Free" : price}
+          {/* Price */}
+          <div className="flex items-center justify-between pt-4 border-t border-gray-50">
+            <span className="font-display font-bold text-gray-900 text-lg">
+              {course.price === 0 ? "Free" : course.price ? formatPrice(course.price) : "Free"}
             </span>
-            <span className="text-[11px] text-slate-600">
-              {course.total_chapters} chapters
+            <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg">
+              Enroll now
             </span>
           </div>
         </div>

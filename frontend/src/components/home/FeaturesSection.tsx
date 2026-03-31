@@ -1,159 +1,124 @@
 "use client";
-import { motion } from "framer-motion";
-import { Brain, MessageSquare, Award, Shield, Users, Video, Cpu, BarChart3 } from "lucide-react";
+import { motion, useInView } from "framer-motion";
+import { useRef } from "react";
+import { Brain, Video, Award, BarChart2, BookOpen, Zap, Upload, Users } from "lucide-react";
 
-const features = [
+/* Large hero features — shown in a 2-col row with more breathing room */
+const heroFeatures = [
   {
-    icon: Cpu,
-    title: "AI Course Builder",
-    description:
-      "Upload any recording. Our AI transcribes, structures chapters, writes summaries, and generates quizzes — automatically.",
-    gradient: "from-blue-500 to-indigo-600",
-    shadow: "shadow-blue-500/20",
-    border: "hover:border-blue-500/20",
-    glow: "from-blue-500/[0.06] to-transparent",
-    size: "lg", // span 2 cols
+    icon:        Upload,
+    color:       "bg-indigo-600",
+    iconColor:   "text-white",
+    label:       "For Teachers",
+    title:       "Turn any lecture into a full course — in minutes",
+    description: "Upload a video recording. Our AI auto-generates structured chapters, timestamped summaries, practice quizzes, and a personal AI tutor for every student. No manual work.",
+    pill:        "AI Course Builder",
+    pillColor:   "bg-indigo-50 text-indigo-700 border-indigo-100",
+    items:       ["Auto-generated chapters & summaries", "AI-created quizzes per lesson", "Student-facing AI tutor included"],
   },
   {
-    icon: MessageSquare,
-    title: "Per-Course AI Tutor",
-    description:
-      "Every course ships with an AI chatbot trained on the course material. Students get instant, accurate answers 24/7.",
-    gradient: "from-violet-500 to-purple-600",
-    shadow: "shadow-violet-500/20",
-    border: "hover:border-violet-500/20",
-    glow: "from-violet-500/[0.06] to-transparent",
-    size: "sm",
-  },
-  {
-    icon: Award,
-    title: "Verified Certificates",
-    description:
-      "Blockchain-anchored certificates on course completion. Anyone can verify authenticity with a single link.",
-    gradient: "from-amber-500 to-orange-500",
-    shadow: "shadow-amber-500/20",
-    border: "hover:border-amber-500/20",
-    glow: "from-amber-500/[0.06] to-transparent",
-    size: "sm",
-  },
-  {
-    icon: Shield,
-    title: "Dropout Prediction",
-    description:
-      "ML model scores every student's risk of dropping out based on watch rate, quiz scores, and activity. Teachers get alerts before it's too late.",
-    gradient: "from-emerald-500 to-green-600",
-    shadow: "shadow-emerald-500/20",
-    border: "hover:border-emerald-500/20",
-    glow: "from-emerald-500/[0.06] to-transparent",
-    size: "sm",
-  },
-  {
-    icon: Users,
-    title: "Course Community",
-    description:
-      "Built-in discussion boards per course. Post doubts, get answers from teachers, peers, and AI — all in one place.",
-    gradient: "from-cyan-500 to-sky-600",
-    shadow: "shadow-cyan-500/20",
-    border: "hover:border-cyan-500/20",
-    glow: "from-cyan-500/[0.06] to-transparent",
-    size: "sm",
-  },
-  {
-    icon: Video,
-    title: "Live Doubt Sessions",
-    description:
-      "Book 1-on-1 or group video calls with teachers. Integrated HD video — no Zoom, no third-party tools required.",
-    gradient: "from-rose-500 to-pink-600",
-    shadow: "shadow-rose-500/20",
-    border: "hover:border-rose-500/20",
-    glow: "from-rose-500/[0.06] to-transparent",
-    size: "lg",
+    icon:        Users,
+    color:       "bg-violet-600",
+    iconColor:   "text-white",
+    label:       "For Students",
+    title:       "A learning experience built around you",
+    description: "Join live classes, ask your AI tutor anything at 2 AM, track your weak areas with smart analytics, and earn blockchain-verified certificates recruiters trust.",
+    pill:        "Student Experience",
+    pillColor:   "bg-violet-50 text-violet-700 border-violet-100",
+    items:       ["Live sessions with expert teachers", "AI tutor available 24/7", "Blockchain-verified certificates"],
   },
 ];
 
-const cardVariants = {
-  hidden: { opacity: 0, y: 32 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.6, delay: i * 0.1, ease: [0.25, 0.1, 0.25, 1] },
-  }),
-};
+/* Smaller supporting features */
+const miniFeatures = [
+  { icon: Brain,    color: "bg-indigo-50 text-indigo-600",  title: "Adaptive AI Tutor",   desc: "Explains concepts in multiple ways until the student truly gets it." },
+  { icon: Video,    color: "bg-rose-50 text-rose-600",      title: "Live Sessions",        desc: "Real-time interactive classes with India's top educators." },
+  { icon: Award,    color: "bg-amber-50 text-amber-600",    title: "Verified Certificates",desc: "Industry-recognised, backed by blockchain. One-click LinkedIn sharing." },
+  { icon: BarChart2,color: "bg-emerald-50 text-emerald-600",title: "Learning Analytics",   desc: "Identify weak areas. Get targeted practice exactly where it's needed." },
+];
 
 export function FeaturesSection() {
+  const ref    = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
+
   return (
-    <section className="py-28 bg-[#080E1D] relative overflow-hidden">
-      {/* Section accent */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-20 bg-gradient-to-b from-transparent via-blue-500/40 to-transparent" />
+    <section ref={ref} className="bg-[#FAFAF9] py-24 lg:py-32">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-16"
-        >
-          <span className="inline-block text-blue-400 text-xs font-semibold tracking-[0.2em] uppercase mb-4">
-            What We Do
-          </span>
-          <h2 className="text-4xl lg:text-5xl font-extrabold text-white leading-tight tracking-tight">
-            Everything educators &amp; learners
-            <br />
-            <span className="bg-gradient-to-r from-blue-400 via-violet-400 to-cyan-400 bg-clip-text text-transparent">
-              have always needed
-            </span>
-          </h2>
-          <p className="text-slate-400 text-lg mt-5 max-w-2xl mx-auto leading-relaxed">
-            One platform. AI-powered from upload to certificate. Built for real teachers and ambitious students.
-          </p>
-        </motion.div>
+        {/* Section header */}
+        <div className="max-w-2xl mb-16">
+          <motion.p
+            initial={{ opacity: 0, y: 12 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.45 }}
+            className="eyebrow mb-3"
+          >Why Brainwave</motion.p>
+          <motion.h2
+            initial={{ opacity: 0, y: 16 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.5, delay: 0.06 }}
+            className="font-display font-extrabold text-gray-900 tracking-tight leading-[1.08] mb-4"
+            style={{ fontSize: "clamp(2rem, 4vw, 3rem)" }}
+          >
+            One platform for every<br />part of the learning journey.
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 12 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.5, delay: 0.12 }}
+            className="text-[1.05rem] text-gray-500 leading-relaxed"
+          >
+            Not a tool. Not a marketplace. A complete ecosystem — purpose-built for teachers and students.
+          </motion.p>
+        </div>
 
-        {/* Cards grid — bento-ish layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {features.map((feature, i) => {
-            const Icon = feature.icon;
+        {/* Hero features — 2 col */}
+        <div className="grid md:grid-cols-2 gap-6 mb-6">
+          {heroFeatures.map((f, i) => {
+            const Icon = f.icon;
             return (
               <motion.div
-                key={feature.title}
-                custom={i}
-                variants={cardVariants}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: "-40px" }}
-                whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                className={`group relative rounded-2xl border border-white/[0.06] ${feature.border} bg-[#0C1526] overflow-hidden transition-all duration-300 hover:shadow-xl ${feature.shadow} p-7 cursor-default`}
+                key={i}
+                initial={{ opacity: 0, y: 24 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.55, delay: 0.1 + i * 0.1 }}
+                className="bg-white rounded-3xl border border-gray-100 p-8 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-300"
               >
-                {/* Gradient bg on hover */}
-                <div
-                  className={`absolute inset-0 bg-gradient-to-br ${feature.glow} opacity-0 group-hover:opacity-100 transition-opacity duration-400`}
-                />
-
-                {/* Icon */}
-                <div
-                  className={`relative z-10 h-12 w-12 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-5 shadow-lg ${feature.shadow}`}
-                >
-                  <Icon className="h-6 w-6 text-white" />
-                </div>
-
-                {/* Content */}
-                <h3 className="relative z-10 text-white font-bold text-lg mb-3 leading-snug">
-                  {feature.title}
-                </h3>
-                <p className="relative z-10 text-slate-500 text-sm leading-relaxed">
-                  {feature.description}
-                </p>
-
-                {/* Hover arrow */}
-                <div className="relative z-10 mt-5 flex items-center gap-1.5 text-xs font-medium opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all duration-200">
-                  <span
-                    className={`bg-gradient-to-r ${feature.gradient} bg-clip-text text-transparent`}
-                  >
-                    Learn more
+                <div className="flex items-start justify-between mb-6">
+                  <div className={`w-12 h-12 rounded-2xl ${f.color} flex items-center justify-center shadow-sm`}>
+                    <Icon className={`w-6 h-6 ${f.iconColor}`} />
+                  </div>
+                  <span className={`text-[11px] font-semibold px-3 py-1.5 rounded-full border ${f.pillColor}`}>
+                    {f.pill}
                   </span>
-                  <span className="text-slate-500">→</span>
                 </div>
+                <p className="eyebrow mb-2">{f.label}</p>
+                <h3 className="font-display font-bold text-gray-900 text-xl leading-snug mb-3">{f.title}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed mb-6">{f.description}</p>
+                <ul className="space-y-2.5">
+                  {f.items.map((item) => (
+                    <li key={item} className="flex items-center gap-2.5 text-sm text-gray-700">
+                      <span className="w-5 h-5 rounded-full bg-indigo-50 flex items-center justify-center flex-shrink-0">
+                        <svg className="w-3 h-3 text-indigo-600" viewBox="0 0 12 12" fill="none">
+                          <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* Mini features — 4 col */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {miniFeatures.map((f, i) => {
+            const Icon = f.icon;
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.5, delay: 0.28 + i * 0.06 }}
+                className="bg-white rounded-2xl border border-gray-100 p-5 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-300"
+              >
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${f.color}`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+                <h4 className="font-display font-bold text-sm text-gray-900 mb-1.5">{f.title}</h4>
+                <p className="text-xs text-gray-500 leading-relaxed">{f.desc}</p>
               </motion.div>
             );
           })}
