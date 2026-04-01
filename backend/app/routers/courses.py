@@ -165,6 +165,20 @@ async def archive_course(
     return {"message": "Course archived"}
 
 
+@router.post("/{course_id}/archive")
+async def archive_course_post(
+    course_id: str,
+    current_user: User = Depends(get_current_teacher),
+    db: Session = Depends(get_db)
+):
+    course = db.query(Course).filter(Course.id == course_id, Course.teacher_id == current_user.id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    course.status = "archived"
+    db.commit()
+    return {"message": "Course archived"}
+
+
 @router.post("/{course_id}/publish")
 async def publish_course(
     course_id: str,

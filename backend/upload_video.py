@@ -30,7 +30,7 @@ from botocore.client import Config
 
 # ─── CONFIG ──────────────────────────────────────────────────────────────────
 VIDEO_DIR = "/videos"          # mounted from host
-TARGET_COURSE_SLUG = "system-design-software-engineers"   # change if needed
+TARGET_COURSE_SLUG = "python-data-science-zero-to-hero"   # change if needed
 TARGET_CHAPTER_INDEX = 1       # 1 = first chapter
 TARGET_LESSON_INDEX = 1        # 1 = first lesson in that chapter
 

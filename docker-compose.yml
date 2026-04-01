@@ -69,7 +69,7 @@ services:
       - app-network
     volumes:
       - ./backend:/app
-      - "D:/Udemy - Complete Agentic AI Bootcamp With LangGraph and Langchain 2025-5/15 - RAG With LangGraph:/videos:ro"
+      - "D:/Udemy - Data Warehouse - The Ultimate Guide 2022-5/Udemy - Data Warehouse - The Ultimate Guide 2022-5/01 - Intro:/videos:ro"
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
   # ─────────────────────────────────────────

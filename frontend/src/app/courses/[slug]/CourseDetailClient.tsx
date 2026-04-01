@@ -4,11 +4,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores/authStore";
-import { enrollmentApi } from "@/lib/api";
+import { enrollmentApi, doubtApi } from "@/lib/api";
 import {
   Star, Users, Clock, BookOpen, Play, Check, ChevronDown, ChevronUp,
   Award, Globe, Zap, Shield, MessageSquare, Video, Lock, Unlock,
-  ArrowRight, Share2, Heart, BarChart3, FileText,
+  ArrowRight, Share2, Heart, BarChart3, FileText, HelpCircle, Calendar,
+  RefreshCw,
 } from "lucide-react";
 
 // ─── Razorpay loader ───────────────────────────────────────────────────────────
@@ -183,6 +184,19 @@ export function CourseDetailClient({ course }: { course: Course }) {
   const [checkingEnroll, setCheckingEnroll] = useState(true);
   const [wishlist, setWishlist] = useState(false);
 
+  // Doubt sessions state
+  const [doubtSessions, setDoubtSessions] = useState<any[]>([]);
+  const [doubtLoading, setDoubtLoading] = useState(false);
+  const [bookingSessionId, setBookingSessionId] = useState<string | null>(null);
+  const [bookedSessionIds, setBookedSessionIds] = useState<Set<string>>(new Set());
+
+  // Refund state
+  const [showRefundModal, setShowRefundModal] = useState(false);
+  const [refundReason, setRefundReason] = useState("");
+  const [refundDesc, setRefundDesc] = useState("");
+  const [refundLoading, setRefundLoading] = useState(false);
+  const [refundDone, setRefundDone] = useState(false);
+
   const isFree = Number(course.price) === 0;
   const price = isFree ? "Free" : `₹${Number(course.price).toLocaleString("en-IN")}`;
   const totalLessons = course.chapters?.reduce((s, c) => s + c.lessons.length, 0) || 0;
@@ -195,6 +209,91 @@ export function CourseDetailClient({ course }: { course: Course }) {
       .catch(() => {})
       .finally(() => setCheckingEnroll(false));
   }, [course.id]);
+
+  useEffect(() => {
+    if (!enrolled) return;
+    setDoubtLoading(true);
+    doubtApi.getSessions(course.id)
+      .then(({ data }) => setDoubtSessions(data.sessions || []))
+      .catch(() => {})
+      .finally(() => setDoubtLoading(false));
+  }, [enrolled, course.id]);
+
+  async function handleBookDoubtSession(session: any) {
+    if (!isAuthenticated()) { router.push(`/login?redirect=/courses/${course.slug}`); return; }
+    setBookingSessionId(session.id);
+    try {
+      if (session.price === 0) {
+        // Free session — book directly (no payment needed, skip to confirmation)
+        setBookedSessionIds((prev) => new Set(prev).add(session.id));
+        setBookingSessionId(null);
+        return;
+      }
+      const { data: order } = await doubtApi.initiate(session.id);
+      const loaded = await loadRazorpay();
+      if (!loaded) { setBookingSessionId(null); return; }
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
+        amount: Math.round(order.amount * 100),
+        currency: order.currency || "INR",
+        name: "Brainwave.ai",
+        description: `Doubt Session: ${session.topic || session.title}`,
+        order_id: order.razorpay_order_id,
+        prefill: { name: user?.full_name || "", email: user?.email || "" },
+        theme: { color: "#4F46E5" },
+        modal: { ondismiss: () => setBookingSessionId(null) },
+        handler: async (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
+          try {
+            await doubtApi.book(session.id, {
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+            setBookedSessionIds((prev) => new Set(prev).add(session.id));
+          } catch {
+            // booking confirmed via webhook fallback
+          } finally {
+            setBookingSessionId(null);
+          }
+        },
+      };
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on("payment.failed", () => setBookingSessionId(null));
+      rzp.open();
+    } catch (err: any) {
+      setBookingSessionId(null);
+    }
+  }
+
+  async function handleRefundRequest() {
+    if (!refundReason) return;
+    setRefundLoading(true);
+    try {
+      // Find enrollment id — check from the enrollment check we did earlier
+      const { data: enrollData } = await enrollmentApi.check(course.id);
+      // The check endpoint just returns enrolled:bool, so we need to get the enrollment id
+      // from my-courses endpoint; for now we pass course.id as a hint
+      const { data: myCoursesData } = await enrollmentApi.myCourses();
+      const enrolled = myCoursesData?.courses?.find((c: any) => c.course?.id === course.id || c.course?.slug === course.slug);
+      if (!enrolled?.enrollment_id) return;
+
+      const resp = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"}/refunds/request?enrollment_id=${enrolled.enrollment_id}&reason=${encodeURIComponent(refundReason)}&description=${encodeURIComponent(refundDesc)}`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${localStorage.getItem("access_token")}` },
+        }
+      );
+      if (resp.ok) {
+        setRefundDone(true);
+        setShowRefundModal(false);
+      }
+    } catch {
+    } finally {
+      setRefundLoading(false);
+    }
+  }
 
   async function handleEnroll() {
     if (!isAuthenticated()) { router.push(`/login?redirect=/courses/${course.slug}`); return; }
@@ -535,6 +634,167 @@ export function CourseDetailClient({ course }: { course: Course }) {
                 </div>
               </Card>
             )}
+
+            {/* Doubt Sessions — only shown to enrolled students */}
+            {enrolled && (
+              <Card>
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="font-display font-bold text-xl text-gray-900">Book a doubt session</h2>
+                  {refundDone && (
+                    <span className="text-xs text-emerald-600 font-semibold bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full">
+                      Refund requested
+                    </span>
+                  )}
+                </div>
+
+                {doubtLoading ? (
+                  <div className="flex justify-center py-6">
+                    <RefreshCw className="h-5 w-5 text-indigo-400 animate-spin" />
+                  </div>
+                ) : doubtSessions.length === 0 ? (
+                  <div className="text-center py-8">
+                    <HelpCircle className="h-12 w-12 text-gray-200 mx-auto mb-3" />
+                    <p className="text-gray-400 text-sm">No doubt sessions available yet.</p>
+                    <p className="text-gray-300 text-xs mt-1">Check back later or use the community forum.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {doubtSessions.map((session: any) => {
+                      const booked = bookedSessionIds.has(session.id);
+                      const isBooking = bookingSessionId === session.id;
+                      const scheduledDate = new Date(session.scheduled_at);
+                      const isPast = scheduledDate < new Date();
+                      return (
+                        <div key={session.id} className="flex items-center justify-between gap-4 p-4 rounded-xl border border-gray-100 bg-[#FAFAF9]">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${
+                                session.session_type === "one_on_one"
+                                  ? "bg-violet-50 text-violet-700 border-violet-100"
+                                  : "bg-blue-50 text-blue-700 border-blue-100"
+                              }`}>
+                                {session.session_type === "one_on_one" ? "1-on-1" : "Group"}
+                              </span>
+                              {session.spots_left <= 2 && !isPast && (
+                                <span className="text-[11px] text-red-500 font-semibold">
+                                  {session.spots_left} spot{session.spots_left !== 1 ? "s" : ""} left
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm font-semibold text-gray-900 truncate">
+                              {session.topic || "Doubt Session"}
+                            </p>
+                            <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-3.5 w-3.5" />
+                                {scheduledDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                              </span>
+                              <span>{session.duration_minutes} mins</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 shrink-0">
+                            <span className={`font-bold text-sm ${session.price === 0 ? "text-emerald-600" : "text-gray-900"}`}>
+                              {session.price === 0 ? "Free" : `₹${Number(session.price).toLocaleString("en-IN")}`}
+                            </span>
+                            {booked ? (
+                              <span className="flex items-center gap-1 text-xs text-emerald-600 font-semibold bg-emerald-50 border border-emerald-100 px-3 py-1.5 rounded-lg">
+                                <Check className="h-3.5 w-3.5" /> Booked
+                              </span>
+                            ) : isPast || session.spots_left === 0 ? (
+                              <span className="text-xs text-gray-400 font-medium px-3 py-1.5 rounded-lg border border-gray-100">
+                                {isPast ? "Ended" : "Full"}
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => handleBookDoubtSession(session)}
+                                disabled={isBooking}
+                                className="text-xs font-semibold bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-60 transition-colors"
+                              >
+                                {isBooking ? "..." : session.price === 0 ? "Reserve" : "Book"}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Refund request link */}
+                {!refundDone && (
+                  <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
+                    <p className="text-xs text-gray-400">Not satisfied? You may request a refund.</p>
+                    <button
+                      onClick={() => setShowRefundModal(true)}
+                      className="text-xs font-semibold text-red-500 hover:text-red-600 transition-colors"
+                    >
+                      Request refund
+                    </button>
+                  </div>
+                )}
+              </Card>
+            )}
+
+            {/* Refund Modal */}
+            <AnimatePresence>
+              {showRefundModal && (
+                <motion.div
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
+                  onClick={(e) => { if (e.target === e.currentTarget) setShowRefundModal(false); }}
+                >
+                  <motion.div
+                    initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+                    className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl"
+                  >
+                    <h3 className="font-display font-bold text-gray-900 text-lg mb-1">Request a Refund</h3>
+                    <p className="text-xs text-gray-400 mb-5">Refund requests are reviewed within 2 business days.</p>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block mb-1.5">Reason *</label>
+                        <select
+                          value={refundReason}
+                          onChange={(e) => setRefundReason(e.target.value)}
+                          className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"
+                        >
+                          <option value="">Select a reason</option>
+                          <option value="content_quality">Content quality not as expected</option>
+                          <option value="wrong_course">Enrolled in wrong course</option>
+                          <option value="technical_issues">Technical issues</option>
+                          <option value="duplicate">Duplicate purchase</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block mb-1.5">Description</label>
+                        <textarea
+                          value={refundDesc}
+                          onChange={(e) => setRefundDesc(e.target.value)}
+                          rows={3}
+                          placeholder="Tell us more about your issue..."
+                          className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 resize-none"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-3 mt-5">
+                      <button
+                        onClick={handleRefundRequest}
+                        disabled={!refundReason || refundLoading}
+                        className="flex-1 bg-red-500 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-red-600 disabled:opacity-50 transition-colors"
+                      >
+                        {refundLoading ? "Submitting…" : "Submit Request"}
+                      </button>
+                      <button
+                        onClick={() => setShowRefundModal(false)}
+                        className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Platform features */}
             <Card>

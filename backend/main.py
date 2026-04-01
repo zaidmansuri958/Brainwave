@@ -107,8 +107,82 @@ async def request_refund(
 ):
     from app.middleware.auth_middleware import get_current_user
     from app.database import get_db
-    # Simple implementation
-    return {"refund_request_id": "pending", "status": "pending"}
+    from app.models.payment import Payment, RefundRequest
+    from app.models.enrollment import Enrollment
+    from app.models.progress import StudentProgress
+    from sqlalchemy import func as sqlfunc
+    from fastapi import Depends
+
+    # Get auth token manually since we're in main.py
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        return JSONResponse(status_code=401, content={"detail": "Not authenticated"})
+
+    token = auth_header.split(" ")[1]
+    from app.utils.jwt import decode_access_token
+    payload = decode_access_token(token)
+    if not payload:
+        return JSONResponse(status_code=401, content={"detail": "Invalid token"})
+
+    user_id = payload.get("sub")
+    if not user_id:
+        return JSONResponse(status_code=401, content={"detail": "Invalid token"})
+
+    db_gen = get_db()
+    db = next(db_gen)
+    try:
+        enrollment = db.query(Enrollment).filter(
+            Enrollment.id == enrollment_id,
+            Enrollment.student_id == user_id,
+            Enrollment.is_active == True
+        ).first()
+        if not enrollment:
+            return JSONResponse(status_code=404, content={"detail": "Enrollment not found"})
+
+        # Check no existing pending refund
+        existing = db.query(RefundRequest).filter(
+            RefundRequest.enrollment_id == enrollment_id,
+            RefundRequest.status == "pending"
+        ).first()
+        if existing:
+            return JSONResponse(status_code=400, content={"detail": "Refund already requested"})
+
+        # Calculate watch percent
+        from app.models.course import Lesson, Chapter
+        total_lessons = db.query(sqlfunc.count(Lesson.id)).join(
+            Chapter, Lesson.chapter_id == Chapter.id
+        ).filter(Chapter.course_id == enrollment.course_id).scalar() or 1
+
+        completed = db.query(sqlfunc.count(StudentProgress.id)).filter(
+            StudentProgress.student_id == user_id,
+            StudentProgress.course_id == enrollment.course_id,
+            StudentProgress.completed == True
+        ).scalar() or 0
+
+        watch_pct = round(completed / total_lessons * 100, 2)
+
+        # Find the payment for this enrollment
+        payment = db.query(Payment).filter(
+            Payment.reference_id == enrollment.course_id,
+            Payment.payer_id == user_id,
+            Payment.status == "completed"
+        ).order_by(Payment.created_at.desc()).first()
+
+        refund = RefundRequest(
+            student_id=user_id,
+            enrollment_id=enrollment_id,
+            payment_id=payment.id if payment else None,
+            reason=reason,
+            description=description,
+            watch_percent_at_request=watch_pct,
+            status="pending"
+        )
+        db.add(refund)
+        db.commit()
+        db.refresh(refund)
+        return {"refund_request_id": str(refund.id), "status": "pending", "watch_percent": watch_pct}
+    finally:
+        db.close()
 
 
 @app.get("/health")
