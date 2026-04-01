@@ -146,18 +146,32 @@ export const adminApi = {
   pendingTeachers: () => api.get("/admin/teachers/pending-verification"),
   pendingCourses: () => api.get("/admin/courses"),
   pendingVerification: () => api.get("/admin/teachers/pending-verification"),
+  // backend reads identity_verified/expert_verified as query params
   verifyTeacher: (id: string, status: string) =>
-    api.patch(`/admin/teachers/${id}/verify`, { status }),
+    api.patch(`/admin/teachers/${id}/verify`, null, {
+      params: {
+        identity_verified: status === "approved",
+        expert_verified:   status === "approved",
+        outcome_verified:  status === "approved",
+      },
+    }),
   courses: () => api.get("/admin/courses"),
+  // backend reads featured as query param
   featureCourse: (id: string, featured: boolean) =>
-    api.patch(`/admin/courses/${id}/feature`, { featured }),
+    api.patch(`/admin/courses/${id}/feature`, null, { params: { featured } }),
   payments: (params?: any) => api.get("/admin/payments", { params }),
+  // backend reads teacher_id as query param
   processPayouts: (teacherId?: string) =>
-    api.post("/admin/payouts/process", { teacher_id: teacherId }),
+    api.post("/admin/payouts/process", null, {
+      params: teacherId ? { teacher_id: teacherId } : undefined,
+    }),
   refunds: () => api.get("/admin/refunds"),
   approveRefund: (id: string) => api.patch(`/admin/refunds/${id}/approve`),
+  // backend reads admin_note as query param
   rejectRefund: (id: string, note?: string) =>
-    api.patch(`/admin/refunds/${id}/reject`, { admin_note: note }),
+    api.patch(`/admin/refunds/${id}/reject`, null, {
+      params: note ? { admin_note: note } : undefined,
+    }),
 };
 
 // Live Sessions
