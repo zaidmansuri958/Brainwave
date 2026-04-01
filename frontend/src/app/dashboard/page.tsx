@@ -63,8 +63,8 @@ export default function StudentDashboard() {
 
   const courses = enrolledData?.courses || [];
   const certificates = certData?.certificates || [];
-  const inProgress = courses.filter((c: any) => c.progress > 0 && c.progress < 100);
-  const completed = courses.filter((c: any) => c.progress >= 100);
+  const inProgress = courses.filter((c: any) => (c.progress || 0) > 0 && (c.progress || 0) < 100);
+  const completed = courses.filter((c: any) => (c.progress || 0) >= 100);
 
   return (
     <div className="min-h-screen bg-[#FAFAF9] flex flex-col">
@@ -163,7 +163,7 @@ export default function StudentDashboard() {
 
                     <div className="p-4">
                       <h3 className="font-display font-bold text-sm text-gray-900 leading-snug mb-1 line-clamp-2">{course.title}</h3>
-                      <p className="text-xs text-gray-500 mb-3">by {course.teacher_name}</p>
+                      <p className="text-xs text-gray-500 mb-3">by {course.teacher?.full_name}</p>
 
                       {/* Progress */}
                       <div className="flex items-center justify-between text-xs text-gray-500 mb-1.5">

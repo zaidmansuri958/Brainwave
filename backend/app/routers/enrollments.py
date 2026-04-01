@@ -117,6 +117,11 @@ async def get_my_courses(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    from app.schemas.course import CourseResponse
+    from app.models.progress import StudentProgress
+    from app.models.course import Lesson, Chapter
+    from sqlalchemy import func
+
     enrollments = db.query(Enrollment).filter(
         Enrollment.student_id == current_user.id,
         Enrollment.is_active == True
@@ -124,10 +129,24 @@ async def get_my_courses(
 
     courses = []
     for e in enrollments:
-        from app.schemas.course import CourseResponse
+        # Count total lessons in this course
+        total_lessons = db.query(func.count(Lesson.id)).join(
+            Chapter, Lesson.chapter_id == Chapter.id
+        ).filter(Chapter.course_id == e.course_id).scalar() or 0
+
+        # Count completed lessons for this student
+        completed_lessons = db.query(func.count(StudentProgress.id)).filter(
+            StudentProgress.student_id == current_user.id,
+            StudentProgress.course_id == e.course_id,
+            StudentProgress.completed == True
+        ).scalar() or 0
+
+        progress = round(completed_lessons / total_lessons * 100) if total_lessons > 0 else 0
+
         courses.append({
             "enrollment_id": str(e.id),
             "enrolled_at": e.enrolled_at.isoformat(),
+            "progress": progress,
             "course": CourseResponse.from_orm(e.course)
         })
 

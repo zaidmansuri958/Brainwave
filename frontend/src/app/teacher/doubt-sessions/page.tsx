@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { doubtApi, courseApi } from "@/lib/api";
+import { doubtApi, teacherApi } from "@/lib/api";
 import { Navbar } from "@/components/layout/Navbar";
 import { HelpCircle, Plus, Calendar, Clock, DollarSign, Loader2, ExternalLink } from "lucide-react";
 import { formatDate, formatPrice } from "@/lib/utils";
@@ -25,7 +25,7 @@ export default function TeacherDoubtSessionsPage() {
 
   const { data: courses } = useQuery({
     queryKey: ["teacher-courses"],
-    queryFn: () => courseApi.list({ teacher: true }).then((r) => r.data),
+    queryFn: () => teacherApi.myCourses().then((r) => r.data),
   });
 
   const { data: sessions, isLoading } = useQuery({

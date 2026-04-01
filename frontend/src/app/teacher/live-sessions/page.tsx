@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { liveApi, courseApi } from "@/lib/api";
+import { liveApi, teacherApi } from "@/lib/api";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Video, Plus, Calendar, Users, ExternalLink, Loader2, X } from "lucide-react";
@@ -23,7 +23,7 @@ export default function TeacherLiveSessionsPage() {
 
   const { data: courses } = useQuery({
     queryKey: ["teacher-courses"],
-    queryFn: () => courseApi.list({ teacher: true }).then((r) => r.data),
+    queryFn: () => teacherApi.myCourses().then((r) => r.data),
   });
 
   const { data: sessions, isLoading } = useQuery({

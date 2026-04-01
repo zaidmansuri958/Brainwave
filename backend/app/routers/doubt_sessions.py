@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
+from typing import Optional
 from app.database import get_db
 from app.models.doubt_session import DoubtSession, DoubtSessionBooking
 from app.models.enrollment import Enrollment
@@ -12,6 +14,78 @@ from datetime import datetime
 import uuid
 
 router = APIRouter(tags=["Doubt Sessions"])
+
+
+class DoubtSessionCreate(BaseModel):
+    title: str
+    course_id: Optional[str] = None
+    scheduled_at: str
+    duration_minutes: int = 30
+    price: float = 0
+    session_type: str = "one_on_one"
+    max_students: int = 1
+    description: Optional[str] = None
+
+
+@router.get("/doubt-sessions/my")
+async def get_my_doubt_sessions(
+    current_user: User = Depends(get_current_teacher),
+    db: Session = Depends(get_db)
+):
+    """Returns all doubt sessions created by the current teacher."""
+    sessions = db.query(DoubtSession).filter(
+        DoubtSession.teacher_id == current_user.id
+    ).order_by(DoubtSession.scheduled_at.desc()).all()
+
+    result = []
+    for s in sessions:
+        booking_count = len(s.bookings)
+        result.append({
+            "id": str(s.id),
+            "title": s.topic or "",
+            "session_type": s.session_type,
+            "max_students": s.max_students,
+            "duration_minutes": s.duration_minutes,
+            "price": float(s.price),
+            "description": None,
+            "scheduled_at": s.scheduled_at.isoformat(),
+            "status": s.status,
+            "spots_left": s.max_students - booking_count,
+            "course_id": str(s.course_id) if s.course_id else None,
+        })
+    return result
+
+
+@router.post("/doubt-sessions")
+async def create_doubt_session_v2(
+    data: DoubtSessionCreate,
+    current_user: User = Depends(get_current_teacher),
+    db: Session = Depends(get_db)
+):
+    """Create a doubt session slot (course_id optional in body)."""
+    room_name = f"doubt-{uuid.uuid4().hex[:12]}"
+    session = DoubtSession(
+        teacher_id=current_user.id,
+        course_id=data.course_id if data.course_id else None,
+        session_type=data.session_type,
+        max_students=data.max_students,
+        duration_minutes=data.duration_minutes,
+        price=data.price,
+        topic=data.title,
+        scheduled_at=datetime.fromisoformat(data.scheduled_at),
+        jitsi_room_name=room_name,
+        jitsi_room_password=uuid.uuid4().hex[:12],
+        status="available"
+    )
+    db.add(session)
+    db.commit()
+    db.refresh(session)
+    return {
+        "id": str(session.id),
+        "title": session.topic,
+        "scheduled_at": session.scheduled_at.isoformat(),
+        "status": session.status
+    }
 
 
 @router.get("/courses/{course_id}/doubt-sessions")
@@ -164,4 +238,24 @@ async def book_doubt_session(
         "booking_id": str(booking.id),
         "jitsi_url": f"https://{settings.jitsi_domain}/{session.jitsi_room_name}",
         "scheduled_at": session.scheduled_at.isoformat()
+    }
+
+
+@router.get("/doubt-sessions/{session_id}/join")
+async def join_doubt_session(
+    session_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    session = db.query(DoubtSession).filter(DoubtSession.id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    return {
+        "jitsi_domain": settings.jitsi_domain,
+        "room_name": session.jitsi_room_name,
+        "room_password": session.jitsi_room_password,
+        "display_name": current_user.full_name,
+        "is_moderator": current_user.role == "teacher",
+        "jitsi_url": f"https://{settings.jitsi_domain}/{session.jitsi_room_name}"
     }

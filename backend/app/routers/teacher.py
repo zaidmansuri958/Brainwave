@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+from pydantic import BaseModel
+from typing import Optional, List
 from app.database import get_db
 from app.middleware.auth_middleware import get_current_teacher
 from app.models.user import User, TeacherProfile
@@ -10,6 +12,18 @@ from app.models.payment import Payment, Payout
 from app.models.risk import StudentRiskScore
 from app.models.progress import StudentProgress
 from app.services.notification_service import create_notification
+
+
+class TeacherProfileUpdate(BaseModel):
+    full_name: Optional[str] = None
+    bio: Optional[str] = None
+    expertise_areas: Optional[List[str]] = None
+    bank_account_name: Optional[str] = None
+    bank_account_number: Optional[str] = None
+    bank_ifsc: Optional[str] = None
+    payout_bank_account: Optional[str] = None  # alias for bank_account_number
+    payout_ifsc: Optional[str] = None           # alias for bank_ifsc
+
 
 router = APIRouter(prefix="/teacher", tags=["Teacher"])
 
@@ -223,12 +237,32 @@ async def get_teacher_earnings(
     }
 
 
+@router.get("/courses")
+async def get_teacher_courses(
+    current_user: User = Depends(get_current_teacher),
+    db: Session = Depends(get_db)
+):
+    from app.schemas.course import CourseResponse
+    courses = db.query(Course).filter(Course.teacher_id == current_user.id).order_by(Course.created_at.desc()).all()
+    return [CourseResponse.from_orm(c) for c in courses]
+
+
+@router.get("/courses/{course_id}")
+async def get_teacher_course(
+    course_id: str,
+    current_user: User = Depends(get_current_teacher),
+    db: Session = Depends(get_db)
+):
+    from app.schemas.course import CourseResponse
+    course = db.query(Course).filter(Course.id == course_id, Course.teacher_id == current_user.id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    return CourseResponse.from_orm(course)
+
+
 @router.patch("/profile")
 async def update_teacher_profile(
-    bio: str = None,
-    bank_account_name: str = None,
-    bank_account_number: str = None,
-    bank_ifsc: str = None,
+    data: TeacherProfileUpdate,
     current_user: User = Depends(get_current_teacher),
     db: Session = Depends(get_db)
 ):
@@ -236,14 +270,21 @@ async def update_teacher_profile(
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
 
-    if bio is not None:
-        profile.bio = bio
-    if bank_account_name:
-        profile.bank_account_name = bank_account_name
-    if bank_account_number:
-        profile.bank_account_number = bank_account_number
-    if bank_ifsc:
-        profile.bank_ifsc = bank_ifsc
+    if data.bio is not None:
+        profile.bio = data.bio
+    if data.bank_account_name:
+        profile.bank_account_name = data.bank_account_name
+    # Accept legacy field aliases from frontend
+    if data.bank_account_number:
+        profile.bank_account_number = data.bank_account_number
+    if data.payout_bank_account:
+        profile.bank_account_number = data.payout_bank_account
+    if data.bank_ifsc:
+        profile.bank_ifsc = data.bank_ifsc
+    if data.payout_ifsc:
+        profile.bank_ifsc = data.payout_ifsc
+    if data.full_name:
+        current_user.full_name = data.full_name
 
     db.commit()
     return {"message": "Profile updated"}

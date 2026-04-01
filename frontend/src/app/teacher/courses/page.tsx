@@ -98,7 +98,7 @@ export default function TeacherCoursesPage() {
 
                   <div className="flex flex-wrap gap-5 mt-3 text-sm text-gray-400">
                     <span className="flex items-center gap-1.5">
-                      <Users className="h-3.5 w-3.5" /> {course.enrollment_count || 0} students
+                      <Users className="h-3.5 w-3.5" /> {course.enrolled_count || 0} students
                     </span>
                     <span className="flex items-center gap-1.5">
                       <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
