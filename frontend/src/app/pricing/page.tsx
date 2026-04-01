@@ -195,20 +195,23 @@ export default function PricingPage() {
 
       {/* Are you a teacher CTA */}
       <section className="max-w-6xl mx-auto px-6 lg:px-8 pb-16">
-        <div className="bg-gray-950 rounded-3xl p-10 lg:p-14 text-center relative overflow-hidden">
+        <div
+          className="rounded-3xl p-10 lg:p-14 text-center relative overflow-hidden"
+          style={{ background: "linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%)" }}
+        >
           <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[250px] bg-indigo-600/10 rounded-full blur-[80px]" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[250px] bg-white/10 rounded-full blur-[80px]" />
           </div>
-          <p className="eyebrow text-indigo-400 mb-3 relative z-10">For educators</p>
+          <p className="text-xs font-bold tracking-widest text-indigo-200 uppercase mb-3 relative z-10">For educators</p>
           <h2 className="font-display font-extrabold text-white text-3xl lg:text-4xl mb-4 relative z-10">
             Bring your lectures online.<br />Keep 90% of what you earn.
           </h2>
-          <p className="text-gray-400 mb-8 max-w-lg mx-auto relative z-10">
+          <p className="text-indigo-200 mb-8 max-w-lg mx-auto relative z-10">
             No setup fee. No monthly subscription. You pay Brainwave only when your students pay you.
           </p>
           <Link
             href="/register?role=teacher"
-            className="inline-flex items-center gap-2 bg-indigo-600 text-white px-8 py-3.5 rounded-xl font-semibold hover:bg-indigo-500 transition-colors shadow-button-indigo relative z-10"
+            className="inline-flex items-center gap-2 bg-white text-indigo-700 px-8 py-3.5 rounded-xl font-semibold hover:bg-indigo-50 transition-colors relative z-10"
           >
             Start teaching free <ArrowRight className="w-4 h-4" />
           </Link>

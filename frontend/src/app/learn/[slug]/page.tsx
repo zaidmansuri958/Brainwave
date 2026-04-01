@@ -61,7 +61,7 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <div className="flex-1 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-600 border-t-transparent" />
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 border-t-transparent" />
         </div>
       </div>
     );
