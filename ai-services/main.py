@@ -31,15 +31,35 @@ def get_s3():
 class TranscribeRequest(BaseModel):
     file_url: str
     material_id: str
+    language: Optional[str] = None  # Whisper language code or None for auto
 
 
 class StructureRequest(BaseModel):
     content: str
+    language: Optional[str] = None
 
 
 class QuizRequest(BaseModel):
     content: str
     num_questions: int = 5
+    language: Optional[str] = None
+
+
+class ModerateRequest(BaseModel):
+    title: str
+    category: str = ""
+    body_text: str = ""
+    file_names: Optional[list] = None
+
+
+class ThumbnailRequest(BaseModel):
+    title: str
+    category: str
+    description: str = ""
+    lesson_title: Optional[str] = None
+    module_title: Optional[str] = None
+    faculty_face_image_url: Optional[str] = None
+    custom_prompt: Optional[str] = None
 
 
 class EmbedRequest(BaseModel):
@@ -58,12 +78,6 @@ class IndexRequest(BaseModel):
     lesson_id: str
     chapter_id: str
     source_type: str = "course_content"
-
-
-class ThumbnailRequest(BaseModel):
-    title: str
-    category: str
-    description: str = ""
 
 
 class RiskRequest(BaseModel):
@@ -92,7 +106,7 @@ async def transcribe(data: TranscribeRequest):
     """Transcribe audio/video from URL."""
     from transcription import transcribe_from_url
     try:
-        result = transcribe_from_url(data.file_url, data.material_id)
+        result = transcribe_from_url(data.file_url, data.material_id, language=data.language)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -139,11 +153,20 @@ async def extract_text(data: ExtractTextRequest):
             os.remove(tmp_path)
 
 
+@app.post("/moderate-content")
+async def moderate_content(data: ModerateRequest):
+    from moderate_content import moderate_course_content
+    result = await moderate_course_content(
+        data.title, data.category, data.body_text, data.file_names or []
+    )
+    return result
+
+
 @app.post("/structure-course")
 async def structure_course(data: StructureRequest):
     """Structure transcript into course chapters using Llama 3."""
     from course_builder import structure_course as _structure
-    result = await _structure(data.content)
+    result = await _structure(data.content, language=data.language)
     return result
 
 
@@ -151,7 +174,7 @@ async def structure_course(data: StructureRequest):
 async def generate_quiz(data: QuizRequest):
     """Generate quiz questions from content using Llama 3."""
     from quiz_generator import generate_quiz as _generate
-    result = await _generate(data.content, data.num_questions)
+    result = await _generate(data.content, data.num_questions, language=data.language)
     return result
 
 
@@ -192,7 +215,15 @@ async def generate_thumbnail(data: ThumbnailRequest):
     from app_storage import upload_thumbnail
 
     try:
-        img_bytes = await _generate(data.title, data.category, data.description)
+        img_bytes = await _generate(
+            data.title,
+            data.category,
+            data.description,
+            lesson_title=data.lesson_title,
+            module_title=data.module_title,
+            faculty_face_image_url=data.faculty_face_image_url,
+            custom_prompt=data.custom_prompt,
+        )
         # Upload to MinIO
         import uuid
         key = f"ai_generated/{uuid.uuid4()}.png"

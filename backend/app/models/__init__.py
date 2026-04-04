@@ -11,6 +11,13 @@ from app.models.live_session import LiveSession
 from app.models.doubt_session import DoubtSession, DoubtSessionBooking
 from app.models.review import Review
 from app.models.risk import StudentRiskScore
+from app.models.promotion import CoursePromotion
+from app.models.study_material import StudyMaterialProduct, StudyMaterialFile, StudyMaterialPurchase
+from app.models.mock_exam import (
+    MockTestPackage, MockTestPaper, MockTestSection, MockTestQuestion,
+    MockTestPurchase, MockTestAttempt,
+)
+from app.models.teacher_availability import TeacherAvailabilityRule
 
 __all__ = [
     "User", "TeacherProfile",
@@ -26,4 +33,9 @@ __all__ = [
     "DoubtSession", "DoubtSessionBooking",
     "Review",
     "StudentRiskScore",
+    "CoursePromotion",
+    "StudyMaterialProduct", "StudyMaterialFile", "StudyMaterialPurchase",
+    "MockTestPackage", "MockTestPaper", "MockTestSection", "MockTestQuestion",
+    "MockTestPurchase", "MockTestAttempt",
+    "TeacherAvailabilityRule",
 ]

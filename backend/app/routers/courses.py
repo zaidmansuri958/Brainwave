@@ -9,7 +9,7 @@ from app.schemas.course import (
     CourseCreate, CourseUpdate, CourseResponse, CourseListResponse,
     AIStatusResponse, MaterialUploadResponse, CourseStructureApproval
 )
-from app.middleware.auth_middleware import get_current_user, get_current_teacher
+from app.middleware.auth_middleware import get_current_user, get_current_teacher, get_current_verified_teacher
 from app.models.user import User
 from app.services.storage_service import upload_file
 from app.services.notification_service import create_notification
@@ -106,7 +106,7 @@ async def get_course(slug: str, db: Session = Depends(get_db)):
 @router.post("", response_model=CourseResponse)
 async def create_course(
     data: CourseCreate,
-    current_user: User = Depends(get_current_teacher),
+    current_user: User = Depends(get_current_verified_teacher),
     db: Session = Depends(get_db)
 ):
     slug = generate_slug(data.title)
@@ -124,8 +124,14 @@ async def create_course(
         completion_requirement_percent=data.completion_requirement_percent,
         quiz_pass_percent=data.quiz_pass_percent,
         certificate_enabled=data.certificate_enabled,
+        delivery_mode=data.delivery_mode or "video_course",
+        default_access_months=data.default_access_months,
+        module_lock_enabled=data.module_lock_enabled if data.module_lock_enabled is not None else True,
+        transcript_language=(data.transcript_language.strip() if data.transcript_language else None),
         status="draft",
-        ai_processing_status="pending"
+        ai_processing_status="pending",
+        moderation_status="pending",
+        content_validation_status="pending",
     )
     db.add(course)
     db.commit()
@@ -182,22 +188,60 @@ async def archive_course_post(
 @router.post("/{course_id}/publish")
 async def publish_course(
     course_id: str,
-    current_user: User = Depends(get_current_teacher),
+    current_user: User = Depends(get_current_verified_teacher),
     db: Session = Depends(get_db)
 ):
     course = db.query(Course).filter(Course.id == course_id, Course.teacher_id == current_user.id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
+    if course.ai_processing_status not in ("completed", "approved"):
+        raise HTTPException(status_code=400, detail="AI processing must complete before publishing.")
+    if course.content_validation_status != "approved" or course.moderation_status != "approved":
+        raise HTTPException(
+            status_code=400,
+            detail="Content must pass validation and moderation before publishing.",
+        )
     course.status = "published"
     db.commit()
     return {"message": "Course published", "course_id": str(course_id)}
+
+
+MAX_VIDEO_BYTES = 2 * 1024 * 1024 * 1024  # 2 GB
+MAX_VIDEO_DURATION_SEC = 30 * 60  # 30 minutes
+
+
+def _probe_video_duration_seconds(content: bytes, filename: str) -> Optional[float]:
+    """Best-effort duration via ffprobe if available."""
+    import subprocess
+    import tempfile
+    import os
+    suf = os.path.splitext(filename)[1] or ".mp4"
+    try:
+        with tempfile.NamedTemporaryFile(suffix=suf, delete=False) as tmp:
+            tmp.write(content)
+            path = tmp.name
+        r = subprocess.run(
+            [
+                "ffprobe", "-v", "error", "-show_entries", "format=duration",
+                "-of", "default=noprint_wrappers=1:nokey=1", path,
+            ],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        os.unlink(path)
+        if r.returncode == 0 and r.stdout.strip():
+            return float(r.stdout.strip())
+    except Exception:
+        pass
+    return None
 
 
 @router.post("/{course_id}/materials/upload", response_model=MaterialUploadResponse)
 async def upload_materials(
     course_id: str,
     files: List[UploadFile] = File(...),
-    current_user: User = Depends(get_current_teacher),
+    current_user: User = Depends(get_current_verified_teacher),
     db: Session = Depends(get_db)
 ):
     course = db.query(Course).filter(Course.id == course_id, Course.teacher_id == current_user.id).first()
@@ -209,6 +253,16 @@ async def upload_materials(
 
     for file in files:
         content = await file.read()
+        if len(content) > MAX_VIDEO_BYTES:
+            raise HTTPException(status_code=400, detail=f"File too large (max {MAX_VIDEO_BYTES // (1024*1024)} MB)")
+        ct = file.content_type or ""
+        if "video" in ct:
+            dur = _probe_video_duration_seconds(content, file.filename or "video.mp4")
+            if dur is not None and dur > MAX_VIDEO_DURATION_SEC:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Video exceeds maximum length of 30 minutes",
+                )
         file_key = f"courses/{course_id}/{uuid.uuid4()}/{file.filename}"
         file_url = upload_file(content, "course-materials", file_key, file.content_type or "application/octet-stream")
 
@@ -251,6 +305,27 @@ async def upload_materials(
         task_id=task.id,
         message="Files uploaded. AI processing started."
     )
+
+
+@router.post("/{course_id}/retry-ai")
+async def retry_ai_pipeline(
+    course_id: str,
+    current_user: User = Depends(get_current_verified_teacher),
+    db: Session = Depends(get_db),
+):
+    course = db.query(Course).filter(Course.id == course_id, Course.teacher_id == current_user.id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    mats = db.query(CourseMaterial).filter(CourseMaterial.course_id == course_id).all()
+    ids = [str(m.id) for m in mats]
+    if not ids:
+        raise HTTPException(status_code=400, detail="No materials to process")
+    from tasks.ai_pipeline import process_course_material
+
+    course.ai_processing_status = "processing"
+    db.commit()
+    task = process_course_material.delay(course_id, ids)
+    return {"task_id": task.id, "message": "Pipeline re-queued"}
 
 
 @router.get("/{course_id}/ai-status", response_model=AIStatusResponse)

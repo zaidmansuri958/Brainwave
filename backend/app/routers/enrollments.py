@@ -10,6 +10,7 @@ from app.models.user import User
 from app.services.payment_service import create_razorpay_order, verify_razorpay_signature, record_payment
 from app.services.notification_service import create_notification
 from app.schemas.payment import EnrollmentInitiate, EnrollmentConfirm
+from app.utils.pricing import effective_course_price, enrollment_access_fields
 import uuid
 
 router = APIRouter(prefix="/enrollments", tags=["Enrollments"])
@@ -33,12 +34,16 @@ async def initiate_enrollment(
     if existing and existing.is_active:
         raise HTTPException(status_code=400, detail="Already enrolled")
 
+    eff = effective_course_price(db, course)
+
     # Free course — enroll directly
-    if float(course.price) == 0:
+    if eff == 0:
+        af = enrollment_access_fields(course)
         enrollment = Enrollment(
             student_id=current_user.id,
             course_id=data.course_id,
-            amount_paid=0
+            amount_paid=0,
+            **af,
         )
         db.add(enrollment)
         course.enrolled_count += 1
@@ -52,10 +57,10 @@ async def initiate_enrollment(
         )
         return {"free": True, "enrolled": True}
 
-    order = create_razorpay_order(float(course.price))
+    order = create_razorpay_order(eff)
     return {
         "razorpay_order_id": order["id"],
-        "amount": float(course.price),
+        "amount": eff,
         "currency": course.currency,
         "course_title": course.title
     }
@@ -74,6 +79,9 @@ async def confirm_enrollment(
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
 
+    tier_n = int(course.enrolled_count or 0)
+    eff = effective_course_price(db, course)
+
     payment = record_payment(
         db,
         payer_id=str(current_user.id),
@@ -82,15 +90,18 @@ async def confirm_enrollment(
         reference_id=str(data.course_id),
         razorpay_order_id=data.razorpay_order_id,
         razorpay_payment_id=data.razorpay_payment_id,
-        total_amount=float(course.price),
-        currency=course.currency
+        total_amount=float(eff),
+        currency=course.currency,
+        tier_enrollment_count=tier_n,
     )
 
+    af = enrollment_access_fields(course)
     enrollment = Enrollment(
         student_id=current_user.id,
         course_id=data.course_id,
         payment_id=payment.id,
-        amount_paid=course.price
+        amount_paid=eff,
+        **af,
     )
     db.add(enrollment)
     course.enrolled_count += 1

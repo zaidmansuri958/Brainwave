@@ -7,7 +7,7 @@ import { formatPrice } from "@/lib/utils";
 import {
   Users, BookOpen, DollarSign, TrendingUp, CheckCircle, XCircle,
   Star, Loader2, ShieldCheck, ShieldX, Clock, BarChart2,
-  RefreshCw, ChevronRight, AlertCircle, GraduationCap, Banknote,
+  RefreshCw, ChevronRight, AlertCircle, AlertTriangle, GraduationCap, Banknote,
   CreditCard, ArrowUpRight,
 } from "lucide-react";
 
@@ -98,10 +98,30 @@ export default function AdminDashboardPage() {
     },
   });
 
+  const reviewOnboarding = useMutation({
+    mutationFn: (args: { teacherId: string; action: "approve" | "reject"; reason?: string }) =>
+      adminApi.reviewOnboarding(args.teacherId, args.action, args.reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pending-teachers"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
+    },
+  });
+
+  const moderateCourse = useMutation({
+    mutationFn: (args: { id: string; status: "approved" | "rejected" }) =>
+      adminApi.moderateCourse(args.id, args.status),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-courses"] }),
+  });
+
   /* ── Derived data ── */
   const teachers    = teachersData?.teachers || [];
   const pending     = pendingData?.pending || [];
+  const onboardingQueue = pending.filter((t: any) => t.onboarding_status === "submitted");
   const courses     = coursesData?.courses || [];
+  const pendingModeration = courses.filter(
+    (c: any) =>
+      (c.moderation_status === "pending" || !c.moderation_status) && c.status !== "archived"
+  ).length;
   const refunds     = refundsData?.refunds || [];
   const payments    = paymentsData?.payments || [];
 
@@ -114,6 +134,7 @@ export default function AdminDashboardPage() {
     { label: "Total Revenue",     value: stats?.total_revenue     != null ? formatPrice(stats.total_revenue) : "—",    icon: DollarSign,   color: "text-green-600",  bg: "bg-green-50"   },
     { label: "Platform Revenue",  value: stats?.platform_revenue  != null ? formatPrice(stats.platform_revenue) : "—", icon: Banknote,    color: "text-teal-600",   bg: "bg-teal-50"    },
     { label: "Pending Verif.",    value: stats?.pending_verifications ?? "—", icon: AlertCircle, color: "text-amber-600",  bg: "bg-amber-50"   },
+    { label: "Moderation queue",  value: pendingModeration, icon: AlertTriangle, color: "text-rose-600", bg: "bg-rose-50"    },
   ];
 
   return (
@@ -289,6 +310,54 @@ export default function AdminDashboardPage() {
         {activeTab === "teachers" && (
           <div className="space-y-6">
             {/* Pending verifications */}
+            {onboardingQueue.length > 0 && (
+              <div className="bg-white rounded-2xl border border-indigo-200 shadow-sm overflow-hidden mb-6">
+                <div className="px-5 py-4 bg-indigo-50 border-b border-indigo-100">
+                  <h2 className="font-display font-bold text-gray-900">Onboarding review</h2>
+                  <p className="text-sm text-indigo-800">{onboardingQueue.length} application(s) submitted</p>
+                </div>
+                <div className="divide-y divide-gray-100">
+                  {onboardingQueue.map((t: any) => (
+                    <div key={t.teacher_id} className="p-4 space-y-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">{t.full_name}</p>
+                          <p className="text-xs text-gray-500">{t.email}</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => reviewOnboarding.mutate({ teacherId: t.teacher_id, action: "approve" })}
+                            disabled={reviewOnboarding.isPending}
+                            className="px-3 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-lg"
+                          >
+                            Approve onboarding
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const reason = window.prompt("Rejection reason?");
+                              if (reason === null) return;
+                              reviewOnboarding.mutate({ teacherId: t.teacher_id, action: "reject", reason });
+                            }}
+                            disabled={reviewOnboarding.isPending}
+                            className="px-3 py-1.5 bg-red-50 text-red-700 text-xs font-semibold rounded-lg border border-red-200"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-500 grid sm:grid-cols-2 gap-2">
+                        {t.legal_name && <span>Legal: {t.legal_name}</span>}
+                        {t.highest_degree && <span>Degree: {t.highest_degree}</span>}
+                        {t.years_teaching != null && <span>Experience: {t.years_teaching} yrs</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {pending.length > 0 && (
               <div className="bg-white rounded-2xl border border-amber-200 shadow-sm overflow-hidden">
                 <div className="px-5 py-4 bg-amber-50 border-b border-amber-100">
@@ -428,6 +497,7 @@ export default function AdminDashboardPage() {
                     <tr className="bg-gray-50 border-b border-gray-100">
                       <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Course</th>
                       <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                      <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Moderation</th>
                       <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Enrolled</th>
                       <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Price</th>
                       <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Featured</th>
@@ -449,6 +519,31 @@ export default function AdminDashboardPage() {
                           }`}>
                             {c.status}
                           </span>
+                        </td>
+                        <td className="px-4 py-3.5 text-center">
+                          <div className="flex flex-col items-center gap-1">
+                            <span className="text-[10px] font-bold text-gray-600">
+                              {c.moderation_status || "—"}
+                            </span>
+                            {(c.moderation_status === "pending" || !c.moderation_status) && (
+                              <div className="flex gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => moderateCourse.mutate({ id: c.id, status: "approved" })}
+                                  className="text-[10px] font-bold px-2 py-0.5 rounded bg-green-50 text-green-700 border border-green-100"
+                                >
+                                  OK
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => moderateCourse.mutate({ id: c.id, status: "rejected" })}
+                                  className="text-[10px] font-bold px-2 py-0.5 rounded bg-red-50 text-red-600 border border-red-100"
+                                >
+                                  No
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 py-3.5 text-center font-semibold text-gray-900">{c.enrolled_count ?? 0}</td>
                         <td className="px-4 py-3.5 text-right font-semibold text-gray-900">

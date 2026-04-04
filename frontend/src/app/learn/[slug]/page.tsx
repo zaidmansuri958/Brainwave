@@ -1,13 +1,13 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { courseApi, lessonApi } from "@/lib/api";
-import { Navbar } from "@/components/layout/Navbar";
+import { courseApi, lessonApi, learnApi } from "@/lib/api";
 import { useAuthStore } from "@/stores/authStore";
+import { Navbar } from "@/components/layout/Navbar";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Play, CheckCircle, BookOpen, MessageSquare, Users, ChevronLeft, ChevronRight, Sparkles
+  Play, CheckCircle, BookOpen, MessageSquare, Users, ChevronLeft, ChevronRight, Sparkles, Lock,
 } from "lucide-react";
 import { useCourseStore } from "@/stores/courseStore";
 
@@ -33,6 +33,30 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
     queryFn: () => lessonApi.myProgress(course!.id).then((r) => r.data),
     enabled: !!course?.id,
   });
+
+  const { data: accessData, isLoading: accessLoading } = useQuery({
+    queryKey: ["learn-access", params.slug],
+    queryFn: () => learnApi.courseAccess(params.slug).then((r) => r.data),
+    enabled: !!course?.id && user?.role === "student",
+    retry: false,
+  });
+
+  const chapterUnlocked = useMemo(() => {
+    const m: Record<string, boolean> = {};
+    if (!accessData?.chapters) return m;
+    for (const c of accessData.chapters) {
+      m[c.chapter_id] = c.unlocked;
+    }
+    return m;
+  }, [accessData]);
+
+  const chapterMeta = useMemo(() => {
+    const m: Record<string, { unlocked: boolean; required_quiz_id?: string | null }> = {};
+    for (const c of accessData?.chapters || []) {
+      m[c.chapter_id] = { unlocked: c.unlocked, required_quiz_id: c.required_quiz_id };
+    }
+    return m;
+  }, [accessData]);
 
   // Auto-select first lesson
   useEffect(() => {
@@ -94,6 +118,21 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
           </Link>
         </div>
       </div>
+
+      {user?.role === "student" && accessData?.access && (
+        <div className="px-4 py-2.5 bg-violet-500/10 border-b border-violet-500/20 text-[11px] text-violet-100 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span>
+            {accessData.access.type === "lifetime" || !accessData.access.expires_at
+              ? "Enrollment: lifetime access"
+              : `Enrollment: access ends ${new Date(accessData.access.expires_at).toLocaleString()}`}
+          </span>
+          {accessData.module_lock_enabled && (
+            <span className="text-slate-400">
+              Modules unlock when you complete the previous chapter and pass its quiz.
+            </span>
+          )}
+        </div>
+      )}
 
       <div className="flex-1 flex overflow-hidden">
         {/* Main Video Area */}
@@ -188,33 +227,56 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
                   const lessonProgress = progressMap[lesson.id];
                   const isDone = lessonProgress?.completed;
                   const isActive = lesson.id === activeLessonId;
+                  const unlocked =
+                    user?.role !== "student" ||
+                    accessLoading ||
+                    chapterUnlocked[String(chapter.id)] === true;
+                  const meta = chapterMeta[String(chapter.id)];
+                  const needQuiz = meta && !meta.unlocked && meta.required_quiz_id;
 
                   return (
-                    <button
-                      key={lesson.id}
-                      onClick={() => setActiveLessonId(lesson.id)}
-                      className={`w-full flex items-start gap-3 px-4 py-3 hover:bg-white/[0.03] transition-colors text-left ${
-                        isActive ? "bg-blue-500/[0.08] border-l-2 border-blue-500" : "border-l-2 border-transparent"
-                      }`}
-                    >
-                      <div className="flex-shrink-0 mt-0.5">
-                        {isDone ? (
-                          <CheckCircle className="h-4 w-4 text-emerald-500" />
-                        ) : isActive ? (
-                          <Play className="h-4 w-4 text-blue-400 fill-blue-400" />
-                        ) : (
-                          <div className="h-4 w-4 rounded-full border border-slate-700" />
-                        )}
-                      </div>
-                      <div>
-                        <p className={`text-xs font-medium leading-snug ${isActive ? "text-blue-400" : isDone ? "text-slate-400" : "text-slate-500"}`}>
-                          {lesson.title}
-                        </p>
-                        {lesson.duration_seconds && (
-                          <p className="text-[10px] text-slate-700 mt-0.5">{Math.floor(lesson.duration_seconds / 60)}m</p>
-                        )}
-                      </div>
-                    </button>
+                    <div key={lesson.id} className="w-full">
+                      <button
+                        onClick={() => {
+                          if (!unlocked) return;
+                          setActiveLessonId(lesson.id);
+                        }}
+                        disabled={!unlocked}
+                        className={`w-full flex items-start gap-3 px-4 py-3 hover:bg-white/[0.03] transition-colors text-left disabled:opacity-40 disabled:cursor-not-allowed ${
+                          isActive ? "bg-blue-500/[0.08] border-l-2 border-blue-500" : "border-l-2 border-transparent"
+                        }`}
+                      >
+                        <div className="flex-shrink-0 mt-0.5">
+                          {!unlocked ? (
+                            <Lock className="h-4 w-4 text-amber-500/80" />
+                          ) : isDone ? (
+                            <CheckCircle className="h-4 w-4 text-emerald-500" />
+                          ) : isActive ? (
+                            <Play className="h-4 w-4 text-blue-400 fill-blue-400" />
+                          ) : (
+                            <div className="h-4 w-4 rounded-full border border-slate-700" />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className={`text-xs font-medium leading-snug ${isActive ? "text-blue-400" : isDone ? "text-slate-400" : "text-slate-500"}`}>
+                            {lesson.title}
+                          </p>
+                          {lesson.duration_seconds && (
+                            <p className="text-[10px] text-slate-700 mt-0.5">{Math.floor(lesson.duration_seconds / 60)}m</p>
+                          )}
+                        </div>
+                      </button>
+                      {needQuiz && (
+                        <div className="px-4 pb-2 -mt-1">
+                          <Link
+                            href={`/courses/${params.slug}/quiz/${meta.required_quiz_id}`}
+                            className="text-[10px] font-semibold text-amber-400 hover:text-amber-300 underline underline-offset-2"
+                          >
+                            Pass previous chapter quiz to unlock →
+                          </Link>
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </div>

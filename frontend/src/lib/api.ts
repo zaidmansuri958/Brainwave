@@ -67,6 +67,7 @@ export const courseApi = {
     }),
   aiStatus: (id: string) => api.get(`/courses/${id}/ai-status`),
   approveStructure: (id: string, data: any) => api.post(`/courses/${id}/structure/approve`, data),
+  retryAi: (id: string) => api.post(`/courses/${id}/retry-ai`),
   getReviews: (id: string) => api.get(`/courses/${id}/reviews`),
   featured: () => api.get("/courses/featured"),
 };
@@ -136,6 +137,110 @@ export const teacherApi = {
     api.post(`/teacher/courses/${courseId}/students/${studentId}/nudge`),
   earnings: () => api.get("/teacher/earnings"),
   updateProfile: (data: any) => api.patch("/teacher/profile", data),
+  onboardingStatus: () => api.get("/teacher/onboarding/status"),
+  saveOnboarding: (data: any) => api.patch("/teacher/onboarding", data),
+  submitOnboarding: () => api.post("/teacher/onboarding/submit"),
+  onboardingUpload: (docType: string, file: File) => {
+    const fd = new FormData();
+    fd.append("doc_type", docType);
+    fd.append("file", file);
+    return api.post("/teacher/onboarding/upload", fd, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+  analytics: (courseId?: string) =>
+    api.get("/teacher/analytics", { params: courseId ? { course_id: courseId } : {} }),
+  regenerateThumbnail: (courseId: string, params?: { lesson_id?: string; custom_prompt?: string }) =>
+    api.post(`/teacher/courses/${courseId}/thumbnails/regenerate`, null, { params }),
+};
+
+export const learnApi = {
+  courseAccess: (slug: string) => api.get(`/learn/courses/${slug}/access`),
+};
+
+export const promotionsApi = {
+  create: (data: {
+    course_id: string;
+    discount_percent?: number;
+    price_override?: number;
+    starts_at: string;
+    ends_at: string;
+  }) => api.post("/teacher/promotions", data),
+  listByCourse: (courseId: string) => api.get(`/teacher/promotions/courses/${courseId}`),
+  toggle: (promotionId: string) => api.patch(`/teacher/promotions/${promotionId}/toggle`),
+};
+
+export const materialsApi = {
+  teacherList: () => api.get("/study-materials/teacher/my"),
+  create: (data: { title: string; description?: string; price: number }) => api.post("/study-materials", data),
+  uploadFiles: (productId: string, files: FormData) =>
+    api.post(`/study-materials/${productId}/files`, files, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
+  publish: (productId: string) => api.post(`/study-materials/${productId}/publish`),
+  catalog: () => api.get("/study-materials/catalog"),
+  bySlug: (slug: string) => api.get(`/study-materials/slug/${slug}`),
+  purchaseInitiate: (productId: string) =>
+    api.post("/study-materials/purchase/initiate", null, { params: { product_id: productId } }),
+  purchaseConfirm: (data: {
+    product_id: string;
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+  }) => api.post("/study-materials/purchase/confirm", data),
+  myPurchases: () => api.get("/study-materials/my-purchases"),
+  purchasedFiles: (productId: string) => api.get(`/study-materials/purchased/${productId}/files`),
+};
+
+export const mockTestsApi = {
+  teacherList: () => api.get("/mock-tests/teacher/my-packages"),
+  createPackage: (data: { title: string; description?: string; price: number }) =>
+    api.post("/mock-tests/packages", data),
+  addPaper: (packageId: string, data: any) => api.post(`/mock-tests/packages/${packageId}/papers`, data),
+  addSection: (paperId: string, data: { title: string; order_index?: number }) =>
+    api.post(`/mock-tests/papers/${paperId}/sections`, data),
+  addQuestion: (sectionId: string, data: any) => api.post(`/mock-tests/sections/${sectionId}/questions`, data),
+  publishPackage: (packageId: string) => api.post(`/mock-tests/packages/${packageId}/publish`),
+  builderDetail: (packageId: string) => api.get(`/mock-tests/packages/${packageId}/builder`),
+  catalog: () => api.get("/mock-tests/catalog"),
+  bySlug: (slug: string) => api.get(`/mock-tests/slug/${slug}`),
+  purchaseInitiate: (packageId: string) =>
+    api.post("/mock-tests/purchase/initiate", null, { params: { package_id: packageId } }),
+  purchaseConfirm: (data: {
+    package_id: string;
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+  }) => api.post("/mock-tests/purchase/confirm", data),
+  myPackages: () => api.get("/mock-tests/my-packages"),
+  paperTake: (paperId: string) => api.get(`/mock-tests/papers/${paperId}/take`),
+  submitAttempt: (paperId: string, answers: Record<string, string>) =>
+    api.post(`/mock-tests/papers/${paperId}/attempt`, { answers }),
+};
+
+export const availabilityApi = {
+  createRule: (data: {
+    weekday: number;
+    start_time: string;
+    end_time: string;
+    timezone?: string;
+    slot_duration_minutes?: number;
+    price?: number;
+  }) => api.post("/teacher/availability/rules", data),
+  listRules: () => api.get("/teacher/availability/rules"),
+  generateSlots: (daysAhead?: number) =>
+    api.post("/teacher/availability/generate-slots", null, { params: { days_ahead: daysAhead } }),
+  teacherSlots: (teacherId: string) => api.get(`/teacher/availability/teachers/${teacherId}/slots`),
+};
+
+export const curriculumApi = {
+  listQuizzes: (courseId: string) => api.get(`/teacher/curriculum/courses/${courseId}/quizzes`),
+  updateQuiz: (courseId: string, quizId: string, data: any) =>
+    api.patch(`/teacher/curriculum/courses/${courseId}/quizzes/${quizId}`, data),
+  updateChapter: (courseId: string, chapterId: string, data: any) =>
+    api.patch(`/teacher/curriculum/courses/${courseId}/chapters/${chapterId}`, data),
+  updateLesson: (courseId: string, lessonId: string, data: any) =>
+    api.patch(`/teacher/curriculum/courses/${courseId}/lessons/${lessonId}`, data),
 };
 
 // Admin
@@ -166,6 +271,12 @@ export const adminApi = {
       params: teacherId ? { teacher_id: teacherId } : undefined,
     }),
   refunds: () => api.get("/admin/refunds"),
+  reviewOnboarding: (teacherId: string, action: "approve" | "reject", reason?: string) =>
+    api.patch(`/admin/teachers/${teacherId}/onboarding`, null, {
+      params: { action, reason },
+    }),
+  moderateCourse: (courseId: string, status: "approved" | "rejected") =>
+    api.patch(`/admin/courses/${courseId}/moderation`, null, { params: { moderation_status: status } }),
   approveRefund: (id: string) => api.patch(`/admin/refunds/${id}/approve`),
   // backend reads admin_note as query param
   rejectRefund: (id: string, note?: string) =>

@@ -1,7 +1,7 @@
 "use client";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { courseApi } from "@/lib/api";
+import { courseApi, teacherApi } from "@/lib/api";
 import { useDropzone } from "react-dropzone";
 import {
   Upload, CheckCircle, Loader2, X, FileVideo, FileText, Mic,
@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import Link from "next/link";
+import { TRANSCRIPTION_LANGS } from "@/lib/transcriptionLangs";
 
 const CATEGORIES = [
   "Mathematics","Physics","Chemistry","Biology","Programming",
@@ -38,6 +39,23 @@ const inputClass = "w-full px-4 py-3 bg-white border border-gray-200 rounded-xl 
 
 export default function CreateCoursePage() {
   const router = useRouter();
+
+  useEffect(() => {
+    let cancelled = false;
+    teacherApi
+      .onboardingStatus()
+      .then(({ data }) => {
+        if (cancelled) return;
+        if (data.onboarding_status !== "approved") {
+          router.replace("/teacher/onboarding");
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
+
   const [activeSection, setActiveSection] = useState<Section>("info");
   const [courseId,   setCourseId]   = useState<string | null>(null);
   const [courseSlug, setCourseSlug] = useState<string | null>(null);
@@ -50,6 +68,7 @@ export default function CreateCoursePage() {
     category:         "",
     difficulty_level: "beginner",
     language:         "English",
+    transcript_language: "",
   });
 
   const [files,          setFiles]          = useState<File[]>([]);
@@ -83,7 +102,11 @@ export default function CreateCoursePage() {
     setSaving(true);
     try {
       if (!courseId) {
-        const { data } = await courseApi.create({ ...info, price: parseFloat(info.price) });
+        const { data } = await courseApi.create({
+          ...info,
+          price: parseFloat(info.price),
+          transcript_language: info.transcript_language.trim() || undefined,
+        });
         setCourseId(data.id);
         setCourseSlug(data.slug);
         toast({ title: "Draft saved" });
@@ -131,7 +154,11 @@ export default function CreateCoursePage() {
           toast({ title: "AI has built your course!", description: "Review and publish when ready." });
         } else if (s.status === "failed") {
           clearInterval(interval);
-          toast({ title: "AI processing failed", variant: "destructive" });
+          toast({
+            title: "AI processing failed",
+            description: data.error || "Check materials and retry.",
+            variant: "destructive",
+          });
         }
       } catch {}
     }, 3000);
@@ -352,6 +379,27 @@ export default function CreateCoursePage() {
                     </div>
                   </div>
 
+                  <div>
+                    <label className={labelClass}>
+                      <Mic className="w-3.5 h-3.5 inline -mt-0.5 mr-1 text-gray-400" />
+                      Transcription language
+                    </label>
+                    <p className="text-xs text-gray-500 mb-1.5">
+                      Used only for Whisper when transcribing your video/audio. Course UI stays in your chosen language above.
+                    </p>
+                    <select
+                      value={info.transcript_language}
+                      onChange={(e) => setInfo({ ...info, transcript_language: e.target.value })}
+                      className={inputClass}
+                    >
+                      {TRANSCRIPTION_LANGS.map((l) => (
+                        <option key={l.value || "auto"} value={l.value}>
+                          {l.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
                   <button
                     onClick={handleSaveDraft}
                     disabled={saving || !info.title}
@@ -389,7 +437,10 @@ export default function CreateCoursePage() {
                     {isDragActive ? "Drop files here" : "Drag & drop your files here"}
                   </p>
                   <p className="text-gray-400 text-sm">or <span className="text-indigo-600 font-medium">click to browse</span></p>
-                  <p className="text-gray-300 text-xs mt-3">MP4 · MOV · AVI · MP3 · WAV · PDF · Max 2GB per file</p>
+                  <p className="text-gray-300 text-xs mt-3">
+                    Video: MP4, MOV, AVI, WebM (max 30 minutes, 2GB). Audio: MP3, WAV, M4A. Documents: PDF.
+                    Server also accepts Word/PPT uploads when encoded as doc/ppt MIME types.
+                  </p>
                 </div>
 
                 {/* File list */}

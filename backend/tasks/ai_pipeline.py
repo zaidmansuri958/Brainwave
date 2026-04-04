@@ -7,113 +7,219 @@ redis_client = redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379/0")
 AI_SERVICE_URL = os.getenv("AI_SERVICE_URL", "http://ai-services:8001")
 
 
-def update_status(course_id: str, field: str, value: str):
-    redis_client.hset(f"ai_status:{course_id}", field, value)
+def update_status(course_id: str, **kwargs):
+    for k, v in kwargs.items():
+        redis_client.hset(f"ai_status:{course_id}", k, str(v))
+
+
+def _whisper_lang(course_language: str) -> str:
+    """Map UI course language label to Whisper ISO 639-1 code."""
+    if not course_language:
+        return None
+    m = {
+        "English": "en",
+        "Hindi": "hi",
+        "Gujarati": "gu",
+        "Tamil": "ta",
+        "Telugu": "te",
+        "Marathi": "mr",
+        "Bengali": "bn",
+        "Kannada": "kn",
+        "Malayalam": "ml",
+        "Punjabi": "pa",
+        "Odia": "or",
+        "Urdu": "ur",
+    }
+    return m.get(course_language)
+
+
+def _resolve_transcription_language(course) -> str:
+    """
+    Course-level transcription language for Whisper.
+    Prefer explicit transcript_language (ISO code); else derive from course.language; else auto (None).
+    """
+    raw = getattr(course, "transcript_language", None)
+    if raw:
+        code = str(raw).strip().lower()
+        if code in ("", "auto"):
+            return None
+        if len(code) >= 2:
+            return code[:2]
+    return _whisper_lang(course.language or "")
 
 
 @celery_app.task(bind=True, max_retries=3)
 def process_course_material(self, course_id: str, material_ids: list):
-    """Full AI pipeline triggered after teacher uploads materials."""
+    """AI pipeline: transcribe/extract → moderate → structure → quizzes → index → thumbnails."""
     from app.database import SessionLocal
     from app.models.course import Course, CourseMaterial, Chapter, Lesson
-    from app.models.quiz import Quiz, QuizQuestion
     import json
 
     db = SessionLocal()
+    course = None
     try:
-        update_status(course_id, "ai_status", "processing")
-        update_status(course_id, "ai_progress", "10")
+        update_status(course_id, ai_status="processing", ai_progress="5", current_step="transcribe")
 
         course = db.query(Course).filter(Course.id == course_id).first()
         if not course:
             return
 
+        course.ai_last_error = None
+        course.ai_pipeline_step = "transcribe"
+        course.content_validation_status = "pending"
+        course.moderation_status = "pending"
+        db.commit()
+
+        lang = _resolve_transcription_language(course)
+        instruct_lang = course.language or "English"
+        whisper_code = lang or "auto"
+        redis_client.hset(f"ai_status:{course_id}", "transcription_language", whisper_code)
+
         combined_content = ""
-        
-        for i, material_id in enumerate(material_ids):
+        file_names = []
+
+        for material_id in material_ids:
             material = db.query(CourseMaterial).filter(CourseMaterial.id == material_id).first()
             if not material:
                 continue
-
+            file_names.append(material.file_name or "")
             material.processing_status = "processing"
             db.commit()
 
             content = ""
-
-            # Step 1: Download and transcribe/extract
             if material.file_type in ["video", "audio"]:
                 try:
+                    payload = {"file_url": material.file_url, "material_id": str(material_id)}
+                    if lang:
+                        payload["language"] = lang
                     resp = httpx.post(
                         f"{AI_SERVICE_URL}/transcribe",
-                        json={"file_url": material.file_url, "material_id": material_id},
-                        timeout=600
+                        json=payload,
+                        timeout=600,
                     )
                     if resp.status_code == 200:
-                        content = resp.json().get("text", "")
-                        update_status(course_id, "steps_completed", "transcription")
-                        update_status(course_id, "ai_progress", "30")
+                        data = resp.json()
+                        content = data.get("text", "")
+                        tl = data.get("language")
+                        if tl:
+                            redis_client.hset(f"ai_status:{course_id}", "detected_language", tl)
                 except Exception as e:
+                    material.processing_error = str(e)
                     print(f"Transcription failed: {e}")
-
             elif material.file_type in ["pdf", "doc", "ppt"]:
                 try:
                     resp = httpx.post(
                         f"{AI_SERVICE_URL}/extract-text",
                         json={"file_url": material.file_url, "file_type": material.file_type},
-                        timeout=120
+                        timeout=120,
                     )
                     if resp.status_code == 200:
                         content = resp.json().get("text", "")
                 except Exception as e:
+                    material.processing_error = str(e)
                     print(f"Text extraction failed: {e}")
 
-            combined_content += content + "\n\n"
+            material.extracted_text = content
             material.processing_status = "completed"
+            combined_content += (content or "") + "\n\n"
             db.commit()
 
-        # Step 2: Structure course
-        if combined_content and i == 0:
+        update_status(course_id, ai_progress="25", current_step="moderate", steps_completed="transcription")
+
+        # Moderation
+        try:
+            mod = httpx.post(
+                f"{AI_SERVICE_URL}/moderate-content",
+                json={
+                    "title": course.title,
+                    "category": course.category or "",
+                    "body_text": combined_content[:16000],
+                    "file_names": file_names,
+                },
+                timeout=120,
+            )
+            if mod.status_code == 200:
+                mr = mod.json()
+                course.content_validation_details = mr
+                if mr.get("allowed"):
+                    course.content_validation_status = "approved"
+                    course.moderation_status = "approved"
+                else:
+                    course.content_validation_status = "rejected"
+                    course.moderation_status = "rejected"
+                    course.ai_last_error = "Content moderation failed: " + ",".join(mr.get("reasons") or [])
+            else:
+                course.content_validation_status = "approved"
+                course.moderation_status = "approved"
+        except Exception as e:
+            print(f"Moderation failed: {e}")
+            course.content_validation_status = "approved"
+            course.moderation_status = "approved"
+
+        db.commit()
+
+        if course.moderation_status == "rejected":
+            course.ai_processing_status = "failed"
+            course.ai_pipeline_step = "moderate"
+            course.ai_last_error = course.ai_last_error or "Moderation rejected"
+            db.commit()
+            update_status(course_id, ai_status="failed", ai_progress="100", error=course.ai_last_error)
+            return
+
+        update_status(course_id, ai_progress="40", current_step="structure", steps_completed="transcription,moderate")
+
+        # Structure (after ALL materials — fixed bug: no longer `i == 0`)
+        if combined_content.strip():
             try:
                 resp = httpx.post(
                     f"{AI_SERVICE_URL}/structure-course",
-                    json={"content": combined_content[:8000]},
-                    timeout=180
+                    json={"content": combined_content[:8000], "language": instruct_lang},
+                    timeout=180,
                 )
                 if resp.status_code == 200:
                     structure = resp.json()
                     if isinstance(structure, str):
                         structure = json.loads(structure)
-
-                    # Save to DB
-                    save_course_structure(db, course, structure)
-                    update_status(course_id, "steps_completed", "transcription,structuring")
-                    update_status(course_id, "ai_progress", "55")
+                    save_course_structure(db, course, structure, lesson_transcript_lang=lang or _whisper_lang(course.language) or "en")
+                    update_status(
+                        course_id,
+                        ai_progress="55",
+                        steps_completed="transcription,moderate,structuring",
+                    )
             except Exception as e:
+                course.ai_last_error = f"structuring: {e}"
                 print(f"Course structuring failed: {e}")
 
-        # Step 3: Generate quiz questions
+        db.refresh(course)
+
+        # Quizzes per chapter
+        update_status(course_id, ai_progress="65", current_step="quizzes")
         try:
-            chapters = db.query(Chapter).filter(Chapter.course_id == course_id).all()
+            chapters = db.query(Chapter).filter(Chapter.course_id == course_id).order_by(Chapter.order_index).all()
             for chapter in chapters:
                 chapter_content = " ".join([l.ai_summary or l.title for l in chapter.lessons])
-                if chapter_content:
-                    resp = httpx.post(
-                        f"{AI_SERVICE_URL}/generate-quiz",
-                        json={"content": chapter_content, "num_questions": 5},
-                        timeout=120
-                    )
-                    if resp.status_code == 200:
-                        quiz_data = resp.json()
-                        if isinstance(quiz_data, str):
-                            quiz_data = json.loads(quiz_data)
-                        save_quiz(db, course_id, chapter, quiz_data)
-            update_status(course_id, "steps_completed", "transcription,structuring,quizzes")
-            update_status(course_id, "ai_progress", "70")
+                if not chapter_content:
+                    continue
+                resp = httpx.post(
+                    f"{AI_SERVICE_URL}/generate-quiz",
+                    json={
+                        "content": chapter_content,
+                        "num_questions": 5,
+                        "language": instruct_lang,
+                    },
+                    timeout=120,
+                )
+                if resp.status_code == 200:
+                    quiz_data = resp.json()
+                    if isinstance(quiz_data, str):
+                        quiz_data = json.loads(quiz_data)
+                    save_quiz(db, course_id, chapter, quiz_data)
+            update_status(course_id, ai_progress="75", steps_completed="transcription,moderate,structuring,quizzes")
         except Exception as e:
             print(f"Quiz generation failed: {e}")
 
-        # Step 4: Index for chatbot (Qdrant)
-        if combined_content:
+        # Index
+        if combined_content.strip():
             try:
                 httpx.post(
                     f"{AI_SERVICE_URL}/index",
@@ -122,74 +228,104 @@ def process_course_material(self, course_id: str, material_ids: list):
                         "text": combined_content,
                         "lesson_id": str(course.id),
                         "chapter_id": str(course.id),
-                        "source_type": "course_content"
+                        "source_type": "course_content",
                     },
-                    timeout=300
+                    timeout=300,
                 )
-                update_status(course_id, "steps_completed", "transcription,structuring,quizzes,indexing")
-                update_status(course_id, "ai_progress", "85")
+                update_status(
+                    course_id,
+                    ai_progress="85",
+                    steps_completed="transcription,moderate,structuring,quizzes,indexing",
+                )
             except Exception as e:
                 print(f"Indexing failed: {e}")
 
-        # Step 5: Generate thumbnail
+        # Course banner thumbnail
+        update_status(course_id, ai_progress="90", current_step="thumbnail")
         try:
+            teacher = course.teacher
+            face_url = getattr(teacher, "avatar_url", None) if teacher else None
             resp = httpx.post(
                 f"{AI_SERVICE_URL}/generate-thumbnail",
                 json={
                     "title": course.title,
                     "category": course.category or "Education",
-                    "description": course.description or ""
+                    "description": course.description or "",
+                    "faculty_face_image_url": face_url,
                 },
-                timeout=120
+                timeout=120,
             )
             if resp.status_code == 200:
                 thumbnail_url = resp.json().get("thumbnail_url")
                 if thumbnail_url:
                     course.thumbnail_url = thumbnail_url
                     db.commit()
-            update_status(course_id, "steps_completed", "transcription,structuring,quizzes,indexing,thumbnail")
-            update_status(course_id, "ai_progress", "95")
         except Exception as e:
             print(f"Thumbnail generation failed: {e}")
 
-        # Final
-        course.ai_processing_status = "completed"
-        db.commit()
-        update_status(course_id, "ai_progress", "100")
-        update_status(course_id, "ai_status", "completed")
+        # Per-lesson thumbnails (first pass)
+        try:
+            lessons = (
+                db.query(Lesson).filter(Lesson.course_id == course_id).order_by(Lesson.order_index).all()
+            )
+            for les in lessons[:20]:
+                ch = db.query(Chapter).filter(Chapter.id == les.chapter_id).first()
+                r2 = httpx.post(
+                    f"{AI_SERVICE_URL}/generate-thumbnail",
+                    json={
+                        "title": course.title,
+                        "category": course.category or "Education",
+                        "description": les.ai_summary or les.title,
+                        "lesson_title": les.title,
+                        "module_title": ch.title if ch else "",
+                        "faculty_face_image_url": face_url,
+                    },
+                    timeout=120,
+                )
+                if r2.status_code == 200:
+                    u = r2.json().get("thumbnail_url")
+                    if u:
+                        les.thumbnail_url = u
+            db.commit()
+        except Exception as e:
+            print(f"Lesson thumbnails failed: {e}")
 
-        # Notify teacher
+        course.ai_processing_status = "completed"
+        course.ai_pipeline_step = "done"
+        db.commit()
+        update_status(course_id, ai_progress="100", ai_status="completed", steps_completed="all")
+
         from app.services.notification_service import create_notification
         create_notification(
-            db, str(course.teacher_id), "ai_processing_complete",
+            db,
+            str(course.teacher_id),
+            "ai_processing_complete",
             "Course Processing Complete!",
             f"Your course '{course.title}' has been processed. Please review and publish.",
-            {"course_id": course_id}
+            {"course_id": course_id},
         )
         from tasks.email_tasks import notify_teacher_processing_complete
         notify_teacher_processing_complete.delay(course_id)
 
     except Exception as e:
-        update_status(course_id, "ai_status", "failed")
-        update_status(course_id, "error", str(e))
+        update_status(course_id, ai_status="failed", error=str(e))
         course = db.query(Course).filter(Course.id == course_id).first()
         if course:
             course.ai_processing_status = "failed"
+            course.ai_last_error = str(e)
             db.commit()
         raise self.retry(exc=e, countdown=60)
     finally:
         db.close()
 
 
-def save_course_structure(db, course, structure: dict):
+def save_course_structure(db, course, structure: dict, lesson_transcript_lang: str = None):
     from app.models.course import Chapter, Lesson
-    import uuid
+    import json
 
     if isinstance(structure, str):
-        import json
         structure = json.loads(structure)
 
-    # Update course info
     if structure.get("course_title"):
         course.title = structure["course_title"]
     if structure.get("course_description"):
@@ -207,7 +343,7 @@ def save_course_structure(db, course, structure: dict):
             course_id=course.id,
             title=ch_data.get("title", "Chapter"),
             description=ch_data.get("description"),
-            order_index=ch_data.get("order", 1)
+            order_index=ch_data.get("order", 1),
         )
         db.add(chapter)
         db.flush()
@@ -220,7 +356,8 @@ def save_course_structure(db, course, structure: dict):
                 lesson_type="video",
                 order_index=lesson_data.get("order", 1),
                 ai_summary=lesson_data.get("summary"),
-                is_published=True
+                is_published=True,
+                transcript_language=lesson_transcript_lang,
             )
             db.add(lesson)
 
@@ -230,10 +367,9 @@ def save_course_structure(db, course, structure: dict):
 
 def save_quiz(db, course_id: str, chapter, quiz_data: dict):
     from app.models.quiz import Quiz, QuizQuestion
-    import uuid
+    import json
 
     if isinstance(quiz_data, str):
-        import json
         quiz_data = json.loads(quiz_data)
 
     questions_data = quiz_data.get("questions", [])
@@ -242,9 +378,10 @@ def save_quiz(db, course_id: str, chapter, quiz_data: dict):
 
     quiz = Quiz(
         course_id=course_id,
+        chapter_id=chapter.id,
         title=f"Quiz: {chapter.title}",
         max_attempts=3,
-        pass_percent=60
+        pass_percent=60,
     )
     db.add(quiz)
     db.flush()
@@ -258,8 +395,25 @@ def save_quiz(db, course_id: str, chapter, quiz_data: dict):
             correct_answer=q.get("correct_answer"),
             explanation=q.get("explanation"),
             order_index=i,
-            ai_generated=True
+            ai_generated=True,
         )
         db.add(question)
 
     db.commit()
+
+
+@celery_app.task
+def retry_ai_pipeline_step(course_id: str, step: str, material_ids: list = None):
+    """Re-run full pipeline (simplified) or specific step — reuse process_course_material."""
+    mids = material_ids or []
+    if not mids:
+        from app.database import SessionLocal
+        from app.models.course import CourseMaterial
+
+        db = SessionLocal()
+        try:
+            mats = db.query(CourseMaterial).filter(CourseMaterial.course_id == course_id).all()
+            mids = [str(m.id) for m in mats]
+        finally:
+            db.close()
+    process_course_material.delay(course_id, mids)

@@ -8,6 +8,7 @@ from app.models.course import Course
 from app.models.user import TeacherProfile
 from fastapi import HTTPException
 import uuid
+from app.utils.pricing import platform_cut_percent_for_enrollments
 
 razorpay_client = razorpay.Client(auth=(settings.razorpay_key_id, settings.razorpay_key_secret))
 
@@ -53,9 +54,14 @@ def record_payment(
     razorpay_order_id: str,
     razorpay_payment_id: str,
     total_amount: float,
-    currency: str = "INR"
+    currency: str = "INR",
+    tier_enrollment_count: int = None,
 ) -> Payment:
-    platform_cut = total_amount * settings.platform_cut_percent / 100
+    if tier_enrollment_count is not None and payment_type == "course_purchase":
+        pct = platform_cut_percent_for_enrollments(int(tier_enrollment_count))
+    else:
+        pct = float(settings.platform_cut_percent)
+    platform_cut = total_amount * pct / 100
     teacher_earning = total_amount - platform_cut
 
     payment = Payment(
@@ -67,6 +73,7 @@ def record_payment(
         razorpay_payment_id=razorpay_payment_id,
         total_amount=total_amount,
         platform_cut=platform_cut,
+        platform_cut_percent_applied=pct,
         teacher_earning=teacher_earning,
         currency=currency,
         status="completed"

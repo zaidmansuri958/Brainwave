@@ -1,6 +1,7 @@
 "use client";
+import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { enrollmentApi, certApi } from "@/lib/api";
+import { enrollmentApi, certApi, materialsApi, mockTestsApi } from "@/lib/api";
 import { useAuthStore } from "@/stores/authStore";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -8,7 +9,7 @@ import Link from "next/link";
 import {
   BookOpen, Award, TrendingUp, Search, ArrowRight,
   Play, CheckCircle2, Clock, ExternalLink, Download,
-  Sparkles, Users,
+  Sparkles, Users, FileStack, ClipboardList,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -61,8 +62,20 @@ export default function StudentDashboard() {
     queryFn: () => certApi.myCertificates().then((r) => r.data),
   });
 
+  const { data: materialPurchases } = useQuery({
+    queryKey: ["my-material-purchases"],
+    queryFn: () => materialsApi.myPurchases().then((r) => r.data),
+  });
+
+  const { data: mockPkgs } = useQuery({
+    queryKey: ["my-mock-packages"],
+    queryFn: () => mockTestsApi.myPackages().then((r) => r.data),
+  });
+
   const courses = enrolledData?.courses || [];
   const certificates = certData?.certificates || [];
+  const matList = materialPurchases?.purchases || [];
+  const mockList = mockPkgs?.packages || [];
   const inProgress = courses.filter((c: any) => (c.progress || 0) > 0 && (c.progress || 0) < 100);
   const completed = courses.filter((c: any) => (c.progress || 0) >= 100);
 
@@ -191,6 +204,93 @@ export default function StudentDashboard() {
             </div>
           )}
         </section>
+
+        {/* ── Materials & mocks ── */}
+        {(matList.length > 0 || mockList.length > 0) && (
+          <section className="mb-12">
+            <h2 className="font-display font-bold text-xl text-gray-900 mb-5">Downloads & practice</h2>
+            <div className="grid md:grid-cols-2 gap-5">
+              {matList.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4 }}
+                  className="group rounded-2xl border border-gray-100/90 bg-white p-5 shadow-card transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card-hover"
+                >
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                      <FileStack className="w-5 h-5" />
+                    </div>
+                    <span className="font-display font-semibold text-gray-900">Study materials</span>
+                  </div>
+                  <ul className="space-y-2">
+                    {matList.map((m: { product_id: string; title: string; slug?: string }) => (
+                      <li key={m.product_id}>
+                        <Link
+                          href={m.slug ? `/catalog/materials/${m.slug}` : "/catalog/materials"}
+                          className="text-sm font-medium text-indigo-600 transition-colors hover:text-indigo-800"
+                        >
+                          {m.title}
+                          <span className="ml-1 inline-block opacity-0 transition-transform group-hover:translate-x-0.5 group-hover:opacity-100 text-indigo-400">
+                            →
+                          </span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link
+                    href="/catalog/materials"
+                    className="text-xs font-semibold text-gray-500 mt-4 inline-flex items-center gap-1 hover:text-indigo-600 transition-colors"
+                  >
+                    Browse catalog <ArrowRight className="w-3 h-3" />
+                  </Link>
+                </motion.div>
+              )}
+              {mockList.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: 0.06 }}
+                  className="group rounded-2xl border border-gray-100/90 bg-white p-5 shadow-card transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card-hover"
+                >
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+                      <ClipboardList className="w-5 h-5" />
+                    </div>
+                    <span className="font-display font-semibold text-gray-900">Mock tests</span>
+                  </div>
+                  <ul className="space-y-2">
+                    {mockList.map((p: { package_id: string; title: string; papers: { id: string; title: string }[] }) => (
+                      <li key={p.package_id}>
+                        <p className="text-sm font-medium text-gray-800">{p.title}</p>
+                        <ul className="ml-2 mt-1 space-y-1">
+                          {(p.papers || []).map((paper) => (
+                            <li key={paper.id}>
+                              <Link
+                                href={`/mock-tests/take/${paper.id}`}
+                                className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
+                              >
+                                {paper.title}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link
+                    href="/catalog/mock-tests"
+                    className="text-xs font-semibold text-gray-500 mt-4 inline-flex items-center gap-1 hover:text-indigo-600 transition-colors"
+                  >
+                    Browse catalog <ArrowRight className="w-3 h-3" />
+                  </Link>
+                </motion.div>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* ── Certificates ── */}
         {certificates.length > 0 && (

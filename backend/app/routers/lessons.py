@@ -6,6 +6,7 @@ from app.models.enrollment import Enrollment
 from app.models.progress import StudentProgress
 from app.middleware.auth_middleware import get_current_user
 from app.models.user import User
+from app.utils.enrollment_access import get_valid_enrollment
 from app.services.storage_service import get_presigned_url
 from datetime import datetime, timezone
 from typing import Optional
@@ -25,13 +26,9 @@ async def get_video_url(
 
     # Check enrollment (unless teacher)
     if current_user.role == "student":
-        enrollment = db.query(Enrollment).filter(
-            Enrollment.student_id == current_user.id,
-            Enrollment.course_id == lesson.course_id,
-            Enrollment.is_active == True
-        ).first()
+        enrollment = get_valid_enrollment(db, current_user.id, str(lesson.course_id))
         if not enrollment:
-            raise HTTPException(status_code=403, detail="Not enrolled in this course")
+            raise HTTPException(status_code=403, detail="Not enrolled or access expired")
 
     return {
         "master_url": lesson.video_url,
@@ -51,13 +48,9 @@ async def get_lesson(
         raise HTTPException(status_code=404, detail="Lesson not found")
 
     if current_user.role == "student":
-        enrollment = db.query(Enrollment).filter(
-            Enrollment.student_id == current_user.id,
-            Enrollment.course_id == course_id,
-            Enrollment.is_active == True
-        ).first()
+        enrollment = get_valid_enrollment(db, current_user.id, course_id)
         if not enrollment:
-            raise HTTPException(status_code=403, detail="Not enrolled")
+            raise HTTPException(status_code=403, detail="Not enrolled or access expired")
 
     progress = db.query(StudentProgress).filter(
         StudentProgress.student_id == current_user.id,

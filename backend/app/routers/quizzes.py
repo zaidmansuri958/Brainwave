@@ -1,13 +1,20 @@
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.quiz import Quiz, QuizQuestion, QuizAttempt
 from app.models.enrollment import Enrollment
 from app.middleware.auth_middleware import get_current_user
 from app.models.user import User
+from app.utils.enrollment_access import get_valid_enrollment
 from datetime import datetime, timezone
 
 router = APIRouter(prefix="/quizzes", tags=["Quizzes"])
+
+
+class QuizAttemptBody(BaseModel):
+    answers: dict
+    time_taken_seconds: int = 0
 
 
 @router.get("/{quiz_id}")
@@ -22,13 +29,9 @@ async def get_quiz(
 
     # Check enrollment
     if current_user.role == "student":
-        enrollment = db.query(Enrollment).filter(
-            Enrollment.student_id == current_user.id,
-            Enrollment.course_id == quiz.course_id,
-            Enrollment.is_active == True
-        ).first()
+        enrollment = get_valid_enrollment(db, current_user.id, str(quiz.course_id))
         if not enrollment:
-            raise HTTPException(status_code=403, detail="Not enrolled")
+            raise HTTPException(status_code=403, detail="Not enrolled or access expired")
 
     # Count attempts
     attempt_count = db.query(QuizAttempt).filter(
@@ -63,14 +66,20 @@ async def get_quiz(
 @router.post("/{quiz_id}/attempt")
 async def submit_quiz(
     quiz_id: str,
-    answers: dict,
-    time_taken_seconds: int = 0,
+    body: QuizAttemptBody,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    answers = body.answers
+    time_taken_seconds = body.time_taken_seconds
     quiz = db.query(Quiz).filter(Quiz.id == quiz_id).first()
     if not quiz:
         raise HTTPException(status_code=404, detail="Quiz not found")
+
+    if current_user.role == "student":
+        enrollment = get_valid_enrollment(db, current_user.id, str(quiz.course_id))
+        if not enrollment:
+            raise HTTPException(status_code=403, detail="Not enrolled or access expired")
 
     attempt_count = db.query(QuizAttempt).filter(
         QuizAttempt.student_id == current_user.id,

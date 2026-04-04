@@ -48,13 +48,24 @@ export default function TeacherDashboard() {
     queryFn: () => teacherApi.dashboard().then((r) => r.data),
   });
 
+  const { data: ob } = useQuery({
+    queryKey: ["onboarding-status"],
+    queryFn: () => teacherApi.onboardingStatus().then((r) => r.data),
+  });
+
+  const { data: analytics } = useQuery({
+    queryKey: ["teacher-analytics"],
+    queryFn: () => teacherApi.analytics().then((r) => r.data),
+  });
+
   const earnings     = data?.my_earnings     || 0;
   const pendingPayout = data?.pending_payout  || 0;
   const totalStudents = data?.total_students  || 0;
   const activeCourses = data?.active_courses  || 0;
-  // Derive commission rate based on student count
-  const commissionRate = totalStudents >= 5000 ? 8 : totalStudents >= 500 ? 9 : 10;
-  const nextTierStudents = totalStudents >= 5000 ? null : totalStudents >= 500 ? 5000 : 500;
+  const commissionRate =
+    totalStudents > 10000 ? 10 : totalStudents > 2000 ? 12 : 15;
+  const nextTierStudents =
+    totalStudents > 10000 ? null : totalStudents > 2000 ? 10000 : 2000;
   const progressToNext = nextTierStudents
     ? Math.min(Math.round((totalStudents / nextTierStudents) * 100), 100)
     : 100;
@@ -70,14 +81,83 @@ export default function TeacherDashboard() {
           <div>
             <h1 className="font-display font-extrabold text-3xl text-gray-900">Teacher Studio</h1>
             <p className="text-gray-500 mt-1 text-sm">Manage your courses, track revenue, reach more students.</p>
+            {ob && ob.onboarding_status && ob.onboarding_status !== "approved" && (
+              <p className="text-amber-700 text-sm mt-2">
+                Verification: {ob.onboarding_status}.{" "}
+                <Link href="/teacher/onboarding" className="underline font-semibold">
+                  Complete onboarding
+                </Link>
+              </p>
+            )}
           </div>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/teacher/onboarding"
+              className="inline-flex items-center gap-2 border border-gray-200 bg-white text-gray-800 px-4 py-2.5 rounded-xl font-semibold text-sm"
+            >
+              Verification
+            </Link>
+            <Link
+              href="/teacher/courses/new"
+              className="inline-flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-indigo-700 shadow-button-indigo transition-colors"
+            >
+              <Plus className="w-4 h-4" /> New course
+            </Link>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2 mb-10">
           <Link
-            href="/teacher/courses/new"
-            className="inline-flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-indigo-700 shadow-button-indigo transition-colors"
+            href="/teacher/study-materials"
+            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 hover:border-indigo-200"
           >
-            <Plus className="w-4 h-4" /> New course
+            Study materials
+          </Link>
+          <Link
+            href="/teacher/mock-tests"
+            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 hover:border-indigo-200"
+          >
+            Mock tests
+          </Link>
+          <Link
+            href="/teacher/availability"
+            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 hover:border-indigo-200"
+          >
+            Doubt slots
           </Link>
         </div>
+
+        {analytics?.courses?.length > 0 && (
+          <div className="mb-10 bg-white rounded-2xl border border-gray-100 p-5">
+            <h2 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <BarChart2 className="w-5 h-5 text-indigo-600" /> Course analytics
+            </h2>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="text-left text-gray-500 border-b">
+                    <th className="pb-2 pr-4">Course</th>
+                    <th className="pb-2 pr-4">Enrollments</th>
+                    <th className="pb-2 pr-4">Revenue</th>
+                    <th className="pb-2">Avg quiz</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {analytics.courses.map((c: any) => (
+                    <tr key={c.course_id} className="border-b border-gray-50">
+                      <td className="py-2 pr-4 font-medium text-gray-900">{c.title}</td>
+                      <td className="py-2 pr-4">{c.enrollments}</td>
+                      <td className="py-2 pr-4">{formatPrice(c.revenue)}</td>
+                      <td className="py-2">
+                        {c.avg_quiz_score != null ? `${c.avg_quiz_score.toFixed(1)}%` : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         {/* ── Stats Grid ── */}
         {isLoading ? (

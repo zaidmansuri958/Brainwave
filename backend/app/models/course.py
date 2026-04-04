@@ -22,6 +22,8 @@ class Course(Base):
     tags = Column(ARRAY(String), nullable=True)
     difficulty_level = Column(String(20), nullable=True)
     language = Column(String(50), default="English")
+    # Whisper ISO 639-1 code for transcription (e.g. hi, ta); null = auto-detect from audio
+    transcript_language = Column(String(16), nullable=True)
     status = Column(String(20), default="draft")
     total_chapters = Column(Integer, default=0)
     total_duration_minutes = Column(Integer, default=0)
@@ -32,6 +34,14 @@ class Course(Base):
     quiz_pass_percent = Column(Integer, default=60)
     certificate_enabled = Column(Boolean, default=True)
     ai_processing_status = Column(String(30), default="pending")
+    ai_last_error = Column(Text, nullable=True)
+    ai_pipeline_step = Column(String(50), nullable=True)  # last completed or failed step id
+    delivery_mode = Column(String(30), default="video_course")  # video_course, materials_only
+    moderation_status = Column(String(30), default="pending")  # pending, approved, rejected, flagged
+    content_validation_status = Column(String(30), default="pending")
+    content_validation_details = Column(JSONB, nullable=True)
+    default_access_months = Column(Integer, nullable=True)  # null = lifetime access
+    module_lock_enabled = Column(Boolean, default=True)
     is_featured = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
@@ -64,6 +74,7 @@ class Chapter(Base):
     # Relationships
     course = relationship("Course", back_populates="chapters")
     lessons = relationship("Lesson", back_populates="chapter", cascade="all, delete-orphan", order_by="Lesson.order_index")
+    quizzes = relationship("Quiz", back_populates="chapter")
 
 
 class Lesson(Base):
@@ -78,7 +89,9 @@ class Lesson(Base):
     duration_seconds = Column(Integer, nullable=True)
     video_url = Column(String(500), nullable=True)
     document_url = Column(String(500), nullable=True)
+    thumbnail_url = Column(String(500), nullable=True)
     raw_transcript = Column(Text, nullable=True)
+    transcript_language = Column(String(16), nullable=True)
     ai_summary = Column(Text, nullable=True)
     is_published = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -101,6 +114,7 @@ class CourseMaterial(Base):
     file_size_bytes = Column(BigInteger, nullable=True)
     processing_status = Column(String(30), default="pending")
     processing_error = Column(Text, nullable=True)
+    extracted_text = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships

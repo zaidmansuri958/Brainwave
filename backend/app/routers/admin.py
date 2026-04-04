@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from app.database import get_db
 from app.middleware.auth_middleware import get_current_admin
 from app.models.user import User, TeacherProfile
@@ -86,7 +86,9 @@ async def pending_verifications(
     current_user: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
-    profiles = db.query(TeacherProfile).filter(TeacherProfile.identity_verified == False).all()
+    profiles = db.query(TeacherProfile).filter(
+        or_(TeacherProfile.identity_verified == False, TeacherProfile.onboarding_status == "submitted")
+    ).all()
     result = []
     for p in profiles:
         user = db.query(User).filter(User.id == p.user_id).first()
@@ -95,6 +97,14 @@ async def pending_verifications(
             "full_name": user.full_name if user else "Unknown",
             "email": user.email if user else "",
             "verification_documents": p.verification_documents,
+            "onboarding_status": p.onboarding_status,
+            "legal_name": p.legal_name,
+            "years_teaching": p.years_teaching,
+            "past_employers": p.past_employers,
+            "highest_degree": p.highest_degree,
+            "degree_proof_url": p.degree_proof_url,
+            "aadhaar_doc_url": p.aadhaar_doc_url,
+            "pan_doc_url": p.pan_doc_url,
             "created_at": p.created_at.isoformat()
         })
     return {"pending": result}
@@ -116,6 +126,10 @@ async def verify_teacher(
     profile.identity_verified = identity_verified
     profile.expert_verified = expert_verified
     profile.outcome_verified = outcome_verified
+    if identity_verified and profile.onboarding_status == "submitted":
+        profile.onboarding_status = "approved"
+        profile.onboarding_reviewed_at = datetime.utcnow()
+        profile.rejection_reason = None
 
     user = db.query(User).filter(User.id == teacher_id).first()
     if user:
@@ -131,6 +145,62 @@ async def verify_teacher(
     )
 
     return {"message": "Teacher verified"}
+
+
+@router.patch("/teachers/{teacher_id}/onboarding")
+async def review_onboarding(
+    teacher_id: str,
+    action: str = Query(...),  # approve | reject
+    reason: str = None,
+    current_user: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    profile = db.query(TeacherProfile).filter(TeacherProfile.user_id == teacher_id).first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Teacher profile not found")
+    if action == "approve":
+        profile.onboarding_status = "approved"
+        profile.identity_verified = True
+        profile.onboarding_reviewed_at = datetime.utcnow()
+        profile.rejection_reason = None
+    elif action == "reject":
+        profile.onboarding_status = "rejected"
+        profile.rejection_reason = reason or "Please update your application."
+        profile.onboarding_reviewed_at = datetime.utcnow()
+    else:
+        raise HTTPException(status_code=400, detail="action must be approve or reject")
+    db.commit()
+    create_notification(
+        db, teacher_id, "onboarding_update",
+        "Onboarding update",
+        "Your teacher application was approved. You can create courses."
+        if action == "approve"
+        else f"Application needs attention: {profile.rejection_reason}",
+        {},
+    )
+    return {"message": "ok", "onboarding_status": profile.onboarding_status}
+
+
+@router.patch("/courses/{course_id}/moderation")
+async def admin_course_moderation(
+    course_id: str,
+    moderation_status: str = Query(...),  # approved | rejected
+    current_user: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    course = db.query(Course).filter(Course.id == course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    if moderation_status == "approved":
+        course.moderation_status = "approved"
+        course.content_validation_status = "approved"
+    elif moderation_status == "rejected":
+        course.moderation_status = "rejected"
+        course.content_validation_status = "rejected"
+    else:
+        raise HTTPException(status_code=400, detail="Invalid status")
+    db.commit()
+    return {"message": "updated"}
 
 
 @router.get("/courses")
@@ -149,7 +219,10 @@ async def get_all_courses(
                 "price": float(c.price),
                 "enrolled_count": c.enrolled_count,
                 "is_featured": c.is_featured,
-                "created_at": c.created_at.isoformat()
+                "created_at": c.created_at.isoformat(),
+                "moderation_status": getattr(c, "moderation_status", None),
+                "content_validation_status": getattr(c, "content_validation_status", None),
+                "ai_processing_status": c.ai_processing_status,
             }
             for c in courses
         ]

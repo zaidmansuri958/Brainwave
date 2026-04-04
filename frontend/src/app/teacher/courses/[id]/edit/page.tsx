@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import { Save, Loader2, ArrowLeft, Eye } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { CourseManageNav } from "@/components/teacher/CourseManageNav";
+import { TRANSCRIPTION_LANGS } from "@/lib/transcriptionLangs";
 
 const inputClass =
   "w-full bg-gray-50 text-gray-900 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all text-sm placeholder:text-gray-300";
@@ -26,6 +28,10 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
     what_you_will_learn: [] as string[],
     prerequisites: [] as string[],
     tags: [] as string[],
+    delivery_mode: "video_course",
+    default_access_months: "",
+    module_lock_enabled: true,
+    transcript_language: "",
   });
 
   const [newLearning, setNewLearning] = useState("");
@@ -43,12 +49,21 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
         title: course.title || "",
         description: course.description || "",
         price: course.price || 0,
-        level: course.level || "beginner",
+        level: course.level || course.difficulty_level || "beginner",
         category: course.category || "",
         language: course.language || "English",
         what_you_will_learn: course.what_you_will_learn || [],
         prerequisites: course.prerequisites || [],
         tags: course.tags || [],
+        delivery_mode: course.delivery_mode || "video_course",
+        default_access_months:
+          course.default_access_months != null && course.default_access_months !== undefined
+            ? String(course.default_access_months)
+            : "",
+        module_lock_enabled: course.module_lock_enabled !== false,
+        transcript_language: course.transcript_language != null && course.transcript_language !== undefined
+          ? String(course.transcript_language)
+          : "",
       });
     }
   }, [course]);
@@ -74,7 +89,22 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateCourse.mutate(form);
+    const {
+      level,
+      default_access_months: accessStr,
+      delivery_mode,
+      module_lock_enabled,
+      transcript_language: tl,
+      ...rest
+    } = form;
+    updateCourse.mutate({
+      ...rest,
+      difficulty_level: level,
+      default_access_months: accessStr.trim() === "" ? null : Number(accessStr),
+      delivery_mode,
+      module_lock_enabled,
+      transcript_language: tl.trim() === "" ? null : tl.trim(),
+    } as Parameters<typeof teacherApi.updateCourse>[1]);
   };
 
   const addToList = (field: "what_you_will_learn" | "prerequisites" | "tags", value: string, setter: (v: string) => void) => {
@@ -104,7 +134,7 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
 
       <div className="max-w-3xl mx-auto px-4 py-8">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
+        <div className="flex items-center gap-4 mb-4">
           <Link href="/teacher/courses" className="text-gray-400 hover:text-gray-700 transition-colors">
             <ArrowLeft className="h-5 w-5" />
           </Link>
@@ -139,6 +169,8 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
             </button>
           </div>
         </div>
+
+        <CourseManageNav courseId={params.id} />
 
         <form id="edit-form" onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Info */}
@@ -207,6 +239,57 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
                   className={inputClass}
                 />
               </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-4">
+            <h2 className="font-display font-bold text-gray-900">Delivery & access</h2>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Delivery mode</label>
+                <select
+                  value={form.delivery_mode}
+                  onChange={(e) => setForm({ ...form, delivery_mode: e.target.value })}
+                  className={inputClass}
+                >
+                  <option value="video_course">Video course</option>
+                  <option value="materials_only">Materials only</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Access length (months)</label>
+                <input
+                  type="number"
+                  min={0}
+                  placeholder="Empty = lifetime"
+                  value={form.default_access_months}
+                  onChange={(e) => setForm({ ...form, default_access_months: e.target.value })}
+                  className={inputClass}
+                />
+              </div>
+            </div>
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={form.module_lock_enabled}
+                onChange={(e) => setForm({ ...form, module_lock_enabled: e.target.checked })}
+              />
+              Require passing chapter quiz to unlock the next module
+            </label>
+            <div className="pt-2 border-t border-gray-100">
+              <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Transcription language (Whisper)</label>
+              <p className="text-xs text-gray-500 mb-2">Used when AI transcribes uploaded video/audio. Leave as auto if unsure.</p>
+              <select
+                value={form.transcript_language}
+                onChange={(e) => setForm({ ...form, transcript_language: e.target.value })}
+                className={inputClass}
+              >
+                {TRANSCRIPTION_LANGS.map((l) => (
+                  <option key={l.value || "auto"} value={l.value}>
+                    {l.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 

@@ -31,7 +31,7 @@ def extract_audio(video_path: str) -> str:
     return audio_path
 
 
-def transcribe_file(file_path: str) -> dict:
+def transcribe_file(file_path: str, language: str = None) -> dict:
     """
     Transcribe audio or video file.
     Returns: { "text": str, "segments": [{start, end, text}], "language": str }
@@ -43,13 +43,15 @@ def transcribe_file(file_path: str) -> dict:
     if ext in [".mp4", ".avi", ".webm", ".mkv", ".mov"]:
         audio_path = extract_audio(file_path)
         try:
-            segments_iter, info = model.transcribe(audio_path, language=None, task="transcribe")
+            lang = language if language else None
+            segments_iter, info = model.transcribe(audio_path, language=lang, task="transcribe")
             segments_list = list(segments_iter)
         finally:
             if os.path.exists(audio_path):
                 os.remove(audio_path)
     else:
-        segments_iter, info = model.transcribe(file_path, language=None, task="transcribe")
+        lang = language if language else None
+        segments_iter, info = model.transcribe(file_path, language=lang, task="transcribe")
         segments_list = list(segments_iter)
 
     full_text = " ".join(s.text for s in segments_list).strip()
@@ -63,7 +65,7 @@ def transcribe_file(file_path: str) -> dict:
     }
 
 
-def transcribe_from_url(file_url: str, material_id: str) -> dict:
+def transcribe_from_url(file_url: str, material_id: str, language: str = None) -> dict:
     """Download file from URL and transcribe."""
     import httpx
 
@@ -76,7 +78,7 @@ def transcribe_from_url(file_url: str, material_id: str) -> dict:
                 for chunk in response.iter_bytes():
                     f.write(chunk)
 
-        return transcribe_file(tmp_path)
+        return transcribe_file(tmp_path, language=language)
     finally:
         if os.path.exists(tmp_path):
             os.remove(tmp_path)

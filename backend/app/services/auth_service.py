@@ -35,7 +35,7 @@ def register_user(db: Session, data: UserRegister) -> dict:
     db.flush()
 
     if data.role == "teacher":
-        profile = TeacherProfile(user_id=user.id)
+        profile = TeacherProfile(user_id=user.id, onboarding_status="draft")
         db.add(profile)
 
     db.commit()
@@ -91,7 +91,7 @@ def get_or_create_google_user(db: Session, google_data: dict, role: str = "stude
     db.flush()
 
     if role == "teacher":
-        profile = TeacherProfile(user_id=user.id)
+        profile = TeacherProfile(user_id=user.id, onboarding_status="draft")
         db.add(profile)
 
     db.commit()

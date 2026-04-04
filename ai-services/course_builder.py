@@ -35,15 +35,18 @@ Return ONLY valid JSON in this exact format:
 }}"""
 
 
-async def structure_course(transcript: str) -> dict:
+async def structure_course(transcript: str, language: str = None) -> dict:
     """Use Llama 3 to structure raw transcript into course chapters and lessons."""
+    lang_note = ""
+    if language:
+        lang_note = f"\n\nWrite all titles, descriptions, and lesson text in: {language}."
     try:
         async with httpx.AsyncClient(timeout=180) as client:
             resp = await client.post(
                 f"{OLLAMA_URL}/api/generate",
                 json={
                     "model": "llama3:8b",
-                    "prompt": COURSE_STRUCTURE_PROMPT.format(content=transcript[:8000]),
+                    "prompt": COURSE_STRUCTURE_PROMPT.format(content=transcript[:8000]) + lang_note,
                     "stream": False,
                     "format": "json"
                 }

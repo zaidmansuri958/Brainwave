@@ -6,29 +6,65 @@ import hashlib
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
 
-async def generate_thumbnail(title: str, category: str, description: str) -> bytes:
+async def generate_thumbnail(
+    title: str,
+    category: str,
+    description: str,
+    lesson_title: str = None,
+    module_title: str = None,
+    faculty_face_image_url: str = None,
+    custom_prompt: str = None,
+) -> bytes:
     """
     Generate course thumbnail.
     Uses Gemini Imagen if API key available, otherwise creates a styled placeholder.
     """
     if GEMINI_API_KEY and GEMINI_API_KEY != "your_gemini_api_key_here":
         try:
-            return await generate_with_gemini(title, category, description)
+            return await generate_with_gemini(
+                title,
+                category,
+                description,
+                lesson_title=lesson_title,
+                module_title=module_title,
+                faculty_face_image_url=faculty_face_image_url,
+                custom_prompt=custom_prompt,
+            )
         except Exception as e:
             print(f"Gemini thumbnail failed: {e}")
 
     return generate_placeholder_thumbnail(title, category)
 
 
-async def generate_with_gemini(title: str, category: str, description: str) -> bytes:
+async def generate_with_gemini(
+    title: str,
+    category: str,
+    description: str,
+    lesson_title: str = None,
+    module_title: str = None,
+    faculty_face_image_url: str = None,
+    custom_prompt: str = None,
+) -> bytes:
     """Generate thumbnail using Gemini Imagen API."""
     import google.generativeai as genai
 
     genai.configure(api_key=GEMINI_API_KEY)
 
+    extra = ""
+    if lesson_title:
+        extra += f" Lesson focus: {lesson_title}."
+    if module_title:
+        extra += f" Module: {module_title}."
+    if faculty_face_image_url:
+        extra += " Style should suggest a professional instructor-led course (no need to depict a specific face)."
+    if custom_prompt:
+        extra += f" User request: {custom_prompt}"
+
     prompt = f"""Create a professional educational course thumbnail.
     Course: {title}
     Subject: {category}
+    Description: {description[:500]}
+    {extra}
     Style: Modern, vibrant colors, clean design. No text. 16:9 aspect ratio."""
 
     model = genai.ImageGenerationModel("imagen-3.0-generate-001")

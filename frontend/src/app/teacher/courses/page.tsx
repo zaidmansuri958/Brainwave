@@ -4,7 +4,7 @@ import { teacherApi } from "@/lib/api";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import Link from "next/link";
-import { Plus, Edit, Eye, Archive, Star, Users, BookOpen, Loader2, Sparkles } from "lucide-react";
+import { Plus, Edit, Eye, Archive, Star, Users, BookOpen, Loader2, Sparkles, ListTree } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 
 const statusColors: Record<string, string> = {
@@ -110,6 +110,12 @@ export default function TeacherCoursesPage() {
 
                 {/* Actions */}
                 <div className="flex sm:flex-col gap-2 flex-shrink-0">
+                  <Link
+                    href={`/teacher/courses/${course.id}/curriculum`}
+                    className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 px-3.5 py-2 rounded-lg transition-colors"
+                  >
+                    <ListTree className="h-3.5 w-3.5" /> Curriculum
+                  </Link>
                   <Link
                     href={`/teacher/courses/${course.id}/edit`}
                     className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 bg-gray-50 hover:bg-gray-100 border border-gray-200 px-3.5 py-2 rounded-lg transition-colors"

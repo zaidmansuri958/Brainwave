@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import {
   Zap, Menu, X, ChevronDown, LayoutDashboard,
   User, LogOut, GraduationCap, BookOpen, Sparkles, Video,
-  Award, Search,
+  Award, Search, FileStack, ClipboardList, CalendarClock,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 
@@ -21,6 +21,8 @@ const publicLinks = [
 const studentLinks = [
   { label: "Browse Courses", href: "/courses"   },
   { label: "My Learning",    href: "/dashboard" },
+  { label: "Materials",      href: "/catalog/materials" },
+  { label: "Mock tests",     href: "/catalog/mock-tests" },
   { label: "Search",         href: "/search"    },
   { label: "Features",       href: "/features"  },
 ];
@@ -204,6 +206,9 @@ export function Navbar() {
                             { href: "/teacher/dashboard",       icon: LayoutDashboard, label: "Dashboard"      },
                             { href: "/profile",                 icon: User,            label: "Profile"         },
                             { href: "/teacher/courses",         icon: GraduationCap,   label: "My Courses"     },
+                            { href: "/teacher/study-materials", icon: FileStack,       label: "Study materials"  },
+                            { href: "/teacher/mock-tests",      icon: ClipboardList,   label: "Mock tests"      },
+                            { href: "/teacher/availability",    icon: CalendarClock,   label: "Doubt slots"     },
                             { href: "/teacher/live-sessions",   icon: Video,           label: "Live Sessions"   },
                             { href: "/teacher/courses/new",     icon: Sparkles,        label: "Create Course"  },
                           ].map(({ href, icon: Icon, label }) => (

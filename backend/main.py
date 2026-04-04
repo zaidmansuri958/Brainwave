@@ -62,7 +62,8 @@ except Exception:
 from app.routers import (
     auth, courses, lessons, quizzes, enrollments,
     chat, community, certificates, live_sessions,
-    doubt_sessions, notifications, teacher, admin
+    doubt_sessions, notifications, teacher, admin,
+    learning, curriculum, promotions, study_materials, mock_tests, availability,
 )
 
 API_PREFIX = "/api/v1"
@@ -80,6 +81,12 @@ app.include_router(doubt_sessions.router, prefix=API_PREFIX)
 app.include_router(notifications.router, prefix=API_PREFIX)
 app.include_router(teacher.router, prefix=API_PREFIX)
 app.include_router(admin.router, prefix=API_PREFIX)
+app.include_router(learning.router, prefix=API_PREFIX)
+app.include_router(curriculum.router, prefix=API_PREFIX)
+app.include_router(promotions.router, prefix=API_PREFIX)
+app.include_router(study_materials.router, prefix=API_PREFIX)
+app.include_router(mock_tests.router, prefix=API_PREFIX)
+app.include_router(availability.router, prefix=API_PREFIX)
 
 # Razorpay webhook
 @app.post("/api/v1/payments/webhook")

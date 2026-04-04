@@ -11,6 +11,7 @@ class Quiz(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     lesson_id = Column(UUID(as_uuid=True), ForeignKey("lessons.id"), nullable=True)
+    chapter_id = Column(UUID(as_uuid=True), ForeignKey("chapters.id", ondelete="SET NULL"), nullable=True)
     course_id = Column(UUID(as_uuid=True), ForeignKey("courses.id"))
     title = Column(String(255), nullable=True)
     time_limit_minutes = Column(Integer, nullable=True)
@@ -21,6 +22,7 @@ class Quiz(Base):
 
     # Relationships
     lesson = relationship("Lesson", back_populates="quizzes")
+    chapter = relationship("Chapter", back_populates="quizzes")
     questions = relationship("QuizQuestion", back_populates="quiz", cascade="all, delete-orphan")
     attempts = relationship("QuizAttempt", back_populates="quiz")
 

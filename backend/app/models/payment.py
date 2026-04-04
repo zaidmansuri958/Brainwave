@@ -18,6 +18,7 @@ class Payment(Base):
     razorpay_payment_id = Column(String(255), nullable=True)
     total_amount = Column(Numeric(10, 2), nullable=True)
     platform_cut = Column(Numeric(10, 2), nullable=True)
+    platform_cut_percent_applied = Column(Numeric(5, 2), nullable=True)
     teacher_earning = Column(Numeric(10, 2), nullable=True)
     currency = Column(String(10), default="INR")
     status = Column(String(20), default="pending")  # pending, completed, failed, refunded

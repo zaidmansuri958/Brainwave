@@ -35,8 +35,11 @@ Rules:
 - Vary difficulty across questions"""
 
 
-async def generate_quiz(lesson_content: str, num_questions: int = 5) -> dict:
+async def generate_quiz(lesson_content: str, num_questions: int = 5, language: str = None) -> dict:
     """Generate quiz questions from lesson content using Llama 3."""
+    lang_note = ""
+    if language:
+        lang_note = f"\n\nWrite questions and options in: {language}."
     try:
         async with httpx.AsyncClient(timeout=90) as client:
             resp = await client.post(
@@ -46,7 +49,8 @@ async def generate_quiz(lesson_content: str, num_questions: int = 5) -> dict:
                     "prompt": QUIZ_PROMPT.format(
                         content=lesson_content[:4000],
                         num_questions=num_questions
-                    ),
+                    )
+                    + lang_note,
                     "stream": False,
                     "format": "json"
                 }

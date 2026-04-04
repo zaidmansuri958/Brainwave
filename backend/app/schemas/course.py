@@ -17,6 +17,10 @@ class CourseCreate(BaseModel):
     completion_requirement_percent: int = 80
     quiz_pass_percent: int = 60
     certificate_enabled: bool = True
+    delivery_mode: Optional[str] = "video_course"
+    default_access_months: Optional[int] = None
+    module_lock_enabled: Optional[bool] = True
+    transcript_language: Optional[str] = None  # Whisper code: en, hi, ta, or empty for auto
 
 
 class CourseUpdate(BaseModel):
@@ -31,6 +35,9 @@ class CourseUpdate(BaseModel):
     completion_requirement_percent: Optional[int] = None
     quiz_pass_percent: Optional[int] = None
     certificate_enabled: Optional[bool] = None
+    delivery_mode: Optional[str] = None
+    default_access_months: Optional[int] = None
+    module_lock_enabled: Optional[bool] = None
 
 
 class TeacherInfo(BaseModel):
@@ -50,6 +57,8 @@ class LessonResponse(BaseModel):
     duration_seconds: Optional[int] = None
     is_published: bool
     ai_summary: Optional[str] = None
+    thumbnail_url: Optional[str] = None
+    transcript_language: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -91,6 +100,12 @@ class CourseResponse(BaseModel):
     ai_processing_status: str
     is_featured: bool
     created_at: datetime
+    delivery_mode: Optional[str] = None
+    default_access_months: Optional[int] = None
+    module_lock_enabled: Optional[bool] = True
+    transcript_language: Optional[str] = None
+    moderation_status: Optional[str] = None
+    content_validation_status: Optional[str] = None
     teacher: Optional[TeacherInfo] = None
     chapters: Optional[List[ChapterResponse]] = None
 
