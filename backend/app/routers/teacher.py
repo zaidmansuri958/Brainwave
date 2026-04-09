@@ -75,13 +75,13 @@ async def save_onboarding_draft(
     if profile.onboarding_status in ("submitted", "approved"):
         raise HTTPException(status_code=400, detail="Onboarding already submitted or approved")
     if data.legal_name is not None:
-        profile.legal_name = data.legal_name
+        profile.legal_name = (data.legal_name or "").strip() or None
     if data.years_teaching is not None:
         profile.years_teaching = data.years_teaching
     if data.past_employers is not None:
         profile.past_employers = data.past_employers
     if data.highest_degree is not None:
-        profile.highest_degree = data.highest_degree
+        profile.highest_degree = (data.highest_degree or "").strip() or None
     if profile.onboarding_status == "rejected":
         profile.onboarding_status = "draft"
     db.commit()
@@ -117,6 +117,7 @@ async def onboarding_upload_document(
 
 @router.post("/onboarding/submit")
 async def submit_onboarding(
+    data: OnboardingBody,
     current_user: User = Depends(get_current_teacher),
     db: Session = Depends(get_db),
 ):
@@ -125,8 +126,27 @@ async def submit_onboarding(
         raise HTTPException(status_code=404, detail="Profile not found")
     if profile.onboarding_status in ("submitted", "approved"):
         raise HTTPException(status_code=400, detail="Already submitted or approved")
-    if not profile.legal_name or not profile.highest_degree:
-        raise HTTPException(status_code=400, detail="legal_name and highest_degree are required")
+    # Apply JSON body (FastAPI parses a single Pydantic model as the request body).
+    # Do not use Optional[Body(default=None)] — it often drops the body and leaves fields unset.
+    if data.legal_name is not None:
+        profile.legal_name = (data.legal_name or "").strip() or None
+    if data.years_teaching is not None:
+        profile.years_teaching = data.years_teaching
+    if data.past_employers is not None:
+        profile.past_employers = data.past_employers
+    if data.highest_degree is not None:
+        profile.highest_degree = (data.highest_degree or "").strip() or None
+    if profile.onboarding_status == "rejected":
+        profile.onboarding_status = "draft"
+    legal = (profile.legal_name or "").strip()
+    degree = (profile.highest_degree or "").strip()
+    if not legal or not degree:
+        raise HTTPException(
+            status_code=400,
+            detail="Legal name and highest degree are required. Fill both fields, then submit again.",
+        )
+    profile.legal_name = legal
+    profile.highest_degree = degree
     if not profile.aadhaar_doc_url or not profile.pan_doc_url:
         raise HTTPException(status_code=400, detail="Aadhaar and PAN documents are required")
     profile.onboarding_status = "submitted"

@@ -275,6 +275,7 @@ services:
         mc mb myminio/avatars --ignore-existing;
         mc anonymous set download myminio/thumbnails;
         mc anonymous set download myminio/course-videos;
+        mc anonymous set download myminio/course-materials;
         echo 'MinIO buckets ready!'
       "
 

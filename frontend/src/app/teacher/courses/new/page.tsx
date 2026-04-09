@@ -170,7 +170,7 @@ export default function CreateCoursePage() {
       await courseApi.approveStructure(courseId, { approved: true });
       await courseApi.publish(courseId);
       toast({ title: "Course published!", description: "Your course is now live." });
-      router.push(`/teacher/courses/${courseId}/review`);
+      router.push(`/teacher/courses/${courseId}/edit`);
     } catch {
       toast({ title: "Publish failed", variant: "destructive" });
     }

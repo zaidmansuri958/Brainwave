@@ -106,3 +106,96 @@ html { scroll-behavior: smooth; }
   outline: 2px solid rgba(79, 70, 229, 0.5);
   outline-offset: 2px;
 }
+
+:root {
+  --font-display: "Space Grotesk", system-ui, sans-serif;
+  --font-body: "Manrope", system-ui, sans-serif;
+  --background: 36 30% 97%;
+  --foreground: 220 35% 12%;
+  --secondary: 35 24% 93%;
+  --secondary-foreground: 220 35% 12%;
+  --muted: 35 24% 93%;
+  --muted-foreground: 220 10% 42%;
+  --accent: 192 60% 92%;
+  --accent-foreground: 220 35% 12%;
+  --border: 34 20% 87%;
+  --input: 34 20% 87%;
+  --ring: 223 82% 56%;
+  --radius: 1rem;
+  --panel-ink: #101828;
+  --panel-line: rgba(16, 24, 40, 0.08);
+  --panel-surface: rgba(255, 255, 255, 0.78);
+  --panel-surface-strong: rgba(255, 255, 255, 0.92);
+  --panel-aura: radial-gradient(circle at top left, rgba(79, 70, 229, 0.2), transparent 34%),
+    radial-gradient(circle at top right, rgba(14, 165, 233, 0.18), transparent 30%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.62));
+}
+
+body {
+  background-image:
+    radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.08), transparent 28%),
+    radial-gradient(circle at 100% 0%, rgba(244, 114, 182, 0.07), transparent 24%),
+    linear-gradient(180deg, #fcfaf7 0%, #f6f0ea 100%);
+  color: var(--panel-ink);
+}
+
+.eyebrow {
+  @apply tracking-[0.16em] text-sky-700;
+}
+
+.text-gradient-indigo {
+  background: linear-gradient(135deg, #155eef 0%, #0ea5e9 52%, #e11d48 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.panel-page {
+  position: relative;
+  min-height: 100vh;
+}
+
+.panel-page::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 24rem;
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.18), transparent 34%),
+    radial-gradient(circle at top right, rgba(244, 114, 182, 0.14), transparent 30%);
+  pointer-events: none;
+}
+
+.panel-surface {
+  background: var(--panel-aura);
+  border: 1px solid var(--panel-line);
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(22px);
+}
+
+.panel-card {
+  background: var(--panel-surface);
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  box-shadow: 0 20px 55px rgba(15, 23, 42, 0.07);
+  backdrop-filter: blur(18px);
+}
+
+.panel-card-strong {
+  background: var(--panel-surface-strong);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.09);
+}
+
+.panel-grid {
+  background-image:
+    linear-gradient(rgba(15, 23, 42, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.panel-chip {
+  @apply inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em];
+  border-color: rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.72);
+  color: #344054;
+}

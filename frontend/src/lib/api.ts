@@ -139,14 +139,18 @@ export const teacherApi = {
   updateProfile: (data: any) => api.patch("/teacher/profile", data),
   onboardingStatus: () => api.get("/teacher/onboarding/status"),
   saveOnboarding: (data: any) => api.patch("/teacher/onboarding", data),
-  submitOnboarding: () => api.post("/teacher/onboarding/submit"),
+  submitOnboarding: (data?: {
+    legal_name?: string;
+    years_teaching?: number;
+    past_employers?: string[];
+    highest_degree?: string;
+  }) => api.post("/teacher/onboarding/submit", data ?? {}),
   onboardingUpload: (docType: string, file: File) => {
     const fd = new FormData();
     fd.append("doc_type", docType);
     fd.append("file", file);
-    return api.post("/teacher/onboarding/upload", fd, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    // Let axios set multipart boundary — a bare "multipart/form-data" header breaks uploads.
+    return api.post("/teacher/onboarding/upload", fd);
   },
   analytics: (courseId?: string) =>
     api.get("/teacher/analytics", { params: courseId ? { course_id: courseId } : {} }),
