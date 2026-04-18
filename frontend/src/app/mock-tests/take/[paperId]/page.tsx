@@ -8,6 +8,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { mockTestsApi } from "@/lib/api";
 import { Loader2, Clock, Send, Trophy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getApiErrorMessage } from "@/lib/apiError";
 import { studioBtnPrimary } from "@/components/layout/StudioPageShell";
 
 export default function MockTestTakePage({ params }: { params: { paperId: string } }) {
@@ -31,7 +32,12 @@ export default function MockTestTakePage({ params }: { params: { paperId: string
       setResult(r.data);
       toast({ title: "Submitted" });
     },
-    onError: () => toast({ title: "Submit failed", variant: "destructive" }),
+    onError: (e) =>
+      toast({
+        title: "Submit failed",
+        description: getApiErrorMessage(e),
+        variant: "destructive",
+      }),
   });
 
   useEffect(() => {

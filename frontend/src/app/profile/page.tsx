@@ -7,6 +7,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { User, Save, Loader2, Shield, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getApiErrorMessage } from "@/lib/apiError";
 
 const inputCls = "w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder:text-gray-400 transition-all";
 const labelCls = "block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5";
@@ -64,7 +65,12 @@ export default function ProfilePage() {
       return authApi.me();
     },
     onSuccess: () => toast({ title: "Profile updated" }),
-    onError:   () => toast({ title: "Failed to update profile", variant: "destructive" }),
+    onError: (e) =>
+      toast({
+        title: "Couldn't update profile",
+        description: getApiErrorMessage(e),
+        variant: "destructive",
+      }),
   });
 
   const addExpertise = () => {

@@ -5,11 +5,17 @@ export function Toaster() {
   const { toasts } = useToast();
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full">
+    <div
+      className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"
+      aria-label="Notifications"
+    >
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          className={`rounded-lg p-4 shadow-lg text-white text-sm ${
+          role="status"
+          aria-live={toast.variant === "destructive" ? "assertive" : "polite"}
+          aria-atomic="true"
+          className={`pointer-events-auto rounded-lg p-4 shadow-lg text-white text-sm ${
             toast.variant === "destructive" ? "bg-red-600" : "bg-gray-900"
           }`}
         >

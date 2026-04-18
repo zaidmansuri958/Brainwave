@@ -13,6 +13,9 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import socketio
+from sqlalchemy import text
+import redis as redis_lib
+import httpx
 
 from app.database import engine, Base
 from app.config import settings
@@ -20,8 +23,9 @@ from app.config import settings
 # Import all models to ensure they're registered
 import app.models
 
-# Create tables
-Base.metadata.create_all(bind=engine)
+# Create tables only when explicitly enabled; production should rely on Alembic.
+if settings.auto_create_tables:
+    Base.metadata.create_all(bind=engine)
 
 # FastAPI app
 app = FastAPI(
@@ -194,7 +198,51 @@ async def request_refund(
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "service": "Brainwave.ai Backend"}
+    return {
+        "status": "ok",
+        "service": "Brainwave.ai Backend",
+        "environment": settings.environment,
+    }
+
+
+@app.get("/ready")
+async def ready():
+    checks = {
+        "database": False,
+        "redis": False,
+        "ai_service": False,
+    }
+
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        checks["database"] = True
+    except Exception:
+        pass
+
+    try:
+        redis_client = redis_lib.from_url(settings.redis_url, decode_responses=True)
+        redis_client.ping()
+        checks["redis"] = True
+    except Exception:
+        pass
+
+    try:
+        async with httpx.AsyncClient(timeout=3.0) as client:
+            response = await client.get(f"{settings.ai_service_url}/health")
+            checks["ai_service"] = response.status_code == 200
+    except Exception:
+        pass
+
+    overall = all(checks.values())
+    status_code = 200 if overall else 503
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "status": "ready" if overall else "degraded",
+            "checks": checks,
+        },
+    )
 
 
 @app.get("/")

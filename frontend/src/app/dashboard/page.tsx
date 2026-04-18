@@ -9,9 +9,32 @@ import Link from "next/link";
 import {
   BookOpen, Award, TrendingUp, Search, ArrowRight,
   Play, CheckCircle2, Clock, ExternalLink, Download,
-  Sparkles, Users, FileStack, ClipboardList,
+  Sparkles, FileStack, ClipboardList, AlertCircle,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+
+function SectionError({
+  label,
+  onRetry,
+}: {
+  label: string;
+  onRetry: () => void;
+}) {
+  return (
+    <div className="rounded-xl border border-rose-200 bg-rose-50/90 px-4 py-3 text-sm text-rose-900 flex flex-wrap items-center justify-between gap-2">
+      <span className="flex items-center gap-2">
+        <AlertCircle className="h-4 w-4 shrink-0" />
+        {label}
+      </span>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="font-semibold text-indigo-600 hover:text-indigo-800"
+      >
+        Retry
+      </button>
+    </div>
+  );
+}
 
 function StatCard({
   icon: Icon, label, value, sub, color,
@@ -52,27 +75,44 @@ function SkeletonCard() {
 export default function StudentDashboard() {
   const { user } = useAuthStore();
 
-  const { data: enrolledData, isLoading } = useQuery({
+  const {
+    data: enrolledData,
+    isLoading: enrollmentsLoading,
+    isError: enrollmentsError,
+    refetch: refetchEnrollments,
+  } = useQuery({
     queryKey: ["my-courses"],
     queryFn: () => enrollmentApi.myCourses().then((r) => r.data),
   });
 
-  const { data: certData } = useQuery({
+  const {
+    data: certData,
+    isError: certsError,
+    refetch: refetchCerts,
+  } = useQuery({
     queryKey: ["my-certificates"],
     queryFn: () => certApi.myCertificates().then((r) => r.data),
   });
 
-  const { data: materialPurchases } = useQuery({
+  const {
+    data: materialPurchases,
+    isError: materialsError,
+    refetch: refetchMaterials,
+  } = useQuery({
     queryKey: ["my-material-purchases"],
     queryFn: () => materialsApi.myPurchases().then((r) => r.data),
   });
 
-  const { data: mockPkgs } = useQuery({
+  const {
+    data: mockPkgs,
+    isError: mocksError,
+    refetch: refetchMocks,
+  } = useQuery({
     queryKey: ["my-mock-packages"],
     queryFn: () => mockTestsApi.myPackages().then((r) => r.data),
   });
 
-  const courses = enrolledData?.courses || [];
+  const courses = enrollmentsError ? [] : enrolledData?.courses || [];
   const certificates = certData?.certificates || [];
   const matList = materialPurchases?.purchases || [];
   const mockList = mockPkgs?.packages || [];
@@ -103,11 +143,41 @@ export default function StudentDashboard() {
 
         {/* ── Stats ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-          <StatCard icon={BookOpen}    label="Enrolled"   value={courses.length}      sub="total courses"           color="bg-indigo-50 text-indigo-600" />
-          <StatCard icon={TrendingUp}  label="In Progress" value={inProgress.length}  sub="active learning"          color="bg-violet-50 text-violet-600" />
-          <StatCard icon={CheckCircle2}label="Completed"  value={completed.length}    sub="courses finished"         color="bg-emerald-50 text-emerald-600" />
-          <StatCard icon={Award}       label="Certificates" value={certificates.length} sub="blockchain verified"    color="bg-amber-50 text-amber-600" />
+          <StatCard
+            icon={BookOpen}
+            label="Enrolled"
+            value={enrollmentsError ? "—" : courses.length}
+            sub={enrollmentsError ? "Couldn't load" : "total courses"}
+            color="bg-indigo-50 text-indigo-600"
+          />
+          <StatCard
+            icon={TrendingUp}
+            label="In Progress"
+            value={enrollmentsError ? "—" : inProgress.length}
+            sub={enrollmentsError ? "Couldn't load" : "active learning"}
+            color="bg-violet-50 text-violet-600"
+          />
+          <StatCard
+            icon={CheckCircle2}
+            label="Completed"
+            value={enrollmentsError ? "—" : completed.length}
+            sub={enrollmentsError ? "Couldn't load" : "courses finished"}
+            color="bg-emerald-50 text-emerald-600"
+          />
+          <StatCard
+            icon={Award}
+            label="Certificates"
+            value={certsError ? "—" : certificates.length}
+            sub={certsError ? "Couldn't load" : "blockchain verified"}
+            color="bg-amber-50 text-amber-600"
+          />
         </div>
+
+        {enrollmentsError && (
+          <div className="mb-6">
+            <SectionError label="We couldn't load your enrollments." onRetry={() => refetchEnrollments()} />
+          </div>
+        )}
 
         {/* ── AI Tutor Prompt Card ── */}
         <div className="bg-white rounded-2xl border border-indigo-100 shadow-card p-5 mb-10 flex items-center gap-4">
@@ -135,9 +205,20 @@ export default function StudentDashboard() {
             </Link>
           </div>
 
-          {isLoading ? (
+          {enrollmentsLoading ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
               {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
+            </div>
+          ) : enrollmentsError ? (
+            <div className="space-y-3">
+              <p className="text-sm text-gray-600">Your course list couldn&apos;t be loaded. Check your connection and try again.</p>
+              <button
+                type="button"
+                onClick={() => refetchEnrollments()}
+                className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-semibold"
+              >
+                Retry
+              </button>
             </div>
           ) : courses.length === 0 ? (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-card text-center py-16 px-8">
@@ -206,11 +287,11 @@ export default function StudentDashboard() {
         </section>
 
         {/* ── Materials & mocks ── */}
-        {(matList.length > 0 || mockList.length > 0) && (
+        {(matList.length > 0 || mockList.length > 0 || materialsError || mocksError) && (
           <section className="mb-12">
             <h2 className="font-display font-bold text-xl text-gray-900 mb-5">Downloads & practice</h2>
             <div className="grid md:grid-cols-2 gap-5">
-              {matList.length > 0 && (
+              {(matList.length > 0 || materialsError) && (
                 <motion.div
                   initial={{ opacity: 0, y: 12 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -224,30 +305,36 @@ export default function StudentDashboard() {
                     </div>
                     <span className="font-display font-semibold text-gray-900">Study materials</span>
                   </div>
-                  <ul className="space-y-2">
-                    {matList.map((m: { product_id: string; title: string; slug?: string }) => (
-                      <li key={m.product_id}>
-                        <Link
-                          href={m.slug ? `/catalog/materials/${m.slug}` : "/catalog/materials"}
-                          className="text-sm font-medium text-indigo-600 transition-colors hover:text-indigo-800"
-                        >
-                          {m.title}
-                          <span className="ml-1 inline-block opacity-0 transition-transform group-hover:translate-x-0.5 group-hover:opacity-100 text-indigo-400">
-                            →
-                          </span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                  <Link
-                    href="/catalog/materials"
-                    className="text-xs font-semibold text-gray-500 mt-4 inline-flex items-center gap-1 hover:text-indigo-600 transition-colors"
-                  >
-                    Browse catalog <ArrowRight className="w-3 h-3" />
-                  </Link>
+                  {materialsError ? (
+                    <SectionError label="Couldn't load your materials." onRetry={() => refetchMaterials()} />
+                  ) : (
+                    <>
+                      <ul className="space-y-2">
+                        {matList.map((m: { product_id: string; title: string; slug?: string }) => (
+                          <li key={m.product_id}>
+                            <Link
+                              href={m.slug ? `/catalog/materials/${m.slug}` : "/catalog/materials"}
+                              className="text-sm font-medium text-indigo-600 transition-colors hover:text-indigo-800"
+                            >
+                              {m.title}
+                              <span className="ml-1 inline-block opacity-0 transition-transform group-hover:translate-x-0.5 group-hover:opacity-100 text-indigo-400">
+                                →
+                              </span>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                      <Link
+                        href="/catalog/materials"
+                        className="text-xs font-semibold text-gray-500 mt-4 inline-flex items-center gap-1 hover:text-indigo-600 transition-colors"
+                      >
+                        Browse catalog <ArrowRight className="w-3 h-3" />
+                      </Link>
+                    </>
+                  )}
                 </motion.div>
               )}
-              {mockList.length > 0 && (
+              {(mockList.length > 0 || mocksError) && (
                 <motion.div
                   initial={{ opacity: 0, y: 12 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -261,31 +348,37 @@ export default function StudentDashboard() {
                     </div>
                     <span className="font-display font-semibold text-gray-900">Mock tests</span>
                   </div>
-                  <ul className="space-y-2">
-                    {mockList.map((p: { package_id: string; title: string; papers: { id: string; title: string }[] }) => (
-                      <li key={p.package_id}>
-                        <p className="text-sm font-medium text-gray-800">{p.title}</p>
-                        <ul className="ml-2 mt-1 space-y-1">
-                          {(p.papers || []).map((paper) => (
-                            <li key={paper.id}>
-                              <Link
-                                href={`/mock-tests/take/${paper.id}`}
-                                className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
-                              >
-                                {paper.title}
-                              </Link>
-                            </li>
-                          ))}
-                        </ul>
-                      </li>
-                    ))}
-                  </ul>
-                  <Link
-                    href="/catalog/mock-tests"
-                    className="text-xs font-semibold text-gray-500 mt-4 inline-flex items-center gap-1 hover:text-indigo-600 transition-colors"
-                  >
-                    Browse catalog <ArrowRight className="w-3 h-3" />
-                  </Link>
+                  {mocksError ? (
+                    <SectionError label="Couldn't load your mock tests." onRetry={() => refetchMocks()} />
+                  ) : (
+                    <>
+                      <ul className="space-y-2">
+                        {mockList.map((p: { package_id: string; title: string; papers: { id: string; title: string }[] }) => (
+                          <li key={p.package_id}>
+                            <p className="text-sm font-medium text-gray-800">{p.title}</p>
+                            <ul className="ml-2 mt-1 space-y-1">
+                              {(p.papers || []).map((paper) => (
+                                <li key={paper.id}>
+                                  <Link
+                                    href={`/mock-tests/take/${paper.id}`}
+                                    className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
+                                  >
+                                    {paper.title}
+                                  </Link>
+                                </li>
+                              ))}
+                            </ul>
+                          </li>
+                        ))}
+                      </ul>
+                      <Link
+                        href="/catalog/mock-tests"
+                        className="text-xs font-semibold text-gray-500 mt-4 inline-flex items-center gap-1 hover:text-indigo-600 transition-colors"
+                      >
+                        Browse catalog <ArrowRight className="w-3 h-3" />
+                      </Link>
+                    </>
+                  )}
                 </motion.div>
               )}
             </div>
@@ -293,9 +386,12 @@ export default function StudentDashboard() {
         )}
 
         {/* ── Certificates ── */}
-        {certificates.length > 0 && (
+        {(certificates.length > 0 || certsError) && (
           <section>
             <h2 className="font-display font-bold text-xl text-gray-900 mb-5">My certificates</h2>
+            {certsError ? (
+              <SectionError label="Couldn't load certificates." onRetry={() => refetchCerts()} />
+            ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {certificates.map((cert: any) => (
                 <div
@@ -337,6 +433,7 @@ export default function StudentDashboard() {
                 </div>
               ))}
             </div>
+            )}
           </section>
         )}
       </main>

@@ -59,6 +59,20 @@ This starts:
 docker-compose exec backend alembic upgrade head
 ```
 
+### 4. Seed Demo Data
+
+Base catalog:
+
+```bash
+docker-compose exec backend python seed.py
+```
+
+Launch/demo-ready sample data:
+
+```bash
+docker-compose exec backend python seed_demo.py
+```
+
 ## Features
 
 ### Student Features
@@ -138,6 +152,8 @@ Brainwave/
 Once running, visit:
 - Backend API docs: http://localhost:8000/docs
 - AI Services docs: http://localhost:8001/docs
+- Backend health: http://localhost:8000/health
+- Backend readiness: http://localhost:8000/ready
 
 ## AI Pipeline
 

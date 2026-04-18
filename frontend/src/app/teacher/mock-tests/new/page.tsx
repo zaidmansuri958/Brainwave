@@ -7,6 +7,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { mockTestsApi } from "@/lib/api";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getApiErrorMessage } from "@/lib/apiError";
 
 export default function NewMockPackagePage() {
   const router = useRouter();
@@ -27,8 +28,12 @@ export default function NewMockPackagePage() {
       });
       toast({ title: "Package created" });
       router.push(`/teacher/mock-tests/${data.id}`);
-    } catch {
-      toast({ title: "Could not create", variant: "destructive" });
+    } catch (e) {
+      toast({
+        title: "Could not create package",
+        description: getApiErrorMessage(e),
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }

@@ -33,7 +33,7 @@ export default function CoursesPage() {
   const [page,       setPage]        = useState(1);
   const [filtersOpen,setFiltersOpen] = useState(false);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["courses", search, category, level, sort, page],
     queryFn: () =>
       courseApi.list({ search, category, level, sort, page, limit: 12 }).then((r) => r.data),
@@ -60,7 +60,7 @@ export default function CoursesPage() {
             Browse Courses
           </h1>
           <p className="text-gray-500 mt-1 text-sm">
-            {total.toLocaleString()} courses available
+            {isError ? "Unable to load count" : `${total.toLocaleString()} courses available`}
           </p>
         </div>
 
@@ -170,6 +170,18 @@ export default function CoursesPage() {
               <div key={i} className="bg-white rounded-2xl aspect-[4/3] animate-pulse border border-gray-100" />
             ))}
           </div>
+        ) : isError ? (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50/90 px-6 py-12 text-center max-w-md mx-auto">
+            <p className="font-semibold text-gray-900">We couldn&apos;t load courses</p>
+            <p className="text-sm text-gray-600 mt-2">Check your connection and try again.</p>
+            <button
+              type="button"
+              onClick={() => refetch()}
+              className="mt-6 inline-flex items-center justify-center rounded-xl bg-indigo-600 text-white px-5 py-2.5 text-sm font-semibold shadow-button-indigo"
+            >
+              Retry
+            </button>
+          </div>
         ) : courses.length === 0 ? (
           <div className="text-center py-24">
             <div className="h-14 w-14 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
@@ -187,7 +199,7 @@ export default function CoursesPage() {
         )}
 
         {/* Pagination */}
-        {pages > 1 && (
+        {!isError && pages > 1 && (
           <div className="flex justify-center gap-1.5 mt-10">
             {Array.from({ length: Math.min(pages, 10) }, (_, i) => i + 1).map((p) => (
               <button

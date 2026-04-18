@@ -8,6 +8,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { materialsApi } from "@/lib/api";
 import { ArrowLeft, Loader2, Upload, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getApiErrorMessage } from "@/lib/apiError";
 
 export default function MaterialDetailPage({ params }: { params: { id: string } }) {
   const { id } = params;
@@ -32,8 +33,12 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
         await materialsApi.uploadFiles(id, fd);
         toast({ title: "Files uploaded" });
         qc.invalidateQueries({ queryKey: ["teacher-materials"] });
-      } catch {
-        toast({ title: "Upload failed", variant: "destructive" });
+      } catch (e) {
+        toast({
+          title: "Upload failed",
+          description: getApiErrorMessage(e),
+          variant: "destructive",
+        });
       } finally {
         setUploading(false);
       }
@@ -49,7 +54,12 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
       qc.invalidateQueries({ queryKey: ["teacher-materials"] });
       toast({ title: "Published" });
     },
-    onError: () => toast({ title: "Publish failed", variant: "destructive" }),
+    onError: (e) =>
+      toast({
+        title: "Publish failed",
+        description: getApiErrorMessage(e),
+        variant: "destructive",
+      }),
   });
 
   if (isLoading) {

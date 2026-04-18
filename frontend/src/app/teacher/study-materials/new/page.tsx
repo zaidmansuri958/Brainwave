@@ -7,6 +7,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { materialsApi } from "@/lib/api";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getApiErrorMessage } from "@/lib/apiError";
 
 export default function NewMaterialPage() {
   const router = useRouter();
@@ -27,8 +28,12 @@ export default function NewMaterialPage() {
       });
       toast({ title: "Product created" });
       router.push(`/teacher/study-materials/${data.id}`);
-    } catch {
-      toast({ title: "Could not create", variant: "destructive" });
+    } catch (e) {
+      toast({
+        title: "Could not create product",
+        description: getApiErrorMessage(e),
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }

@@ -5,6 +5,7 @@ from typing import Optional
 class Settings(BaseSettings):
     # Database
     database_url: str = "postgresql://postgres:password@localhost:5432/brainwave"
+    auto_create_tables: bool = False
     
     # Redis
     redis_url: str = "redis://localhost:6379/0"
@@ -40,6 +41,7 @@ class Settings(BaseSettings):
     # URLs
     frontend_url: str = "http://localhost:3000"
     backend_url: str = "http://localhost:8000"
+    environment: str = "development"
     
     # Jitsi
     jitsi_domain: str = "meet.jit.si"

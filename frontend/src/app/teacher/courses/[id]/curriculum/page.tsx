@@ -7,6 +7,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { CourseManageNav } from "@/components/teacher/CourseManageNav";
 import { curriculumApi, teacherApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { getApiErrorMessage } from "@/lib/apiError";
 import { useMemo, useState } from "react";
 
 type Q = {
@@ -49,7 +50,12 @@ export default function CurriculumPage({ params }: { params: { id: string } }) {
       qc.invalidateQueries({ queryKey: ["teacher-course", id] });
       toast({ title: "Chapter saved" });
     },
-    onError: () => toast({ title: "Save failed", variant: "destructive" }),
+    onError: (e) =>
+      toast({
+        title: "Couldn't save chapter",
+        description: getApiErrorMessage(e),
+        variant: "destructive",
+      }),
   });
 
   const updateLesson = useMutation({
@@ -59,7 +65,12 @@ export default function CurriculumPage({ params }: { params: { id: string } }) {
       qc.invalidateQueries({ queryKey: ["teacher-course", id] });
       toast({ title: "Lesson saved" });
     },
-    onError: () => toast({ title: "Save failed", variant: "destructive" }),
+    onError: (e) =>
+      toast({
+        title: "Couldn't save lesson",
+        description: getApiErrorMessage(e),
+        variant: "destructive",
+      }),
   });
 
   const updateQuiz = useMutation({
@@ -69,7 +80,12 @@ export default function CurriculumPage({ params }: { params: { id: string } }) {
       qc.invalidateQueries({ queryKey: ["curriculum-quizzes", id] });
       toast({ title: "Quiz saved" });
     },
-    onError: () => toast({ title: "Save failed", variant: "destructive" }),
+    onError: (e) =>
+      toast({
+        title: "Couldn't save quiz",
+        description: getApiErrorMessage(e),
+        variant: "destructive",
+      }),
   });
 
   const input =

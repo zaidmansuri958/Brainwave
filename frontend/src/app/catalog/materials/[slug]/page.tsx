@@ -10,6 +10,7 @@ import { loadRazorpay, openRazorpayCheckout } from "@/lib/razorpay";
 import { ArrowRight, CheckCircle2, Loader2, Lock } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { getApiErrorMessage, getRazorpayFailureMessage } from "@/lib/apiError";
 import {
   LightStudioLayout,
   StudioBackLink,
@@ -49,9 +50,10 @@ export default function MaterialDetailPublicPage({ params }: { params: { slug: s
         router.push(`/login?redirect=/catalog/materials/${slug}`);
         return;
       }
+      let checkoutCompleted = false;
       const { data: order } = await materialsApi.purchaseInitiate(product!.id);
       const ok = await loadRazorpay();
-      if (!ok) throw new Error("Razorpay load failed");
+      if (!ok) throw new Error("Could not load payment window. Check your connection or ad blocker.");
       openRazorpayCheckout({
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
         amountPaise: Math.round(Number(order.amount) * 100),
@@ -59,8 +61,20 @@ export default function MaterialDetailPublicPage({ params }: { params: { slug: s
         orderId: order.razorpay_order_id,
         description: product?.title,
         prefill: { name: user?.full_name, email: user?.email },
-        onDismiss: () => {},
+        onDismiss: () => {
+          if (!checkoutCompleted) {
+            toast({ title: "Payment cancelled", description: "You can try again when you're ready." });
+          }
+        },
+        onFailure: (resp) => {
+          toast({
+            title: "Payment didn't go through",
+            description: getRazorpayFailureMessage(resp),
+            variant: "destructive",
+          });
+        },
         onSuccess: async (response) => {
+          checkoutCompleted = true;
           await materialsApi.purchaseConfirm({
             product_id: product!.id,
             razorpay_order_id: response.razorpay_order_id,
@@ -72,7 +86,12 @@ export default function MaterialDetailPublicPage({ params }: { params: { slug: s
         },
       });
     },
-    onError: () => toast({ title: "Payment failed", variant: "destructive" }),
+    onError: (e) =>
+      toast({
+        title: "Couldn't start checkout",
+        description: getApiErrorMessage(e, "Check your connection and try again."),
+        variant: "destructive",
+      }),
   });
 
   if (isLoading || !product) {

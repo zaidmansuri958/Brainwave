@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Save, Loader2, ArrowLeft, Eye } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { getApiErrorMessage } from "@/lib/apiError";
 import { CourseManageNav } from "@/components/teacher/CourseManageNav";
 import { TRANSCRIPTION_LANGS } from "@/lib/transcriptionLangs";
 
@@ -74,8 +75,12 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
       queryClient.invalidateQueries({ queryKey: ["teacher-course", params.id] });
       toast({ title: "Course updated successfully!" });
     },
-    onError: () => {
-      toast({ title: "Failed to update course", variant: "destructive" });
+    onError: (e) => {
+      toast({
+        title: "Couldn't update course",
+        description: getApiErrorMessage(e),
+        variant: "destructive",
+      });
     },
   });
 
@@ -85,6 +90,12 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
       queryClient.invalidateQueries({ queryKey: ["teacher-course", params.id] });
       toast({ title: "Course published!" });
     },
+    onError: (e) =>
+      toast({
+        title: "Couldn't publish",
+        description: getApiErrorMessage(e),
+        variant: "destructive",
+      }),
   });
 
   const handleSubmit = (e: React.FormEvent) => {

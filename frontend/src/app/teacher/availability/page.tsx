@@ -11,6 +11,7 @@ import {
 } from "@/components/layout/StudioPageShell";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { getApiErrorMessage } from "@/lib/apiError";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -51,7 +52,12 @@ export default function AvailabilityPage() {
       qc.invalidateQueries({ queryKey: ["availability-rules"] });
       toast({ title: "Rule saved" });
     },
-    onError: () => toast({ title: "Failed", variant: "destructive" }),
+    onError: (e) =>
+      toast({
+        title: "Couldn't save rule",
+        description: getApiErrorMessage(e),
+        variant: "destructive",
+      }),
   });
 
   const genSlots = useMutation({
@@ -59,7 +65,12 @@ export default function AvailabilityPage() {
     onSuccess: (r) => {
       toast({ title: `Slots created: ${r.data?.slots_created ?? 0}` });
     },
-    onError: () => toast({ title: "No rules or error", variant: "destructive" }),
+    onError: (e) =>
+      toast({
+        title: "Couldn't generate slots",
+        description: getApiErrorMessage(e, "Add at least one rule, or try again."),
+        variant: "destructive",
+      }),
   });
 
   const input = "w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm";

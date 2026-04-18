@@ -10,6 +10,7 @@ import { loadRazorpay, openRazorpayCheckout } from "@/lib/razorpay";
 import { Clock, Loader2, Play } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { getApiErrorMessage, getRazorpayFailureMessage } from "@/lib/apiError";
 import {
   LightStudioLayout,
   StudioBackLink,
@@ -43,9 +44,10 @@ export default function MockPackagePublicPage({ params }: { params: { slug: stri
         router.push(`/login?redirect=/catalog/mock-tests/${slug}`);
         return;
       }
+      let checkoutCompleted = false;
       const { data: order } = await mockTestsApi.purchaseInitiate(pkg!.id);
       const ok = await loadRazorpay();
-      if (!ok) throw new Error("Razorpay load failed");
+      if (!ok) throw new Error("Could not load payment window. Check your connection or ad blocker.");
       openRazorpayCheckout({
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
         amountPaise: Math.round(Number(order.amount) * 100),
@@ -53,8 +55,20 @@ export default function MockPackagePublicPage({ params }: { params: { slug: stri
         orderId: order.razorpay_order_id,
         description: pkg?.title,
         prefill: { name: user?.full_name, email: user?.email },
-        onDismiss: () => {},
+        onDismiss: () => {
+          if (!checkoutCompleted) {
+            toast({ title: "Payment cancelled", description: "You can try again when you're ready." });
+          }
+        },
+        onFailure: (resp) => {
+          toast({
+            title: "Payment didn't go through",
+            description: getRazorpayFailureMessage(resp),
+            variant: "destructive",
+          });
+        },
         onSuccess: async (response) => {
+          checkoutCompleted = true;
           await mockTestsApi.purchaseConfirm({
             package_id: pkg!.id,
             razorpay_order_id: response.razorpay_order_id,
@@ -66,7 +80,12 @@ export default function MockPackagePublicPage({ params }: { params: { slug: stri
         },
       });
     },
-    onError: () => toast({ title: "Payment failed", variant: "destructive" }),
+    onError: (e) =>
+      toast({
+        title: "Couldn't start checkout",
+        description: getApiErrorMessage(e, "Check your connection and try again."),
+        variant: "destructive",
+      }),
   });
 
   if (isLoading || !pkg) {

@@ -164,6 +164,20 @@ async def teacher_dashboard(
     courses = db.query(Course).filter(Course.teacher_id == current_user.id).all()
     course_ids = [c.id for c in courses]
 
+    if not course_ids:
+        profile = db.query(TeacherProfile).filter(TeacherProfile.user_id == current_user.id).first()
+        return {
+            "total_revenue": 0.0,
+            "platform_cut": 0.0,
+            "my_earnings": 0.0,
+            "total_students": 0,
+            "active_courses": 0,
+            "pending_payout": float(profile.pending_payout) if profile else 0,
+            "avg_completion_rate": float(profile.avg_completion_rate) if profile else 0,
+            "recent_enrollments": [],
+            "at_risk_students": [],
+        }
+
     total_revenue = db.query(func.sum(Payment.total_amount)).filter(
         Payment.payee_id == current_user.id,
         Payment.status == "completed"
@@ -181,37 +195,55 @@ async def teacher_dashboard(
         Enrollment.is_active == True
     ).scalar() or 0
 
-    at_risk = db.query(StudentRiskScore).filter(
-        StudentRiskScore.course_id.in_(course_ids),
-        StudentRiskScore.risk_level == "high"
-    ).limit(10).all()
+    at_risk = (
+        db.query(
+            StudentRiskScore.student_id,
+            StudentRiskScore.course_id,
+            StudentRiskScore.risk_level,
+            StudentRiskScore.risk_score,
+            User.full_name,
+            Course.title,
+        )
+        .join(User, User.id == StudentRiskScore.student_id)
+        .join(Course, Course.id == StudentRiskScore.course_id)
+        .filter(
+            StudentRiskScore.course_id.in_(course_ids),
+            StudentRiskScore.risk_level == "high"
+        )
+        .limit(10)
+        .all()
+    )
 
-    at_risk_list = []
-    for r in at_risk:
-        student = db.query(User).filter(User.id == r.student_id).first()
-        course = db.query(Course).filter(Course.id == r.course_id).first()
-        at_risk_list.append({
-            "student_id": str(r.student_id),
-            "student_name": student.full_name if student else "Unknown",
-            "course_id": str(r.course_id),
-            "course_title": course.title if course else "Unknown",
-            "risk_level": r.risk_level,
-            "risk_score": float(r.risk_score) if r.risk_score else 0
-        })
+    at_risk_list = [
+        {
+            "student_id": str(student_id),
+            "student_name": student_name or "Unknown",
+            "course_id": str(course_id),
+            "course_title": course_title or "Unknown",
+            "risk_level": risk_level,
+            "risk_score": float(risk_score) if risk_score else 0,
+        }
+        for student_id, course_id, risk_level, risk_score, student_name, course_title in at_risk
+    ]
 
-    recent_enrollments = db.query(Enrollment).filter(
-        Enrollment.course_id.in_(course_ids)
-    ).order_by(Enrollment.enrolled_at.desc()).limit(10).all()
+    recent_enrollments = (
+        db.query(Enrollment.enrolled_at, User.full_name, Course.title)
+        .join(User, User.id == Enrollment.student_id)
+        .join(Course, Course.id == Enrollment.course_id)
+        .filter(Enrollment.course_id.in_(course_ids))
+        .order_by(Enrollment.enrolled_at.desc())
+        .limit(10)
+        .all()
+    )
 
-    recent_list = []
-    for e in recent_enrollments:
-        student = db.query(User).filter(User.id == e.student_id).first()
-        course = db.query(Course).filter(Course.id == e.course_id).first()
-        recent_list.append({
-            "student_name": student.full_name if student else "Unknown",
-            "course_title": course.title if course else "Unknown",
-            "enrolled_at": e.enrolled_at.isoformat()
-        })
+    recent_list = [
+        {
+            "student_name": student_name or "Unknown",
+            "course_title": course_title or "Unknown",
+            "enrolled_at": enrolled_at.isoformat(),
+        }
+        for enrolled_at, student_name, course_title in recent_enrollments
+    ]
 
     active_courses = sum(1 for c in courses if c.status == "published")
 
@@ -245,29 +277,43 @@ async def get_course_students(
         Enrollment.is_active == True
     ).all()
 
+    total_lessons = db.query(func.count(Lesson.id)).filter(
+        Lesson.course_id == course_id,
+        Lesson.is_published == True,
+    ).scalar() or 1
+
+    progress_rows = (
+        db.query(
+            StudentProgress.student_id,
+            func.count(StudentProgress.id).filter(StudentProgress.completed == True),
+            func.max(StudentProgress.last_watched_at),
+        )
+        .filter(StudentProgress.course_id == course_id)
+        .group_by(StudentProgress.student_id)
+        .all()
+    )
+    progress_map = {
+        str(student_id): {
+            "completed": int(completed or 0),
+            "last_active": last_active,
+        }
+        for student_id, completed, last_active in progress_rows
+    }
+
+    risk_rows = db.query(StudentRiskScore).filter(
+        StudentRiskScore.course_id == course_id
+    ).all()
+    risk_map = {str(r.student_id): r.risk_level for r in risk_rows}
+
     students = []
     for e in enrollments:
         student = db.query(User).filter(User.id == e.student_id).first()
         if not student:
             continue
 
-        # Get risk score
-        risk = db.query(StudentRiskScore).filter(
-            StudentRiskScore.student_id == e.student_id,
-            StudentRiskScore.course_id == course_id
-        ).first()
-
-        # Get progress
-        progress_records = db.query(StudentProgress).filter(
-            StudentProgress.student_id == e.student_id,
-            StudentProgress.course_id == course_id
-        ).all()
-        completed = sum(1 for p in progress_records if p.completed)
-        total_lessons = db.query(func.count()).filter(
-            StudentProgress.course_id == course_id
-        ).scalar() or 1
-
-        last_active = max((p.last_watched_at for p in progress_records if p.last_watched_at), default=None)
+        student_progress = progress_map.get(str(e.student_id), {})
+        completed = student_progress.get("completed", 0)
+        last_active = student_progress.get("last_active")
 
         students.append({
             "student_id": str(student.id),
@@ -276,7 +322,7 @@ async def get_course_students(
             "avatar_url": student.avatar_url,
             "progress_percent": round(completed / total_lessons * 100) if total_lessons else 0,
             "last_active": last_active.isoformat() if last_active else None,
-            "risk_level": risk.risk_level if risk else "low",
+            "risk_level": risk_map.get(str(e.student_id), "low"),
             "enrolled_at": e.enrolled_at.isoformat()
         })
 
@@ -504,11 +550,11 @@ async def regenerate_thumbnail(
         payload["module_title"] = ch.title if ch else ""
         payload["description"] = les.ai_summary or les.title
     try:
-        r = httpx.post(
-            f"{settings.ai_service_url}/generate-thumbnail",
-            json=payload,
-            timeout=120,
-        )
+        async with httpx.AsyncClient(timeout=120) as client:
+            r = await client.post(
+                f"{settings.ai_service_url}/generate-thumbnail",
+                json=payload,
+            )
         if r.status_code != 200:
             raise HTTPException(status_code=500, detail=r.text)
         url = r.json().get("thumbnail_url")

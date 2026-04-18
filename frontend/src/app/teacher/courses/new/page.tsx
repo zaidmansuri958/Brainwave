@@ -9,6 +9,7 @@ import {
   Users, DollarSign, Globe, Layers, Brain, Search, Image, Lightbulb,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { getApiErrorMessage } from "@/lib/apiError";
 import Link from "next/link";
 import { TRANSCRIPTION_LANGS } from "@/lib/transcriptionLangs";
 
@@ -58,7 +59,6 @@ export default function CreateCoursePage() {
 
   const [activeSection, setActiveSection] = useState<Section>("info");
   const [courseId,   setCourseId]   = useState<string | null>(null);
-  const [courseSlug, setCourseSlug] = useState<string | null>(null);
   const [saving,     setSaving]     = useState(false);
 
   const [info, setInfo] = useState({
@@ -108,12 +108,15 @@ export default function CreateCoursePage() {
           transcript_language: info.transcript_language.trim() || undefined,
         });
         setCourseId(data.id);
-        setCourseSlug(data.slug);
         toast({ title: "Draft saved" });
       }
       setActiveSection("media");
-    } catch {
-      toast({ title: "Failed to save", variant: "destructive" });
+    } catch (e) {
+      toast({
+        title: "Couldn't save draft",
+        description: getApiErrorMessage(e),
+        variant: "destructive",
+      });
     } finally {
       setSaving(false);
     }
@@ -131,8 +134,12 @@ export default function CreateCoursePage() {
       await courseApi.uploadMaterials(courseId, formData);
       setActiveSection("ai");
       pollAIStatus();
-    } catch {
-      toast({ title: "Upload failed", variant: "destructive" });
+    } catch (e) {
+      toast({
+        title: "Upload failed",
+        description: getApiErrorMessage(e),
+        variant: "destructive",
+      });
     } finally {
       setUploading(false);
     }
@@ -171,8 +178,12 @@ export default function CreateCoursePage() {
       await courseApi.publish(courseId);
       toast({ title: "Course published!", description: "Your course is now live." });
       router.push(`/teacher/courses/${courseId}/edit`);
-    } catch {
-      toast({ title: "Publish failed", variant: "destructive" });
+    } catch (e) {
+      toast({
+        title: "Publish failed",
+        description: getApiErrorMessage(e),
+        variant: "destructive",
+      });
     }
   };
 

@@ -7,6 +7,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { mockTestsApi } from "@/lib/api";
 import { ArrowLeft, Loader2, Plus, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getApiErrorMessage } from "@/lib/apiError";
 
 export default function MockPackageBuilderPage({ params }: { params: { id: string } }) {
   const { id } = params;
@@ -39,7 +40,12 @@ export default function MockPackageBuilderPage({ params }: { params: { id: strin
       toast({ title: "Paper added" });
       await refetch();
     },
-    onError: () => toast({ title: "Failed", variant: "destructive" }),
+    onError: (e) =>
+      toast({
+        title: "Couldn't add paper",
+        description: getApiErrorMessage(e),
+        variant: "destructive",
+      }),
   });
 
   const addSection = useMutation({
@@ -53,7 +59,12 @@ export default function MockPackageBuilderPage({ params }: { params: { id: strin
       toast({ title: "Section added" });
       await refetch();
     },
-    onError: () => toast({ title: "Failed", variant: "destructive" }),
+    onError: (e) =>
+      toast({
+        title: "Couldn't add section",
+        description: getApiErrorMessage(e),
+        variant: "destructive",
+      }),
   });
 
   const addQuestion = useMutation({
@@ -77,7 +88,12 @@ export default function MockPackageBuilderPage({ params }: { params: { id: strin
       toast({ title: "Question added" });
       await refetch();
     },
-    onError: () => toast({ title: "Failed", variant: "destructive" }),
+    onError: (e) =>
+      toast({
+        title: "Couldn't add question",
+        description: getApiErrorMessage(e),
+        variant: "destructive",
+      }),
   });
 
   const publish = useMutation({
@@ -86,7 +102,12 @@ export default function MockPackageBuilderPage({ params }: { params: { id: strin
       qc.invalidateQueries({ queryKey: ["mock-builder", id] });
       toast({ title: "Published" });
     },
-    onError: () => toast({ title: "Publish failed", variant: "destructive" }),
+    onError: (e) =>
+      toast({
+        title: "Publish failed",
+        description: getApiErrorMessage(e),
+        variant: "destructive",
+      }),
   });
 
   const input = "w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm";
