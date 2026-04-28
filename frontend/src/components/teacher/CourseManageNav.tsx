@@ -16,21 +16,21 @@ export function CourseManageNav({ courseId }: { courseId: string }) {
   ];
 
   return (
-    <div className="mb-8 flex flex-wrap gap-1 rounded-2xl border border-gray-100/90 bg-white/90 p-1.5 shadow-card backdrop-blur-sm">
+    <div className="neo-tabbar mb-8">
       {tabs.map(({ href, label, icon: Icon }) => {
         const active = pathname === href;
         return (
           <Link
             key={href}
             href={href}
-            className={`relative inline-flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-colors ${
-              active ? "text-white" : "text-gray-600 hover:text-gray-900"
+            className={`relative inline-flex items-center gap-2 rounded-full px-3.5 py-2.5 text-sm font-extrabold uppercase transition-colors ${
+              active ? "text-black" : "text-gray-600 hover:text-gray-900"
             }`}
           >
             {active && (
               <motion.span
                 layoutId="course-manage-nav-pill"
-                className="absolute inset-0 rounded-xl bg-indigo-600 shadow-sm"
+                className="absolute inset-0 rounded-full border-2 border-black bg-[#ffe500] shadow-[3px_3px_0_#111111]"
                 transition={{ type: "spring", stiffness: 420, damping: 32 }}
               />
             )}

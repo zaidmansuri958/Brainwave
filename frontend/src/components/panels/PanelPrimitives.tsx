@@ -39,18 +39,18 @@ export function PanelHero({
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45 }}
-      className="panel-surface relative overflow-hidden rounded-[2rem] p-6 sm:p-8"
+      className="panel-surface relative overflow-hidden rounded-[2rem] border-2 border-black bg-[#fffdf7] p-6 shadow-[6px_6px_0_#111111] sm:p-8"
     >
       <div className="panel-grid absolute inset-0 opacity-30" aria-hidden />
       <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-3xl">
           {eyebrow ? <p className="eyebrow mb-3">{eyebrow}</p> : null}
-          <h1 className="max-w-3xl text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">{title}</h1>
+          <h1 className="max-w-3xl font-display text-4xl font-black uppercase tracking-tight text-slate-950 sm:text-5xl">{title}</h1>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">{description}</p>
           {chips?.length ? (
             <div className="mt-5 flex flex-wrap gap-2">
               {chips.map((chip) => (
-                <span key={chip} className="panel-chip">
+                <span key={chip} className="bw-chip">
                   {chip}
                 </span>
               ))}
@@ -79,20 +79,20 @@ export function MetricCard({
   href?: string;
 }) {
   const toneClass = {
-    blue: "from-sky-500/15 to-blue-500/5 text-sky-700",
-    green: "from-emerald-500/15 to-lime-500/5 text-emerald-700",
-    amber: "from-amber-500/15 to-orange-500/5 text-amber-700",
-    rose: "from-rose-500/15 to-pink-500/5 text-rose-700",
-    violet: "from-violet-500/15 to-fuchsia-500/5 text-violet-700",
+    blue: "bg-[#8ed8ff] text-sky-900",
+    green: "bg-[#7dde92] text-green-900",
+    amber: "bg-[#ffe500] text-black",
+    rose: "bg-[#f7a8d8] text-rose-900",
+    violet: "bg-[#fff6a8] text-black",
   }[tone];
 
   const content = (
-    <div className="panel-card rounded-[1.6rem] p-5 transition duration-300 hover:-translate-y-1 hover:shadow-[0_28px_65px_rgba(15,23,42,0.11)]">
-      <div className={cn("mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br", toneClass)}>
+    <div className="panel-card rounded-[1.6rem] border-2 border-black bg-white p-5 shadow-[5px_5px_0_#111111] transition duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[7px_7px_0_#111111]">
+      <div className={cn("mb-4 flex h-12 w-12 items-center justify-center rounded-[16px] border-2 border-black", toneClass)}>
         <Icon className="h-5 w-5" />
       </div>
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</p>
-      <p className="mt-2 text-3xl font-black tracking-tight text-slate-950">{value}</p>
+      <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-slate-500">{label}</p>
+      <p className="mt-2 font-display text-3xl font-black uppercase tracking-tight text-slate-950">{value}</p>
       {hint ? <p className="mt-2 text-sm text-slate-500">{hint}</p> : null}
     </div>
   );
@@ -107,7 +107,7 @@ export function PanelCard({
   children: ReactNode;
   className?: string;
 }) {
-  return <section className={cn("panel-card rounded-[1.75rem] p-5 sm:p-6", className)}>{children}</section>;
+  return <section className={cn("panel-card rounded-[1.75rem] border-2 border-black bg-white p-5 shadow-[5px_5px_0_#111111] sm:p-6", className)}>{children}</section>;
 }
 
 export function SectionHeader({
@@ -124,11 +124,11 @@ export function SectionHeader({
   return (
     <div className="mb-4 flex items-end justify-between gap-3">
       <div>
-        <h2 className="text-2xl font-black tracking-tight text-slate-950">{title}</h2>
+        <h2 className="font-display text-2xl font-black uppercase tracking-tight text-slate-950">{title}</h2>
         {description ? <p className="mt-1 text-sm text-slate-500">{description}</p> : null}
       </div>
       {href && cta ? (
-        <Link href={href} className="inline-flex items-center gap-1 text-sm font-semibold text-sky-700">
+        <Link href={href} className="inline-flex items-center gap-1 text-sm font-extrabold uppercase text-slate-950">
           {cta}
           <ArrowRight className="h-4 w-4" />
         </Link>

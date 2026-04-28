@@ -11,8 +11,7 @@ import { getApiErrorMessage } from "@/lib/apiError";
 import { CourseManageNav } from "@/components/teacher/CourseManageNav";
 import { TRANSCRIPTION_LANGS } from "@/lib/transcriptionLangs";
 
-const inputClass =
-  "w-full bg-gray-50 text-gray-900 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all text-sm placeholder:text-gray-300";
+const inputClass = "w-full bg-white px-4 py-3 text-sm text-gray-900";
 
 export default function EditCoursePage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -130,27 +129,27 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#FAFAF9]">
+      <div className="bw-page min-h-screen">
         <Navbar />
         <div className="flex items-center justify-center h-96">
-          <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#ff6b00]" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9]">
+    <div className="bw-page min-h-screen">
       <Navbar />
 
       <div className="max-w-3xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center gap-4 mb-4">
-          <Link href="/teacher/courses" className="text-gray-400 hover:text-gray-700 transition-colors">
+          <Link href="/teacher/courses" className="neo-secondary-btn h-10 w-10 rounded-full px-0 py-0 text-gray-700">
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div className="flex-1">
-            <h1 className="font-display font-extrabold text-2xl text-gray-900">Edit Course</h1>
+            <h1 className="font-display text-2xl font-extrabold uppercase text-gray-900">Edit Course</h1>
             <p className="text-gray-500 text-sm">
               Status: <span className={`font-semibold ${course?.status === "published" ? "text-emerald-600" : "text-amber-600"}`}>
                 {course?.status}
@@ -162,7 +161,7 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
               <button
                 onClick={() => publishCourse.mutate()}
                 disabled={publishCourse.isPending}
-                className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-emerald-700 transition-colors font-semibold"
+                className="neo-dark-btn px-4 py-2 text-sm"
               >
                 {publishCourse.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
                 Publish
@@ -172,8 +171,7 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
               form="edit-form"
               type="submit"
               disabled={updateCourse.isPending}
-              className="flex items-center gap-2 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all disabled:opacity-60"
-              style={{ background: "linear-gradient(135deg,#4f46e5,#7c3aed)", boxShadow: "0 4px 14px rgba(99,102,241,0.35)" }}
+              className="neo-primary-btn px-4 py-2 text-sm disabled:opacity-60"
             >
               {updateCourse.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               Save Changes

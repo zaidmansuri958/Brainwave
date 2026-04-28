@@ -4,12 +4,11 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Navbar } from "@/components/layout/Navbar";
 import { mockTestsApi } from "@/lib/api";
 import { Loader2, Clock, Send, Trophy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getApiErrorMessage } from "@/lib/apiError";
-import { studioBtnPrimary } from "@/components/layout/StudioPageShell";
+import { ProgressRing } from "@/components/ui/progress-ring";
 
 export default function MockTestTakePage({ params }: { params: { paperId: string } }) {
   const { paperId } = params;
@@ -79,10 +78,8 @@ export default function MockTestTakePage({ params }: { params: { paperId: string
 
   if (isLoading || !paper) {
     return (
-      <div className="min-h-screen bg-[#FAFAF9] relative">
-        <div className="pointer-events-none absolute inset-0 bg-dot-grid opacity-35" aria-hidden />
-        <Navbar />
-        <div className="relative z-10 flex justify-center py-24">
+      <div className="min-h-screen bg-white">
+        <div className="flex justify-center py-24">
           <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
         </div>
       </div>
@@ -91,29 +88,25 @@ export default function MockTestTakePage({ params }: { params: { paperId: string
 
   if (result) {
     return (
-      <div className="min-h-screen bg-[#FAFAF9] relative">
-        <div className="pointer-events-none absolute inset-0 bg-dot-grid opacity-35" aria-hidden />
-        <Navbar />
+      <div className="min-h-screen bg-white">
         <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          className="relative z-10 max-w-lg mx-auto px-4 py-16 text-center"
+          className="mx-auto max-w-xl px-4 py-16 text-center"
         >
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-100 to-violet-100 shadow-card">
-            <Trophy className="h-8 w-8 text-indigo-600" />
+          <div className="mx-auto mb-6">
+            <ProgressRing value={result.score_percent} size={140} strokeWidth={10} />
           </div>
-          <h1 className="font-display font-extrabold text-2xl text-gray-900">Results</h1>
-          <p className="text-5xl font-black text-gradient-indigo mt-4 tabular-nums">{result.score_percent.toFixed(1)}%</p>
-          <p className="text-gray-500 text-sm mt-2">
+          <h1 className="font-display text-3xl text-ink-heading">Results</h1>
+          <p className="mt-3 text-sm text-ink-muted">
             Score {result.total_score.toFixed(1)} / {result.max_score.toFixed(1)}
           </p>
-          <Link
-            href="/dashboard"
-            className={`${studioBtnPrimary} mt-10 inline-flex px-8 py-3 text-sm`}
-          >
-            Back to dashboard
-          </Link>
+          <div className="mt-6 grid grid-cols-2 gap-3 text-left">
+            <div className="rounded-lg border border-[#e2e5ec] p-3"><p className="text-xs text-ink-muted">Correct</p><p className="text-lg font-semibold text-green-700">{Math.round(result.max_score * (result.score_percent / 100))}</p></div>
+            <div className="rounded-lg border border-[#e2e5ec] p-3"><p className="text-xs text-ink-muted">Accuracy</p><p className="text-lg font-semibold text-ink-heading">{result.score_percent.toFixed(1)}%</p></div>
+          </div>
+          <Link href="/dashboard" className="bw-action-primary mt-10 inline-flex px-8">Back to dashboard</Link>
         </motion.div>
       </div>
     );
@@ -124,19 +117,18 @@ export default function MockTestTakePage({ params }: { params: { paperId: string
   const pct = left !== null && totalSecs > 0 ? Math.min(100, (left / totalSecs) * 100) : 100;
   const urgent = left !== null && left < 300;
 
+  const flatQuestions = (paper.sections || []).flatMap((s: any) => s.questions || []);
   return (
-    <div className="min-h-screen bg-[#FAFAF9] relative">
-      <div className="pointer-events-none absolute inset-0 bg-dot-grid opacity-35" aria-hidden />
-      <Navbar />
-      <div className="relative z-10 max-w-3xl mx-auto px-4 py-6">
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="min-h-screen bg-white">
+      <div className="sticky top-0 z-20 border-b border-[#e2e5ec] bg-white">
+        <div className="bw-shell flex items-center justify-between py-3">
           <div>
-            <p className="eyebrow mb-1">Mock test</p>
-            <h1 className="font-display font-bold text-xl text-gray-900">{paper.title}</h1>
+            <p className="text-xs text-ink-muted">Exam mode</p>
+            <h1 className="font-semibold text-ink-heading">{paper.title}</h1>
           </div>
           <motion.div
             layout
-            className={`inline-flex items-center gap-2 self-start rounded-2xl border px-4 py-2.5 text-sm font-bold tabular-nums shadow-sm transition-colors ${
+            className={`inline-flex items-center gap-2 self-start rounded-md border px-4 py-2.5 text-sm font-bold tabular-nums transition-colors ${
               urgent
                 ? "border-rose-200 bg-rose-50 text-rose-800"
                 : "border-amber-200/80 bg-amber-50 text-amber-900"
@@ -153,8 +145,10 @@ export default function MockTestTakePage({ params }: { params: { paperId: string
               />
             </div>
           </motion.div>
+          <p className="text-sm text-ink-muted">Question {Object.keys(answers).length} of {flatQuestions.length}</p>
         </div>
-
+      </div>
+      <div className="bw-shell grid gap-6 py-6 lg:grid-cols-[1fr_240px]">
         <div className="space-y-8">
           {(paper.sections || []).map((sec: any, si: number) => (
             <motion.section
@@ -162,7 +156,7 @@ export default function MockTestTakePage({ params }: { params: { paperId: string
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: si * 0.06, duration: 0.4 }}
-              className="rounded-2xl border border-gray-100/90 bg-white p-5 sm:p-6 shadow-card"
+              className="rounded-xl border border-[#e2e5ec] bg-white p-5 sm:p-6 shadow-card"
             >
               <h2 className="font-display font-semibold text-gray-900 mb-4">{sec.title}</h2>
               <div className="space-y-5">
@@ -202,16 +196,23 @@ export default function MockTestTakePage({ params }: { params: { paperId: string
             </motion.section>
           ))}
         </div>
-
-        <button
-          type="button"
-          disabled={submit.isPending}
-          onClick={() => submit.mutate()}
-          className={`${studioBtnPrimary} mt-10 w-full py-3.5 text-sm gap-2`}
-        >
-          {submit.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
-          Submit test
-        </button>
+        <aside className="h-fit rounded-xl border border-[#e2e5ec] bg-[#f7f8fa] p-4">
+          <p className="mb-3 text-sm font-semibold text-ink-heading">Question Navigator</p>
+          <div className="grid grid-cols-4 gap-2">
+            {flatQuestions.map((q: any, idx: number) => {
+              const attempted = Boolean(answers[q.id]);
+              return (
+                <div key={q.id} className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold ${attempted ? "bg-brand-primary text-white" : "border border-[#e2e5ec] bg-white text-ink-muted"}`}>
+                  {idx + 1}
+                </div>
+              );
+            })}
+          </div>
+          <button type="button" disabled={submit.isPending} onClick={() => submit.mutate()} className="bw-action-primary mt-6 w-full">
+            {submit.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+            Submit Test
+          </button>
+        </aside>
       </div>
     </div>
   );

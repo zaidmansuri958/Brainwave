@@ -9,23 +9,36 @@ module.exports = {
   theme: {
     container: {
       center: true,
-      padding: "2rem",
-      screens: { "2xl": "1400px" },
+      padding: {
+        DEFAULT: "1.5rem",
+        md: "3rem",
+        xl: "5rem",
+      },
+      screens: { "2xl": "1200px" },
     },
     extend: {
       fontFamily: {
-        /* Plus Jakarta Sans — premium geometric, CRED/Happn-style feel */
-        display: ["var(--font-display)", "Plus Jakarta Sans", "system-ui", "sans-serif"],
-        sans:    ["var(--font-body)", "Plus Jakarta Sans", "system-ui", "sans-serif"],
+        display: ["var(--font-display)", "Georgia", "serif"],
+        sans: ["var(--font-body)", "system-ui", "sans-serif"],
       },
       colors: {
-        border:     "hsl(var(--border))",
-        input:      "hsl(var(--input))",
-        ring:       "hsl(var(--ring))",
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        brand: {
+          primary: "var(--brand-primary)",
+          light: "var(--brand-light)",
+          dark: "var(--brand-dark)",
+        },
+        ink: {
+          heading: "var(--text-heading)",
+          body: "var(--text-body)",
+          muted: "var(--text-muted)",
+        },
         primary: {
-          DEFAULT:    "hsl(var(--primary))",
+          DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
@@ -54,16 +67,17 @@ module.exports = {
         },
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        sm: "var(--radius-sm)",
+        md: "var(--radius-md)",
+        lg: "var(--radius-lg)",
+        xl: "var(--radius-xl)",
       },
       boxShadow: {
-        "card":          "0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06)",
-        "card-hover":    "0 4px 8px rgba(0,0,0,0.06), 0 16px 40px rgba(0,0,0,0.10)",
-        "product":       "0 20px 60px rgba(0,0,0,0.12), 0 6px 20px rgba(0,0,0,0.07)",
-        "button-indigo": "0 2px 4px rgba(79,70,229,0.22), 0 6px 16px rgba(79,70,229,0.18)",
-        "button-hover":  "0 4px 8px rgba(79,70,229,0.28), 0 10px 24px rgba(79,70,229,0.22)",
+        sm: "var(--shadow-sm)",
+        md: "var(--shadow-md)",
+        lg: "var(--shadow-lg)",
+        card: "var(--shadow-card)",
+        "card-hover": "var(--shadow-md)",
       },
       keyframes: {
         "accordion-down": {

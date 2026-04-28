@@ -88,30 +88,29 @@ export default function CurriculumPage({ params }: { params: { id: string } }) {
       }),
   });
 
-  const input =
-    "w-full bg-gray-50 text-gray-900 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200";
+  const input = "w-full bg-white px-3 py-2 text-sm text-gray-900";
 
   if (loadingCourse) {
     return (
-      <div className="min-h-screen bg-[#FAFAF9]">
+      <div className="bw-page min-h-screen">
         <Navbar />
         <div className="flex justify-center py-24">
-          <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#ff6b00]" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9]">
+    <div className="bw-page min-h-screen">
       <Navbar />
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="flex items-center gap-4 mb-6">
-          <Link href="/teacher/courses" className="text-gray-400 hover:text-gray-700">
+          <Link href="/teacher/courses" className="neo-secondary-btn h-10 w-10 rounded-full px-0 py-0 text-gray-700">
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="font-display font-extrabold text-2xl text-gray-900">Curriculum & quizzes</h1>
+            <h1 className="font-display text-2xl font-extrabold uppercase text-gray-900">Curriculum & quizzes</h1>
             <p className="text-gray-500 text-sm">{course?.title}</p>
           </div>
         </div>
@@ -217,7 +216,7 @@ function ChapterTitleInput({
         type="button"
         disabled={disabled || v === initial}
         onClick={() => onSave(v)}
-        className="px-3 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold disabled:opacity-40"
+        className="neo-primary-btn px-3 py-2 text-xs disabled:opacity-40"
       >
         Save
       </button>
@@ -244,7 +243,7 @@ function LessonTitleInput({
         type="button"
         disabled={disabled || v === initial}
         onClick={() => onSave(v)}
-        className="px-3 py-2 rounded-xl bg-gray-800 text-white text-xs font-semibold disabled:opacity-40"
+        className="neo-dark-btn px-3 py-2 text-xs disabled:opacity-40"
       >
         Save
       </button>
@@ -372,7 +371,7 @@ function QuizEditor({
         type="button"
         disabled={saving}
         onClick={() => onSave(payload)}
-        className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-semibold disabled:opacity-60"
+        className="neo-primary-btn px-4 py-2 text-sm disabled:opacity-60"
       >
         {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
         Save quiz

@@ -1,18 +1,19 @@
-import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { HeroSection } from "@/components/home/HeroSection";
-import { StatsSection } from "@/components/home/StatsSection";
-import { FeaturesSection } from "@/components/home/FeaturesSection";
-import { HowItWorksSection } from "@/components/home/HowItWorksSection";
-import { TestimonialsSection } from "@/components/home/TestimonialsSection";
+import { Navbar } from "@/components/layout/Navbar";
 import { CTASection } from "@/components/home/CTASection";
 import { CoursesPreview } from "@/components/home/CoursesPreview";
+import { FeaturesSection } from "@/components/home/FeaturesSection";
+import { HeroSection } from "@/components/home/HeroSection";
+import { HowItWorksSection } from "@/components/home/HowItWorksSection";
+import { StatsSection } from "@/components/home/StatsSection";
+import { TestimonialsSection } from "@/components/home/TestimonialsSection";
+import { AppShell } from "@/components/ui/app-shell";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAFAF9]">
+    <AppShell className="flex flex-col">
       <Navbar />
-      <main className="flex-1">
+      <main className="flex-1 pb-4">
         <HeroSection />
         <StatsSection />
         <FeaturesSection />
@@ -22,6 +23,6 @@ export default function HomePage() {
         <CTASection />
       </main>
       <Footer />
-    </div>
+    </AppShell>
   );
 }

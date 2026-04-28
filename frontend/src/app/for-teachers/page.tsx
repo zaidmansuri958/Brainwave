@@ -1,247 +1,131 @@
 "use client";
+
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { Navbar } from "@/components/layout/Navbar";
+import { ArrowRight, Banknote, BarChart3, Sparkles, Upload, Video, Wallet } from "lucide-react";
 import { Footer } from "@/components/layout/Footer";
-import {
-  Upload, Sparkles, Video, Users, DollarSign, Shield,
-  ArrowRight, Check, BarChart2, BookOpen, Zap,
-} from "lucide-react";
+import { Navbar } from "@/components/layout/Navbar";
+import { AppShell, ContentBand, InsightCard, SectionHeader } from "@/components/ui/app-shell";
 
-const up = (delay = 0) => ({
-  initial: { opacity: 0, y: 20 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true },
-  transition: { duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] as any },
-});
-
-const STEPS = [
-  {
-    icon: Upload,
-    title: "Upload your lectures",
-    body: "Drop in your videos, PDFs, or audio recordings — even a phone recording works perfectly.",
-    color: "bg-indigo-50 text-indigo-600",
-  },
-  {
-    icon: Sparkles,
-    title: "AI builds the course",
-    body: "Our AI transcribes, creates chapters, writes quizzes, generates summaries and a thumbnail — in minutes.",
-    color: "bg-violet-50 text-violet-600",
-  },
-  {
-    icon: Users,
-    title: "Students subscribe",
-    body: "Set your price. Students enroll and get instant access to your full course plus a personal AI tutor.",
-    color: "bg-sky-50 text-sky-600",
-  },
-  {
-    icon: DollarSign,
-    title: "You get paid",
-    body: "Earnings hit your account every two weeks. You keep up to 92% — one of the lowest commissions in EdTech.",
-    color: "bg-emerald-50 text-emerald-600",
-  },
-];
-
-const FEATURES = [
-  { icon: Sparkles,   label: "AI course builder",         body: "Transcription, chapters, quizzes, thumbnail — all automated." },
-  { icon: Video,      label: "Live sessions",              body: "Host live classes with Jitsi. Students register in one click."  },
-  { icon: BarChart2,  label: "Earnings dashboard",        body: "Track revenue, commission tier, and upcoming payouts clearly." },
-  { icon: Shield,     label: "Blockchain certificates",   body: "Students earn verifiable certificates on course completion."    },
-  { icon: BookOpen,   label: "AI tutor per course",       body: "Every course ships with a 24/7 AI tutor trained on your content." },
-  { icon: Users,      label: "Doubt & Q&A sessions",      body: "Structured Q&A sessions keep students engaged and progressing." },
-];
-
-const COMMISSION = [
-  { tier: "Starter",  range: "< 500 students",   rate: "10%", keep: "90%", highlight: false },
-  { tier: "Growth",   range: "500–5,000 students", rate: "9%",  keep: "91%", highlight: true  },
-  { tier: "Scale",    range: "5,000+ students",   rate: "8%",  keep: "92%", highlight: false },
+const steps = [
+  { title: "Record once", description: "Upload lectures, notes, or recordings from any setup.", icon: Upload, accentClass: "bg-indigo-50 text-indigo-600" },
+  { title: "AI builds the structure", description: "Generate curriculum, thumbnails, quizzes, summaries, and launch-ready content.", icon: Sparkles, accentClass: "bg-sky-50 text-sky-600" },
+  { title: "Teach with confidence", description: "Run live sessions, engage the community, and manage students in one studio.", icon: Video, accentClass: "bg-amber-50 text-amber-600" },
+  { title: "Track and grow revenue", description: "Use analytics, promotions, and transparent payouts to scale sustainably.", icon: BarChart3, accentClass: "bg-emerald-50 text-emerald-600" },
 ];
 
 export default function ForTeachersPage() {
   return (
-    <div className="min-h-screen bg-[#FAFAF9] flex flex-col">
+    <AppShell>
       <Navbar />
-
-      {/* ── Hero ── */}
-      <section style={{ background: "#FCF8F1" }} className="pt-16 pb-20 lg:pt-24 lg:pb-28">
-        <div className="max-w-5xl mx-auto px-6 lg:px-8 text-center">
-          <motion.span
-            {...up(0)}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold tracking-wide text-indigo-600 mb-6"
-            style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)" }}
-          >
-            <Zap className="w-3 h-3 fill-indigo-500" />
-            For Educators &amp; Coaches
-          </motion.span>
-
-          <motion.h1
-            {...up(0.07)}
-            className="font-display font-extrabold text-gray-950 tracking-tight leading-[1.03] mb-6"
-            style={{ fontSize: "clamp(2.4rem, 5.5vw, 4.2rem)" }}
-          >
-            Your offline lectures,<br />
-            <span style={{ background: "linear-gradient(120deg,#4f46e5,#7c3aed)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-              fully digital in minutes.
-            </span>
-          </motion.h1>
-
-          <motion.p {...up(0.14)} className="text-gray-500 text-lg leading-relaxed max-w-2xl mx-auto mb-10">
-            Upload your recordings. Brainwave's AI builds the complete course — chapters, quizzes,
-            summaries, thumbnail, and a personal AI tutor for every student.
-            You just teach. We handle everything else.
-          </motion.p>
-
-          <motion.div {...up(0.21)} className="flex flex-wrap gap-4 justify-center mb-6">
-            <Link href="/register?role=teacher">
-              <span
-                className="inline-flex items-center gap-3 px-8 py-4 rounded-full font-bold text-base text-white cursor-pointer transition-transform active:scale-[0.97]"
-                style={{ background: "linear-gradient(135deg,#4f46e5,#7c3aed)", boxShadow: "0 6px 22px rgba(99,102,241,0.35)" }}
-              >
-                Start teaching free
-                <ArrowRight className="w-5 h-5" />
-              </span>
-            </Link>
-            <Link href="/pricing">
-              <span className="inline-flex items-center gap-2.5 px-8 py-4 rounded-full font-bold text-base text-gray-700 cursor-pointer border-2 border-gray-200 hover:border-indigo-300 hover:text-indigo-700 transition-all">
-                See commission rates
-              </span>
-            </Link>
-          </motion.div>
-
-          <motion.p {...up(0.27)} className="text-sm text-gray-400">
-            No setup fee. No monthly charge. Pay only when you earn.
-          </motion.p>
-        </div>
-      </section>
-
-      {/* ── How it works ── */}
-      <section className="py-20 bg-[#FAFAF9]">
-        <div className="max-w-6xl mx-auto px-6 lg:px-8">
-          <motion.div {...up(0)} className="text-center mb-14">
-            <p className="text-xs font-bold tracking-widest text-indigo-500 uppercase mb-3">How it works</p>
-            <h2 className="font-display font-extrabold text-3xl text-gray-950">From recording to revenue in 4 steps</h2>
-          </motion.div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {STEPS.map((s, i) => (
-              <motion.div key={s.title} {...up(i * 0.08)}>
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 h-full hover:-translate-y-1 transition-transform duration-300">
-                  <div className={`w-11 h-11 rounded-xl ${s.color} flex items-center justify-center mb-4`}>
-                    <s.icon className="w-5 h-5" />
-                  </div>
-                  <span className="text-[10px] font-bold tracking-widest text-gray-300 uppercase">Step {i + 1}</span>
-                  <h3 className="font-display font-bold text-gray-900 mt-1 mb-2">{s.title}</h3>
-                  <p className="text-sm text-gray-400 leading-relaxed">{s.body}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Commission tiers ── */}
-      <section className="py-20 bg-white border-y border-gray-100">
-        <div className="max-w-4xl mx-auto px-6 lg:px-8">
-          <motion.div {...up(0)} className="text-center mb-12">
-            <p className="text-xs font-bold tracking-widest text-indigo-500 uppercase mb-3">Commission model</p>
-            <h2 className="font-display font-extrabold text-3xl text-gray-950 mb-3">Keep more as you grow</h2>
-            <p className="text-gray-400">Commission drops automatically as your student base grows. No negotiation needed.</p>
-          </motion.div>
-
-          <div className="grid sm:grid-cols-3 gap-5">
-            {COMMISSION.map((c, i) => (
-              <motion.div key={c.tier} {...up(i * 0.08)}>
-                <div
-                  className={`rounded-2xl p-6 border text-center h-full ${
-                    c.highlight
-                      ? "border-indigo-200 bg-indigo-50"
-                      : "border-gray-100 bg-[#FAFAF9]"
-                  }`}
-                >
-                  {c.highlight && (
-                    <span className="inline-block text-[10px] font-bold tracking-widest uppercase text-indigo-600 bg-indigo-100 px-3 py-1 rounded-full mb-4">
-                      Most popular
-                    </span>
-                  )}
-                  <p className="font-display font-extrabold text-4xl text-gray-950 mb-1">{c.keep}</p>
-                  <p className="text-sm font-semibold text-gray-500 mb-4">you keep</p>
-                  <div className="text-xs text-gray-400 mb-1">Platform commission: <span className="font-bold text-gray-700">{c.rate}</span></div>
-                  <div className="text-xs text-gray-400">{c.range}</div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          <motion.div {...up(0.3)} className="mt-8 p-5 bg-amber-50 border border-amber-100 rounded-2xl flex items-start gap-3">
-            <div className="w-5 h-5 rounded-full bg-amber-200 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <span className="text-[10px] font-bold text-amber-700">!</span>
-            </div>
-            <p className="text-sm text-amber-700 leading-relaxed">
-              High-volume teachers (5,000+ students) can negotiate further.
-              Contact us — we've gone as low as <strong>6%</strong> for top creators.
-            </p>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ── Features grid ── */}
-      <section className="py-20 bg-[#FAFAF9]">
-        <div className="max-w-6xl mx-auto px-6 lg:px-8">
-          <motion.div {...up(0)} className="text-center mb-14">
-            <p className="text-xs font-bold tracking-widest text-indigo-500 uppercase mb-3">Everything you get</p>
-            <h2 className="font-display font-extrabold text-3xl text-gray-950">Built for serious educators</h2>
-          </motion.div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {FEATURES.map((f, i) => (
-              <motion.div key={f.label} {...up(i * 0.06)}>
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex gap-4 h-full hover:-translate-y-0.5 transition-transform duration-200">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0">
-                    <f.icon className="w-5 h-5 text-indigo-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-display font-bold text-gray-900 mb-1">{f.label}</h3>
-                    <p className="text-sm text-gray-400 leading-relaxed">{f.body}</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── CTA ── */}
-      <section className="py-20 bg-white border-t border-gray-100">
-        <div className="max-w-2xl mx-auto px-6 text-center">
-          <motion.div {...up(0)}>
-            <div
-              className="rounded-3xl p-10"
-              style={{ background: "linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%)" }}
-            >
-              <h2 className="font-display font-extrabold text-3xl text-white mb-3">
-                Ready to go digital?
-              </h2>
-              <p className="text-indigo-200 text-base mb-8 leading-relaxed">
-                Join 1,200+ teachers already earning on Brainwave. Set up your first course today — free, no card required.
+      <main className="bw-shell space-y-6 pb-6">
+        <ContentBand muted>
+          <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+            <div>
+              <span className="eyebrow mb-4">For Educators & Coaches</span>
+              <h1 className="font-display text-[clamp(2.5rem,5.4vw,4.8rem)] font-extrabold leading-[1.02] text-slate-950">
+                Your offline expertise,
+                <br />
+                <span className="text-gradient-indigo">turned into a premium digital classroom.</span>
+              </h1>
+              <p className="bw-muted mt-5 max-w-2xl text-base leading-8">
+                The redesigned teacher experience feels like a creator studio, not a plain admin tool. Launch faster, guide students
+                better, and understand revenue, content, and learner progress without fighting the interface.
               </p>
-              <div className="flex flex-wrap gap-3 justify-center">
-                <Link href="/register?role=teacher">
-                  <span className="inline-flex items-center gap-2.5 bg-white text-indigo-700 px-7 py-3.5 rounded-full font-bold text-sm cursor-pointer hover:bg-indigo-50 transition-colors">
-                    Create teacher account <ArrowRight className="w-4 h-4" />
-                  </span>
+              <div className="mt-7 flex flex-wrap gap-3">
+                <Link href="/register?role=teacher" className="bw-action-primary">
+                  Start teaching free
+                  <ArrowRight className="h-4 w-4" />
                 </Link>
-                <Link href="/pricing">
-                  <span className="inline-flex items-center gap-2.5 border border-white/30 text-white px-7 py-3.5 rounded-full font-bold text-sm cursor-pointer hover:bg-white/10 transition-colors">
-                    View pricing
-                  </span>
+                <Link href="/pricing" className="bw-action-secondary">
+                  <Wallet className="h-4 w-4" />
+                  View commission model
                 </Link>
               </div>
             </div>
-          </motion.div>
-        </div>
-      </section>
 
+            <div className="grid gap-4">
+              <div className="bw-card p-5">
+                <p className="bw-kicker">Teacher Studio Snapshot</p>
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-[1.3rem] bg-[#f8f2eb] p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Launch speed</p>
+                    <p className="mt-2 font-display text-3xl font-extrabold text-slate-950">2 min</p>
+                    <p className="mt-1 text-xs text-slate-500">Lecture to structured course</p>
+                  </div>
+                  <div className="rounded-[1.3rem] bg-indigo-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-indigo-500">Your keep rate</p>
+                    <p className="mt-2 font-display text-3xl font-extrabold text-indigo-950">Up to 92%</p>
+                    <p className="mt-1 text-xs text-indigo-800">Transparent, teacher-friendly pricing</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bw-card-soft p-5">
+                <p className="bw-kicker">Workflow</p>
+                <div className="mt-4 space-y-3">
+                  {["Upload lecture assets", "AI generates structure", "Review + publish", "Sell, teach, and get paid"].map((item, index) => (
+                    <div key={item} className="flex items-center gap-3 rounded-[1.2rem] bg-white px-4 py-3">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-950 text-xs font-semibold text-white">{index + 1}</span>
+                      <p className="text-sm font-medium text-slate-700">{item}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </ContentBand>
+
+        <ContentBand>
+          <SectionHeader
+            eyebrow="Studio Benefits"
+            title="Built for serious educators"
+            description="Less white space, stronger grouping, and clearer calls to action give teachers a more operational, premium working environment."
+          />
+          <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {steps.map((step) => (
+              <InsightCard key={step.title} {...step} className="h-full" />
+            ))}
+          </div>
+        </ContentBand>
+
+        <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+          <ContentBand className="h-full">
+            <SectionHeader eyebrow="Economics" title="Teacher revenue should feel transparent." description="The pricing experience now speaks in plain outcomes: what you keep, when you get paid, and where growth unlocks better rates." />
+            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+              {[
+                { value: "10%", label: "Starter commission" },
+                { value: "9%", label: "Growth tier" },
+                { value: "8%", label: "Scale tier" },
+              ].map((item) => (
+                <div key={item.label} className="bw-card p-4 text-center">
+                  <p className="font-display text-3xl font-extrabold text-slate-950">{item.value}</p>
+                  <p className="mt-1 text-sm text-slate-500">{item.label}</p>
+                </div>
+              ))}
+            </div>
+          </ContentBand>
+
+          <ContentBand muted className="h-full">
+            <SectionHeader eyebrow="Trust Signals" title="Operational clarity for real teaching businesses." />
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <div className="bw-card p-5">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                  <Banknote className="h-5 w-5" />
+                </div>
+                <p className="mt-4 font-display text-xl font-bold text-slate-950">Predictable payouts</p>
+                <p className="bw-muted mt-2 text-sm leading-7">Earnings, pending payouts, tier progress, and commission logic are now easier to understand at a glance.</p>
+              </div>
+              <div className="bw-card p-5">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-50 text-sky-600">
+                  <BarChart3 className="h-5 w-5" />
+                </div>
+                <p className="mt-4 font-display text-xl font-bold text-slate-950">Actionable analytics</p>
+                <p className="bw-muted mt-2 text-sm leading-7">Use performance data, student signals, and content insights without sifting through sparse, generic tables.</p>
+              </div>
+            </div>
+          </ContentBand>
+        </div>
+      </main>
       <Footer />
-    </div>
+    </AppShell>
   );
 }

@@ -38,16 +38,16 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
 
   if (!course) {
     return (
-      <div className="min-h-screen flex flex-col bg-[#060B18]">
+      <div className="min-h-screen flex flex-col bg-white">
         <Navbar />
         <main className="flex-1 flex items-center justify-center px-4">
           <div className="text-center">
-            <div className="h-20 w-20 rounded-2xl bg-[#0C1526] border border-white/[0.07] flex items-center justify-center mx-auto mb-6">
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl border border-[#e2e5ec] bg-[#f7f8fa]">
               <span className="text-4xl">📚</span>
             </div>
-            <h1 className="text-2xl font-bold text-white mb-2">Course Not Found</h1>
-            <p className="text-slate-500 mb-6">This course may have been removed or the URL is incorrect.</p>
-            <Link href="/courses" className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-violet-600 text-white px-6 py-3 rounded-xl font-semibold text-sm">
+            <h1 className="mb-2 text-2xl font-bold text-ink-heading">Course Not Found</h1>
+            <p className="mb-6 text-ink-muted">This course may have been removed or the URL is incorrect.</p>
+            <Link href="/courses" className="inline-flex items-center gap-2 rounded-md bg-brand-primary px-6 py-3 text-sm font-semibold text-white">
               Browse All Courses
             </Link>
           </div>
@@ -58,7 +58,7 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#060B18]">
+    <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
       <CourseDetailClient course={course} />
       <Footer />

@@ -1,13 +1,14 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { courseApi } from "@/lib/api";
-import { useAuthStore } from "@/stores/authStore";
+
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Send, Loader2, ChevronLeft, Sparkles, BookOpen, Users, User, Trash2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { BookOpen, ChevronLeft, Loader2, Send, Sparkles, Trash2, User, Users } from "lucide-react";
+import { courseApi } from "@/lib/api";
+import { useAuthStore } from "@/stores/authStore";
 
 interface Message {
   role: "user" | "assistant";
@@ -17,13 +18,13 @@ interface Message {
 
 const WELCOME: Message = {
   role: "assistant",
-  content: "Hi! I'm your AI tutor for this course. I can answer questions about the course material, explain concepts, and help you understand difficult topics. What would you like to learn?",
+  content: "Hi! I'm your AI tutor for this course. I can explain concepts, summarise lessons, and help you understand difficult topics. What would you like to learn?",
 };
 
 const SUGGESTIONS = [
   "Explain the key concepts of this course",
-  "What are the prerequisites I should know?",
   "Give me a summary of the main topics",
+  "What should I revise before the next lesson?",
   "What real-world problems does this solve?",
 ];
 
@@ -41,10 +42,9 @@ export default function CourseChatPage({ params }: { params: { slug: string } })
 
   const { data: course } = useQuery({
     queryKey: ["course", params.slug],
-    queryFn: () => courseApi.get(params.slug).then((r) => r.data),
+    queryFn: () => courseApi.get(params.slug).then((response) => response.data),
   });
 
-  // Load persisted messages once we have the course ID
   useEffect(() => {
     if (!course?.id || historyLoaded) return;
     try {
@@ -57,13 +57,12 @@ export default function CourseChatPage({ params }: { params: { slug: string } })
     setHistoryLoaded(true);
   }, [course?.id, historyLoaded]);
 
-  // Persist messages to localStorage whenever they change (after initial load)
   useEffect(() => {
     if (!course?.id || !historyLoaded) return;
     try {
       localStorage.setItem(storageKey(course.id), JSON.stringify(messages));
     } catch {}
-  }, [messages, course?.id, historyLoaded]);
+  }, [course?.id, historyLoaded, messages]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -85,11 +84,10 @@ export default function CourseChatPage({ params }: { params: { slug: string } })
     let assistantContent = "";
 
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
-
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
       let token = localStorage.getItem("access_token") || accessToken;
 
-      let response = await fetch(`${API_URL}/chat/${course.id}/message`, {
+      let response = await fetch(`${apiUrl}/chat/${course.id}/message`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -101,40 +99,38 @@ export default function CourseChatPage({ params }: { params: { slug: string } })
 
       if (response.status === 401) {
         const refreshToken = localStorage.getItem("refresh_token");
-        if (refreshToken) {
-          const refreshResp = await fetch(`${API_URL}/auth/refresh`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ refresh_token: refreshToken }),
-          });
-          if (refreshResp.ok) {
-            const refreshData = await refreshResp.json();
-            token = refreshData.access_token;
-            localStorage.setItem("access_token", token!);
-            response = await fetch(`${API_URL}/chat/${course.id}/message`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-                Accept: "text/event-stream",
-              },
-              body: JSON.stringify({ message: userMsg }),
-            });
-          } else {
-            localStorage.removeItem("access_token");
-            localStorage.removeItem("refresh_token");
-            window.location.href = "/login";
-            return;
-          }
-        } else {
+        if (!refreshToken) {
           window.location.href = "/login";
           return;
         }
+        const refreshResponse = await fetch(`${apiUrl}/auth/refresh`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refresh_token: refreshToken }),
+        });
+        if (!refreshResponse.ok) {
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+          window.location.href = "/login";
+          return;
+        }
+        const refreshData = await refreshResponse.json();
+        const refreshedToken = refreshData.access_token as string;
+        token = refreshedToken;
+        localStorage.setItem("access_token", refreshedToken);
+        response = await fetch(`${apiUrl}/chat/${course.id}/message`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            Accept: "text/event-stream",
+          },
+          body: JSON.stringify({ message: userMsg }),
+        });
       }
 
       if (!response.ok) throw new Error("Chat request failed");
 
-      // Placeholder with bouncing dots
       setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
       const reader = response.body?.getReader();
@@ -145,242 +141,162 @@ export default function CourseChatPage({ params }: { params: { slug: string } })
         const { done, value } = await reader.read();
         if (done) break;
         const chunk = decoder.decode(value);
-        const lines = chunk.split("\n");
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            try {
-              const data = JSON.parse(line.slice(6));
-              if (data.token) {
-                assistantContent += data.token;
-                setMessages((prev) => {
-                  const newMsgs = [...prev];
-                  newMsgs[newMsgs.length - 1] = {
-                    role: "assistant",
-                    content: assistantContent,
-                    sources: data.sources ?? finalSources,
-                  };
-                  return newMsgs;
-                });
-              }
-              if (data.sources) finalSources = data.sources;
-              if (data.done && finalSources.length > 0) {
-                setMessages((prev) => {
-                  const newMsgs = [...prev];
-                  newMsgs[newMsgs.length - 1] = {
-                    ...newMsgs[newMsgs.length - 1],
-                    sources: finalSources,
-                  };
-                  return newMsgs;
-                });
-              }
-            } catch {}
-          }
+        for (const line of chunk.split("\n")) {
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.token) {
+              assistantContent += data.token;
+              setMessages((prev) => {
+                const next = [...prev];
+                next[next.length - 1] = { role: "assistant", content: assistantContent, sources: data.sources ?? finalSources };
+                return next;
+              });
+            }
+            if (data.sources) finalSources = data.sources;
+          } catch {}
         }
       }
     } catch {
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: "Sorry, I couldn't reach the AI service. The model may still be loading — please try again in a moment." },
-      ]);
+      setMessages((prev) => [...prev, { role: "assistant", content: "Sorry, I couldn't reach the AI service just now. Please try again in a moment." }]);
     } finally {
       setIsStreaming(false);
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  };
-
-  const showSuggestions = messages.length === 1;
-
   return (
-    <div className="min-h-screen flex flex-col bg-[#060B18]">
-      {/* Header */}
-      <div className="border-b border-white/[0.06] bg-[#080F20]/80 backdrop-blur-xl px-4 py-3">
-        <div className="max-w-4xl mx-auto flex items-center gap-3">
-          <Link
-            href={`/learn/${params.slug}`}
-            className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/5 transition-colors"
-          >
+    <div className="min-h-screen flex flex-col">
+      <div className="bw-shell">
+        <div className="bw-band mb-4 flex items-center gap-3 px-4 py-3">
+          <Link href={`/learn/${params.slug}`} className="rounded-full bg-white p-2 text-slate-500 transition hover:text-slate-950">
             <ChevronLeft className="h-5 w-5" />
           </Link>
-
-          <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center shadow-lg shadow-blue-500/25 flex-shrink-0">
-            <Sparkles className="h-4.5 w-4.5 text-white" style={{ width: 18, height: 18 }} />
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-sky-500 text-white">
+            <Sparkles className="h-4 w-4" />
           </div>
-
-          <div className="flex-1 min-w-0">
-            <h1 className="text-white font-semibold text-sm">AI Tutor</h1>
-            <p className="text-slate-500 text-xs truncate">{course?.title || "Loading..."}</p>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-sm font-semibold text-slate-950">AI Tutor</h1>
+            <p className="truncate text-xs text-slate-500">{course?.title || "Loading..."}</p>
           </div>
-
-          <button
-            onClick={clearHistory}
-            title="Clear chat history"
-            className="p-1.5 rounded-lg text-slate-600 hover:text-slate-400 hover:bg-white/5 transition-colors"
-          >
+          <button type="button" onClick={clearHistory} className="rounded-lg p-2 text-slate-400 transition hover:bg-[#f8f2eb] hover:text-slate-950">
             <Trash2 className="h-4 w-4" />
           </button>
-
-          <Link
-            href={`/learn/${params.slug}/community`}
-            className="hidden sm:flex items-center gap-1.5 text-xs text-slate-400 hover:text-white px-3 py-1.5 rounded-lg border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/5 transition-all"
-          >
+          <Link href={`/learn/${params.slug}/community`} className="hidden items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs text-slate-600 sm:flex">
             <Users className="h-3.5 w-3.5" /> Community
           </Link>
-          <Link
-            href={`/learn/${params.slug}`}
-            className="hidden sm:flex items-center gap-1.5 text-xs text-slate-400 hover:text-white px-3 py-1.5 rounded-lg border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/5 transition-all"
-          >
+          <Link href={`/learn/${params.slug}`} className="hidden items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs text-slate-600 sm:flex">
             <BookOpen className="h-3.5 w-3.5" /> Course
           </Link>
         </div>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto py-6">
-        <div className="max-w-4xl mx-auto px-4 space-y-6">
+      <div className="bw-shell flex-1 overflow-y-auto py-2">
+        <div className="mx-auto max-w-4xl space-y-6">
           <AnimatePresence initial={false}>
-            {messages.map((msg, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}
-              >
-                {/* Avatar */}
+            {messages.map((message, index) => (
+              <motion.div key={index} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} className={`flex gap-3 ${message.role === "user" ? "flex-row-reverse" : ""}`}>
                 <div className="flex-shrink-0">
-                  {msg.role === "assistant" ? (
-                    <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center shadow-md shadow-blue-500/20">
-                      <Sparkles className="h-4 w-4 text-white" />
+                  {message.role === "assistant" ? (
+                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-sky-500 text-white">
+                      <Sparkles className="h-4 w-4" />
                     </div>
                   ) : (
-                    <div className="h-8 w-8 rounded-xl bg-[#1a2744] border border-white/[0.08] flex items-center justify-center">
-                      <User className="h-4 w-4 text-slate-400" />
+                    <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white">
+                      <User className="h-4 w-4 text-slate-500" />
                     </div>
                   )}
                 </div>
 
-                {/* Bubble */}
-                <div className={`max-w-[78%] flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}>
-                  <div
-                    className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                      msg.role === "user"
-                        ? "bg-gradient-to-br from-blue-500 to-violet-600 text-white rounded-tr-md"
-                        : "bg-[#0C1526] border border-white/[0.07] text-slate-200 rounded-tl-md"
-                    }`}
-                  >
-                    {msg.content ? (
-                      msg.role === "assistant" ? (
+                <div className={`flex max-w-[78%] flex-col ${message.role === "user" ? "items-end" : "items-start"}`}>
+                  <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${message.role === "user" ? "rounded-tr-md bg-slate-950 text-white" : "rounded-tl-md border border-slate-200 bg-white text-slate-700"}`}>
+                    {message.content ? (
+                      message.role === "assistant" ? (
                         <ReactMarkdown
                           remarkPlugins={[remarkGfm]}
                           components={{
                             p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                            strong: ({ children }) => <strong className="font-semibold text-white">{children}</strong>,
-                            em: ({ children }) => <em className="italic text-slate-300">{children}</em>,
-                            ul: ({ children }) => <ul className="list-disc list-inside space-y-1 mb-2 pl-1">{children}</ul>,
-                            ol: ({ children }) => <ol className="list-decimal list-inside space-y-1 mb-2 pl-1">{children}</ol>,
-                            li: ({ children }) => <li className="text-slate-200">{children}</li>,
-                            h1: ({ children }) => <h1 className="text-base font-bold text-white mb-2 mt-1">{children}</h1>,
-                            h2: ({ children }) => <h2 className="text-sm font-bold text-white mb-1.5 mt-1">{children}</h2>,
-                            h3: ({ children }) => <h3 className="text-sm font-semibold text-white mb-1 mt-1">{children}</h3>,
-                            code: ({ children, className }) => {
-                              const isBlock = className?.includes("language-");
-                              return isBlock ? (
-                                <pre className="bg-[#060B18] border border-white/[0.08] rounded-lg p-3 my-2 overflow-x-auto text-xs text-emerald-300 font-mono">
+                            strong: ({ children }) => <strong className="font-semibold text-slate-950">{children}</strong>,
+                            em: ({ children }) => <em className="italic text-slate-500">{children}</em>,
+                            ul: ({ children }) => <ul className="mb-2 list-inside list-disc space-y-1 pl-1">{children}</ul>,
+                            ol: ({ children }) => <ol className="mb-2 list-inside list-decimal space-y-1 pl-1">{children}</ol>,
+                            li: ({ children }) => <li className="text-slate-700">{children}</li>,
+                            h1: ({ children }) => <h1 className="mb-2 mt-1 text-base font-bold text-slate-950">{children}</h1>,
+                            h2: ({ children }) => <h2 className="mb-1.5 mt-1 text-sm font-bold text-slate-950">{children}</h2>,
+                            h3: ({ children }) => <h3 className="mb-1 mt-1 text-sm font-semibold text-slate-950">{children}</h3>,
+                            code: ({ children, className }) =>
+                              className?.includes("language-") ? (
+                                <pre className="my-2 overflow-x-auto rounded-lg border border-slate-200 bg-[#faf6ef] p-3 font-mono text-xs text-emerald-700">
                                   <code>{children}</code>
                                 </pre>
                               ) : (
-                                <code className="bg-white/10 text-emerald-300 font-mono text-xs px-1.5 py-0.5 rounded">{children}</code>
-                              );
-                            },
-                            blockquote: ({ children }) => (
-                              <blockquote className="border-l-2 border-blue-500/50 pl-3 my-2 text-slate-400 italic">{children}</blockquote>
-                            ),
-                            hr: () => <hr className="border-white/10 my-3" />,
+                                <code className="rounded bg-[#faf6ef] px-1.5 py-0.5 font-mono text-xs text-emerald-700">{children}</code>
+                              ),
+                            blockquote: ({ children }) => <blockquote className="my-2 border-l-2 border-indigo-300 pl-3 italic text-slate-500">{children}</blockquote>,
+                            hr: () => <hr className="my-3 border-slate-200" />,
                           }}
                         >
-                          {msg.content}
+                          {message.content}
                         </ReactMarkdown>
                       ) : (
-                        msg.content
+                        message.content
                       )
-                    ) : (
-                      isStreaming && i === messages.length - 1 ? (
-                        <span className="flex items-center gap-1.5 py-0.5">
-                          <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "0ms" }} />
-                          <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "150ms" }} />
-                          <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "300ms" }} />
-                        </span>
-                      ) : ""
-                    )}
+                    ) : isStreaming && index === messages.length - 1 ? (
+                      <span className="flex items-center gap-1.5 py-0.5">
+                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-indigo-500" style={{ animationDelay: "0ms" }} />
+                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-indigo-500" style={{ animationDelay: "150ms" }} />
+                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-indigo-500" style={{ animationDelay: "300ms" }} />
+                      </span>
+                    ) : null}
                   </div>
-                  {msg.sources && msg.sources.length > 0 && (
-                    <div className="mt-1.5 flex items-center gap-1 text-[11px] text-slate-600">
-                      <BookOpen className="h-3 w-3" />
-                      {msg.sources.length} passage{msg.sources.length > 1 ? "s" : ""} from course material
-                    </div>
-                  )}
+                  {message.sources?.length ? <div className="mt-1.5 flex items-center gap-1 text-[11px] text-slate-500"><BookOpen className="h-3 w-3" />{message.sources.length} passage{message.sources.length > 1 ? "s" : ""} from course material</div> : null}
                 </div>
               </motion.div>
             ))}
           </AnimatePresence>
 
-          {/* Suggestions (shown only at start) */}
-          {showSuggestions && (
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4"
-            >
-              {SUGGESTIONS.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => sendMessage(s)}
-                  className="text-left text-sm text-slate-400 hover:text-slate-200 px-4 py-3 rounded-xl border border-white/[0.06] hover:border-blue-500/30 hover:bg-blue-500/5 transition-all"
-                >
-                  {s}
+          {messages.length === 1 ? (
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {SUGGESTIONS.map((suggestion) => (
+                <button key={suggestion} type="button" onClick={() => sendMessage(suggestion)} className="rounded-xl border border-slate-200 px-4 py-3 text-left text-sm text-slate-600 transition hover:bg-white hover:text-slate-950">
+                  {suggestion}
                 </button>
               ))}
             </motion.div>
-          )}
+          ) : null}
 
           <div ref={messagesEndRef} />
         </div>
       </div>
 
-      {/* Input Area */}
-      <div className="border-t border-white/[0.06] bg-[#080F20]/80 backdrop-blur-xl p-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex gap-3 items-end">
-            <div className="flex-1 relative">
+      <div className="bw-shell pb-6">
+        <div className="bw-band mx-auto max-w-4xl p-4">
+          <div className="flex items-end gap-3">
+            <div className="relative flex-1">
               <textarea
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
+                onChange={(event) => setInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault();
+                    sendMessage();
+                  }
+                }}
                 placeholder="Ask anything about the course..."
                 rows={1}
-                className="w-full bg-[#0C1526] border border-white/[0.08] text-slate-200 placeholder:text-slate-600 rounded-xl px-4 py-3 resize-none outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 text-sm transition-all max-h-32"
+                className="max-h-32 w-full resize-none rounded-xl border border-slate-200 bg-[#fcf8f3] px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
                 style={{ fieldSizing: "content" } as any}
               />
             </div>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => sendMessage()}
-              disabled={!input.trim() || isStreaming}
-              className="h-11 w-11 bg-gradient-to-br from-blue-500 to-violet-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity flex-shrink-0"
-            >
-              {isStreaming ? <Loader2 className="h-4.5 w-4.5 animate-spin" style={{ width: 18, height: 18 }} /> : <Send className="h-4 w-4" />}
+            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={() => sendMessage()} disabled={!input.trim() || isStreaming} className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-950 text-white disabled:opacity-40">
+              {isStreaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </motion.button>
           </div>
-          <p className="text-center text-[11px] text-slate-700 mt-2">
-            AI answers are based on course content only · <Link href={`/learn/${params.slug}/community`} className="text-slate-500 hover:text-slate-400 underline underline-offset-2">Ask the community</Link> for broader questions
+          <p className="mt-2 text-center text-[11px] text-slate-500">
+            AI answers are based on course content only.{" "}
+            <Link href={`/learn/${params.slug}/community`} className="text-slate-700 underline underline-offset-2">
+              Ask the community
+            </Link>{" "}
+            for broader questions.
           </p>
         </div>
       </div>

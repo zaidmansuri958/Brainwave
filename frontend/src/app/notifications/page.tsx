@@ -1,16 +1,18 @@
 "use client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Bell, CheckCheck } from "lucide-react";
 import { notifApi } from "@/lib/api";
-import { Navbar } from "@/components/layout/Navbar";
-import { Bell, CheckCheck, Loader2 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
+import { AppShell, ContentBand, EmptyStatePanel, SectionHeader, StatusBadge } from "@/components/ui/app-shell";
 
 export default function NotificationsPage() {
   const queryClient = useQueryClient();
-
   const { data: notifications, isLoading } = useQuery({
     queryKey: ["notifications"],
-    queryFn: () => notifApi.get().then((r) => r.data),
+    queryFn: () => notifApi.get().then((response) => response.data),
   });
 
   const markRead = useMutation({
@@ -23,94 +25,73 @@ export default function NotificationsPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["notifications"] }),
   });
 
-  const unreadCount = notifications?.filter((n: any) => !n.is_read).length || 0;
+  const unreadCount = notifications?.filter((item: any) => !item.is_read).length || 0;
 
-  const notifTypeStyles: Record<string, string> = {
-    enrollment:   "bg-green-50 text-green-700",
-    certificate:  "bg-amber-50 text-amber-700",
-    risk_alert:   "bg-red-50 text-red-700",
-    course_update:"bg-blue-50 text-blue-700",
-    live_session: "bg-violet-50 text-violet-700",
-    default:      "bg-gray-100 text-gray-500",
+  const notifTone = (type: string) => {
+    if (type === "certificate") return "success" as const;
+    if (type === "risk_alert") return "danger" as const;
+    if (type === "live_session") return "info" as const;
+    if (type === "enrollment") return "success" as const;
+    return "neutral" as const;
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9]">
+    <AppShell className="flex flex-col">
       <Navbar />
+      <main className="bw-shell flex-1 space-y-6 pb-6">
+        <ContentBand muted>
+          <SectionHeader
+            eyebrow="Notifications"
+            title="Updates now live in a clearer, denser inbox."
+            description="Unread states, notification types, and actions are easier to scan without the empty single-column feel of the old layout."
+            action={
+              unreadCount > 0 ? (
+                <button type="button" onClick={() => markAllRead.mutate()} className="bw-action-secondary">
+                  <CheckCheck className="h-4 w-4" />
+                  Mark all read
+                </button>
+              ) : null
+            }
+          />
+        </ContentBand>
 
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="font-display font-extrabold text-2xl text-gray-900">Notifications</h1>
-            {unreadCount > 0 && (
-              <p className="text-gray-500 text-sm">{unreadCount} unread</p>
-            )}
-          </div>
-          {unreadCount > 0 && (
-            <button
-              onClick={() => markAllRead.mutate()}
-              disabled={markAllRead.isPending}
-              className="flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 font-semibold transition-colors"
-            >
-              <CheckCheck className="h-4 w-4" />
-              Mark all read
-            </button>
-          )}
-        </div>
-
-        {isLoading ? (
-          <div className="flex items-center justify-center py-24">
-            <Loader2 className="h-8 w-8 text-indigo-600 animate-spin" />
-          </div>
-        ) : !notifications?.length ? (
-          <div className="text-center py-24">
-            <Bell className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-700 text-lg font-semibold">No notifications yet</p>
-            <p className="text-gray-400 text-sm mt-1">We&apos;ll notify you when something happens</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {notifications.map((notif: any) => (
-              <div
-                key={notif.id}
-                onClick={() => !notif.is_read && markRead.mutate(notif.id)}
-                className={`bg-white rounded-xl p-4 border cursor-pointer transition-all shadow-sm ${
-                  notif.is_read
-                    ? "border-gray-100 opacity-70"
-                    : "border-gray-200 hover:border-indigo-200 hover:shadow-md"
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  {!notif.is_read && (
-                    <div className="w-2 h-2 rounded-full bg-indigo-500 flex-shrink-0 mt-2" />
-                  )}
-                  <div className={`flex-1 ${notif.is_read ? "ml-5" : ""}`}>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                        notifTypeStyles[notif.notification_type] || notifTypeStyles.default
-                      }`}>
-                        {notif.notification_type?.replace(/_/g, " ")}
-                      </span>
-                      <span className="text-xs text-gray-400">{formatDate(notif.created_at)}</span>
+        <ContentBand>
+          {isLoading ? (
+            <div className="grid gap-4">
+              {[1, 2, 3].map((item) => (
+                <div key={item} className="bw-card h-28 animate-pulse bg-white/70" />
+              ))}
+            </div>
+          ) : !notifications?.length ? (
+            <EmptyStatePanel title="No notifications yet" description="When something important happens in your courses or account, it will appear here." icon={Bell} />
+          ) : (
+            <div className="space-y-3">
+              {notifications.map((notification: any) => (
+                <button
+                  key={notification.id}
+                  type="button"
+                  onClick={() => !notification.is_read && markRead.mutate(notification.id)}
+                  className={`bw-card w-full p-5 text-left transition ${notification.is_read ? "opacity-75" : "hover:-translate-y-0.5"}`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {!notification.is_read ? <span className="h-2.5 w-2.5 rounded-full bg-indigo-500" /> : null}
+                        <StatusBadge tone={notifTone(notification.notification_type)}>{notification.notification_type?.replace(/_/g, " ")}</StatusBadge>
+                        <span className="text-xs text-slate-400">{formatDate(notification.created_at)}</span>
+                      </div>
+                      <p className="mt-3 font-display text-lg font-bold text-slate-950">{notification.title}</p>
+                      <p className="mt-2 text-sm leading-7 text-slate-600">{notification.message}</p>
+                      {notification.action_url ? <span className="mt-3 inline-flex text-sm font-semibold text-indigo-700">Open related page</span> : null}
                     </div>
-                    <p className="text-sm font-semibold text-gray-900">{notif.title}</p>
-                    <p className="text-sm text-gray-500 mt-0.5">{notif.message}</p>
-                    {notif.action_url && (
-                      <a
-                        href={notif.action_url}
-                        onClick={(e) => e.stopPropagation()}
-                        className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold mt-1 inline-block"
-                      >
-                        View →
-                      </a>
-                    )}
                   </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </ContentBand>
+      </main>
+      <Footer />
+    </AppShell>
   );
 }

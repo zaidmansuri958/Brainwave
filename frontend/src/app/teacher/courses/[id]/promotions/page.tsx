@@ -73,25 +73,25 @@ export default function PromotionsPage({ params }: { params: { id: string } }) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#FAFAF9]">
+      <div className="bw-page min-h-screen">
         <Navbar />
         <div className="flex justify-center py-24">
-          <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#ff6b00]" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9]">
+    <div className="bw-page min-h-screen">
       <Navbar />
       <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="flex items-center gap-4 mb-6">
-          <Link href="/teacher/courses" className="text-gray-400 hover:text-gray-700">
+          <Link href="/teacher/courses" className="neo-secondary-btn h-10 w-10 rounded-full px-0 py-0 text-gray-700">
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="font-display font-extrabold text-2xl text-gray-900">Promotions</h1>
+            <h1 className="font-display text-2xl font-extrabold uppercase text-gray-900">Promotions</h1>
             <p className="text-gray-500 text-sm">{course?.title}</p>
           </div>
         </div>
@@ -149,7 +149,7 @@ export default function PromotionsPage({ params }: { params: { id: string } }) {
             type="button"
             disabled={createPromo.isPending}
             onClick={() => createPromo.mutate()}
-            className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-60"
+            className="neo-primary-btn px-5 py-2.5 text-sm disabled:opacity-60"
           >
             {createPromo.isPending ? "Creating…" : "Create promotion"}
           </button>

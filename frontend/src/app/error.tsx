@@ -15,25 +15,27 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="min-h-[70vh] flex flex-col items-center justify-center bg-[#FAFAF9] px-6 py-16">
-      <h1 className="font-display text-xl font-bold text-gray-900 text-center">Something went wrong</h1>
-      <p className="text-gray-600 text-sm mt-2 text-center max-w-md">
+    <div className="bw-page flex min-h-[70vh] flex-col items-center justify-center px-6 py-16">
+      <div className="neo-panel max-w-xl p-8 text-center">
+      <h1 className="font-display text-xl font-bold uppercase text-gray-900 text-center">Something went wrong</h1>
+      <p className="mt-2 max-w-md text-center text-sm text-gray-600">
         {error.message || "An unexpected error occurred. You can try again or return home."}
       </p>
-      <div className="flex flex-wrap gap-3 justify-center mt-8">
+      <div className="mt-8 flex flex-wrap justify-center gap-3">
         <button
           type="button"
           onClick={reset}
-          className="rounded-xl bg-indigo-600 text-white px-5 py-2.5 text-sm font-semibold shadow-button-indigo hover:bg-indigo-700"
+          className="neo-primary-btn px-5 py-2.5 text-sm"
         >
           Try again
         </button>
         <Link
           href="/"
-          className="rounded-xl border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-800 hover:bg-gray-50"
+          className="neo-secondary-btn px-5 py-2.5 text-sm"
         >
           Home
         </Link>
+      </div>
       </div>
     </div>
   );

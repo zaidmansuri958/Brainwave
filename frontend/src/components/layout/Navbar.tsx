@@ -1,329 +1,342 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
-  Zap, Menu, X, ChevronDown, LayoutDashboard,
-  User, LogOut, GraduationCap, BookOpen, Sparkles, Video,
-  Award, Search, FileStack, ClipboardList, CalendarClock,
+  ArrowRight,
+  BookOpen,
+  ChevronDown,
+  LayoutDashboard,
+  Menu,
+  Sparkles,
+  User,
+  X,
+  LogOut,
+  Search,
+  GraduationCap,
+  Bell,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
+import { cn } from "@/lib/utils";
 
-// Links shown when no one is logged in (or teacher is logged in)
 const publicLinks = [
-  { label: "Courses",      href: "/courses"       },
-  { label: "Features",     href: "/features"      },
-  { label: "For Teachers", href: "/for-teachers"  },
-  { label: "Pricing",      href: "/pricing"       },
+  { label: "Courses", href: "/courses" },
+  { label: "Features", href: "/features" },
+  { label: "For Teachers", href: "/for-teachers" },
+  { label: "Pricing", href: "/pricing" },
 ];
 
-// Links shown in the centre when a student is logged in
 const studentLinks = [
-  { label: "Browse Courses", href: "/courses"   },
-  { label: "My Learning",    href: "/dashboard" },
-  { label: "Materials",      href: "/catalog/materials" },
-  { label: "Mock tests",     href: "/catalog/mock-tests" },
-  { label: "Search",         href: "/search"    },
-  { label: "Features",       href: "/features"  },
+  { label: "Browse", href: "/courses" },
+  { label: "My Learning", href: "/dashboard" },
+  { label: "Search", href: "/search" },
+  { label: "Alerts", href: "/notifications" },
 ];
+
+const teacherLinks = [
+  { label: "Studio", href: "/teacher/dashboard" },
+  { label: "Courses", href: "/teacher/courses" },
+  { label: "Earnings", href: "/teacher/earnings" },
+];
+
+function ProductContextBar({ pathname }: { pathname: string }) {
+  const group =
+    pathname.startsWith("/teacher")
+      ? {
+          label: "Teacher Studio",
+          links: [
+            { href: "/teacher/dashboard", text: "Overview" },
+            { href: "/teacher/courses", text: "Courses" },
+            { href: "/teacher/earnings", text: "Earnings" },
+          ],
+        }
+      : pathname.startsWith("/admin")
+        ? { label: "Operations", links: [{ href: "/admin/dashboard", text: "Dashboard" }] }
+        : pathname.startsWith("/dashboard") || pathname.startsWith("/learn") || pathname.startsWith("/notifications") || pathname.startsWith("/profile")
+          ? {
+              label: "Learning Hub",
+              links: [
+                { href: "/dashboard", text: "Dashboard" },
+                { href: "/courses", text: "Browse" },
+                { href: "/notifications", text: "Alerts" },
+              ],
+            }
+          : null;
+
+  if (!group) return null;
+
+  return (
+    <div className="bw-shell -mt-1 pb-3">
+      <div className="bw-card-soft flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+        <div className="flex items-center gap-3">
+          <span className="bw-chip">{group.label}</span>
+          <p className="bw-muted text-sm">Focused workflows with denser navigation and faster access to key actions.</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {group.links.map((link) => (
+            <Link key={link.href} href={link.href} className="rounded-full px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-white hover:text-slate-950">
+              {link.text}
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function Navbar() {
-  const [scrolled, setScrolled]         = useState(false);
-  const [mobileOpen, setMobileOpen]     = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const router      = useRouter();
-  const pathname    = usePathname();
-
+  const pathname = usePathname();
+  const router = useRouter();
   const { user, logout, isAuthenticated, isTeacher } = useAuthStore();
-  const authed  = isAuthenticated();
-  const student = authed && !isTeacher();
 
-  // Pick the right centre links
-  const centerLinks = student ? studentLinks : publicLinks;
+  const authed = isAuthenticated();
+  const teacher = authed && isTeacher();
+  const student = authed && !teacher && user?.role !== "admin";
+
+  const centerLinks = useMemo(() => {
+    if (teacher) return teacherLinks;
+    if (student) return studentLinks;
+    return publicLinks;
+  }, [student, teacher]);
 
   useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 10);
-    window.addEventListener("scroll", fn, { passive: true });
-    return () => window.removeEventListener("scroll", fn);
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   useEffect(() => {
-    const fn = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node))
+    const onClick = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setDropdownOpen(false);
+      }
     };
-    document.addEventListener("mousedown", fn);
-    return () => document.removeEventListener("mousedown", fn);
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
-  const handleLogout = () => { logout(); setDropdownOpen(false); router.push("/"); };
+  const handleLogout = () => {
+    logout();
+    setDropdownOpen(false);
+    router.push("/");
+  };
 
-  const initials = user?.full_name
-    ?.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase() ?? "U";
+  const initials =
+    user?.full_name
+      ?.split(" ")
+      .map((part) => part[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "BW";
 
-  const dashboardHref = isTeacher() ? "/teacher/dashboard" : "/dashboard";
+  const dashboardHref =
+    user?.role === "teacher" ? "/teacher/dashboard" : user?.role === "admin" ? "/admin/dashboard" : "/dashboard";
 
   return (
     <>
-      <header className="fixed top-0 inset-x-0 z-50 flex justify-center pt-4 px-4 pointer-events-none">
-        <nav
-          className="w-full max-w-6xl h-14 flex items-center justify-between px-5 rounded-2xl pointer-events-auto transition-all duration-500"
-          style={{
-            background: scrolled
-              ? "linear-gradient(135deg, rgba(255,255,255,0.13) 0%, rgba(200,230,255,0.08) 50%, rgba(255,255,255,0.10) 100%)"
-              : "linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(180,220,255,0.06) 50%, rgba(255,255,255,0.08) 100%)",
-            backdropFilter: "blur(32px) saturate(180%)",
-            WebkitBackdropFilter: "blur(32px) saturate(180%)",
-            border: "1px solid rgba(255,255,255,0.18)",
-            boxShadow: scrolled
-              ? "0 8px 32px rgba(0,0,0,0.18), 0 1px 0 rgba(255,255,255,0.22) inset, 0 0 0 1px rgba(120,180,255,0.12)"
-              : "0 4px 24px rgba(0,0,0,0.10), 0 1px 0 rgba(255,255,255,0.20) inset, 0 0 0 1px rgba(120,180,255,0.08)",
-          }}
-        >
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 flex-shrink-0">
-            <div
-              className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-              style={{
-                background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
-                boxShadow: "0 0 12px rgba(99,102,241,0.5), 0 2px 4px rgba(0,0,0,0.2)",
-              }}
-            >
-              <Zap className="w-3.5 h-3.5 text-white fill-white" />
-            </div>
-            <span className="font-display font-bold text-[0.95rem] tracking-tight text-gray-900">
-              Brainwave<span className="text-indigo-500">.ai</span>
-            </span>
-          </Link>
-
-          {/* Centre links */}
-          <div className="hidden md:flex items-center gap-0.5 absolute left-1/2 -translate-x-1/2">
-            {centerLinks.map((item) => {
-              const active = pathname === item.href;
-              return (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  className={`px-3.5 py-1.5 text-[0.82rem] font-semibold rounded-xl transition-all duration-150 whitespace-nowrap ${
-                    active
-                      ? "text-indigo-700 bg-indigo-50/80 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-white/60"
-                  }`}
-                >
-                  {item.label}
+      <header className="sticky top-0 z-50 pt-4">
+        <div className="bw-shell">
+          <div
+            className={cn(
+              "pointer-events-auto rounded-[24px] border-2 px-4 py-3 transition-all duration-300 sm:px-5",
+              scrolled ? "shadow-md" : "shadow-sm"
+            )}
+            style={{
+              background: "var(--bg-base)",
+              borderColor: "var(--border-strong)",
+            }}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-4">
+                <Link href="/" className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-[14px] border-2 border-black bg-brand-primary text-black shadow-[3px_3px_0_#111111]">
+                    <Sparkles className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="font-display text-lg font-extrabold uppercase text-ink-heading">Brainwave.ai</p>
+                    <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink-muted">Neo learning platform</p>
+                  </div>
                 </Link>
-              );
-            })}
-          </div>
+                <span className="hidden xl:inline-flex bw-chip">
+                  {teacher ? "Teacher Studio" : student ? "Student Hub" : "Learn Boldly"}
+                </span>
+              </div>
 
-          {/* Right side */}
-          <div className="hidden md:flex items-center gap-2">
-            {authed && user ? (
-              <div ref={dropdownRef} className="relative flex items-center gap-2">
-                {/* Student quick actions */}
-                {student && (
-                  <Link
-                    href="/courses"
-                    className="px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50/80 hover:bg-indigo-100/80 border border-indigo-100 rounded-xl transition-all flex items-center gap-1.5"
-                  >
-                    <BookOpen className="w-3.5 h-3.5" /> Enroll Now
-                  </Link>
-                )}
-
-                {/* Teacher quick actions */}
-                {isTeacher() && (
-                  <>
+              <nav className="hidden items-center gap-1 rounded-full border-2 border-black bg-white p-1 shadow-[3px_3px_0_#111111] lg:flex">
+                {centerLinks.map((item) => {
+                  const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                  return (
                     <Link
-                      href={dashboardHref}
-                      className="px-3 py-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 rounded-xl hover:bg-white/60 transition-all flex items-center gap-1.5"
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        "rounded-full border-2 border-transparent px-4 py-2 text-sm font-extrabold uppercase transition",
+                        active ? "border-black bg-brand-primary text-black" : "text-ink-muted hover:border-black hover:bg-[#8ed8ff] hover:text-ink-heading"
+                      )}
                     >
-                      <LayoutDashboard className="w-3.5 h-3.5" /> Dashboard
+                      {item.label}
                     </Link>
-                    <Link
-                      href="/teacher/courses/new"
-                      className="px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50/80 hover:bg-indigo-100/80 border border-indigo-100 rounded-xl transition-all flex items-center gap-1.5"
-                    >
-                      <Sparkles className="w-3.5 h-3.5" /> New Course
+                  );
+                })}
+              </nav>
+
+              <div className="hidden lg:flex items-center gap-2">
+                {student ? (
+                  <>
+                    <Link href="/search" className="bw-action-secondary !rounded-full !px-4 !py-2.5">
+                      <Search className="h-4 w-4" />
+                      Search
+                    </Link>
+                    <Link href="/notifications" className="bw-action-secondary !rounded-full !px-4 !py-2.5">
+                      <Bell className="h-4 w-4" />
+                      Updates
                     </Link>
                   </>
-                )}
+                ) : null}
 
-                {/* Avatar dropdown */}
-                <button
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="flex items-center gap-1.5 pl-2 pr-2.5 py-1.5 rounded-xl hover:bg-white/60 transition-colors"
-                >
-                  <div
-                    className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
-                    style={{ background: student ? "linear-gradient(135deg,#0ea5e9,#6366f1)" : "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
-                  >
-                    {initials}
-                  </div>
-                  <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform ${dropdownOpen ? "rotate-180" : ""}`} />
-                </button>
+                {teacher ? (
+                  <>
+                    <Link href="/teacher/courses/new" className="bw-action-secondary !rounded-full !px-4 !py-2.5">
+                      <GraduationCap className="h-4 w-4" />
+                      New Course
+                    </Link>
+                    <Link href="/teacher/onboarding" className="bw-action-primary !rounded-full !px-4 !py-2.5">
+                      Verification
+                    </Link>
+                  </>
+                ) : null}
 
-                {dropdownOpen && (
-                  <div
-                    className="absolute right-0 top-full mt-2 w-56 rounded-2xl py-2 z-50 overflow-hidden"
-                    style={{
-                      background: "rgba(255,255,255,0.95)",
-                      backdropFilter: "blur(24px)",
-                      border: "1px solid rgba(0,0,0,0.08)",
-                      boxShadow: "0 20px 40px rgba(0,0,0,0.12), 0 1px 0 rgba(255,255,255,0.8) inset",
-                    }}
-                  >
-                    <div className="px-4 py-3 border-b border-gray-100">
-                      <p className="text-sm font-semibold text-gray-900 truncate">{user.full_name}</p>
-                      <p className="text-xs text-gray-400 capitalize">{user.role} account</p>
-                    </div>
+                {!authed ? (
+                  <>
+                    <Link href="/login" className="bw-action-secondary !rounded-full !px-4 !py-2.5">
+                      Sign in
+                    </Link>
+                    <Link href="/register" className="bw-action-primary !rounded-full !px-4 !py-2.5">
+                      Get started
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </>
+                ) : (
+                  <div ref={dropdownRef} className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setDropdownOpen((prev) => !prev)}
+                      className="flex items-center gap-3 rounded-full border-2 border-black bg-white px-2.5 py-2 pr-3 text-left shadow-[3px_3px_0_#111111] transition hover:-translate-x-[1px] hover:-translate-y-[1px]"
+                    >
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-black bg-[#8ed8ff] text-sm font-black text-black">
+                        {initials}
+                      </div>
+                      <div className="max-w-[140px]">
+                        <p className="truncate text-sm font-extrabold text-ink-heading">{user?.full_name}</p>
+                        <p className="truncate text-xs font-bold uppercase text-ink-muted">{user?.role}</p>
+                      </div>
+                      <ChevronDown className={cn("h-4 w-4 text-ink-muted transition", dropdownOpen && "rotate-180")} />
+                    </button>
 
-                    <div className="py-1">
-                      {student ? (
-                        // Student dropdown links
-                        <>
+                    {dropdownOpen ? (
+                      <div className="absolute right-0 top-full mt-3 w-64 rounded-[20px] border-2 border-black bg-white p-2 shadow-[5px_5px_0_#111111]">
+                        <div className="rounded-[16px] border-2 border-black bg-[#fff4d6] px-4 py-3">
+                          <p className="truncate text-sm font-extrabold text-ink-heading">{user?.full_name}</p>
+                          <p className="truncate text-xs text-ink-muted">{user?.email}</p>
+                        </div>
+                        <div className="mt-2 space-y-1">
                           {[
-                            { href: "/dashboard",  icon: LayoutDashboard, label: "My Dashboard"     },
-                            { href: "/profile",    icon: User,            label: "Profile"           },
-                            { href: "/courses",    icon: BookOpen,        label: "Browse Courses"    },
-                            { href: "/dashboard",  icon: Award,           label: "My Certificates"  },
-                            { href: "/search",     icon: Search,          label: "Search"            },
+                            { href: dashboardHref, icon: LayoutDashboard, label: "Dashboard" },
+                            { href: "/profile", icon: User, label: "Profile" },
+                            { href: "/courses", icon: BookOpen, label: teacher ? "Browse marketplace" : "Browse courses" },
                           ].map(({ href, icon: Icon, label }) => (
                             <Link
-                              key={label}
+                              key={href + label}
                               href={href}
                               onClick={() => setDropdownOpen(false)}
-                              className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+                              className="flex items-center gap-3 rounded-[14px] px-3 py-2.5 text-sm font-bold text-ink-muted transition hover:bg-[#8ed8ff] hover:text-ink-heading"
                             >
-                              <Icon className="w-4 h-4 text-gray-400" />{label}
+                              <Icon className="h-4 w-4" />
+                              {label}
                             </Link>
                           ))}
-                        </>
-                      ) : (
-                        // Teacher dropdown links
-                        <>
-                          {[
-                            { href: "/teacher/dashboard",       icon: LayoutDashboard, label: "Dashboard"      },
-                            { href: "/profile",                 icon: User,            label: "Profile"         },
-                            { href: "/teacher/courses",         icon: GraduationCap,   label: "My Courses"     },
-                            { href: "/teacher/study-materials", icon: FileStack,       label: "Study materials"  },
-                            { href: "/teacher/mock-tests",      icon: ClipboardList,   label: "Mock tests"      },
-                            { href: "/teacher/availability",    icon: CalendarClock,   label: "Doubt slots"     },
-                            { href: "/teacher/live-sessions",   icon: Video,           label: "Live Sessions"   },
-                            { href: "/teacher/courses/new",     icon: Sparkles,        label: "Create Course"  },
-                          ].map(({ href, icon: Icon, label }) => (
-                            <Link
-                              key={href}
-                              href={href}
-                              onClick={() => setDropdownOpen(false)}
-                              className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors"
-                            >
-                              <Icon className="w-4 h-4 text-gray-400" />{label}
-                            </Link>
-                          ))}
-                        </>
-                      )}
-                    </div>
-
-                    <div className="border-t border-gray-100 pt-1">
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-red-500 hover:text-red-600 hover:bg-red-50 transition-colors"
-                      >
-                        <LogOut className="w-4 h-4" /> Sign out
-                      </button>
-                    </div>
+                          <button
+                            type="button"
+                            onClick={handleLogout}
+                            className="flex w-full items-center gap-3 rounded-[14px] px-3 py-2.5 text-sm font-bold text-rose-600 transition hover:bg-[#ffd6d6]"
+                          >
+                            <LogOut className="h-4 w-4" />
+                            Sign out
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 )}
               </div>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-gray-900 rounded-xl hover:bg-white/60 transition-colors"
-                >
-                  Sign in
-                </Link>
-                <Link
-                  href="/register"
-                  className="px-4 py-2 text-sm font-bold text-white rounded-xl transition-all"
-                  style={{
-                    background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
-                    boxShadow: "0 4px 14px rgba(99,102,241,0.4), 0 1px 0 rgba(255,255,255,0.15) inset",
-                  }}
-                >
-                  Get started
-                </Link>
-              </>
-            )}
-          </div>
 
-          {/* Mobile toggle */}
-          <button
-            className="md:hidden p-2 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-white/60 transition-colors"
-            onClick={() => setMobileOpen(!mobileOpen)}
-          >
-            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
-        </nav>
-
-        {/* Mobile menu */}
-        {mobileOpen && (
-          <div
-            className="absolute top-20 left-4 right-4 rounded-2xl pointer-events-auto overflow-hidden"
-            style={{
-              background: "rgba(255,255,255,0.95)",
-              backdropFilter: "blur(32px)",
-              border: "1px solid rgba(255,255,255,0.5)",
-              boxShadow: "0 20px 40px rgba(0,0,0,0.12)",
-            }}
-          >
-            <div className="px-3 py-3 space-y-0.5">
-              {centerLinks.map((item) => (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  className="block px-3 py-2.5 text-sm font-semibold text-gray-700 hover:text-gray-900 rounded-xl hover:bg-gray-50 transition-colors"
-                  onClick={() => setMobileOpen(false)}
-                >
-                  {item.label}
-                </Link>
-              ))}
+              <button
+                type="button"
+                onClick={() => setMobileOpen((prev) => !prev)}
+                className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-black bg-white text-ink-body shadow-[3px_3px_0_#111111] lg:hidden"
+              >
+                {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </button>
             </div>
-            <div className="border-t border-gray-100 px-3 py-3">
-              {authed && user ? (
-                <div className="space-y-0.5">
-                  <div className="px-3 py-2.5 flex items-center gap-2.5">
-                    <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
-                      style={{ background: student ? "linear-gradient(135deg,#0ea5e9,#6366f1)" : "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
+
+            {mobileOpen ? (
+              <div className="mt-4 rounded-[20px] border-2 border-black bg-white p-3 shadow-[4px_4px_0_#111111] lg:hidden">
+                <div className="grid gap-1">
+                  {centerLinks.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMobileOpen(false)}
+                      className={cn(
+                        "rounded-[14px] px-4 py-3 text-sm font-extrabold uppercase transition",
+                        pathname === item.href ? "bg-brand-primary text-black" : "text-ink-body hover:bg-[#8ed8ff]"
+                      )}
                     >
-                      {initials}
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">{user.full_name}</p>
-                      <p className="text-xs text-gray-400 capitalize">{user.role}</p>
-                    </div>
-                  </div>
-                  <Link href={dashboardHref} className="block px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-xl" onClick={() => setMobileOpen(false)}>Dashboard</Link>
-                  <Link href="/profile"      className="block px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-xl" onClick={() => setMobileOpen(false)}>Profile</Link>
-                  {student && (
-                    <Link href="/dashboard" className="block px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-xl" onClick={() => setMobileOpen(false)}>My Certificates</Link>
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+                <div className="mt-3 grid gap-2">
+                  {authed ? (
+                    <>
+                      <Link href={dashboardHref} onClick={() => setMobileOpen(false)} className="bw-action-secondary !justify-start !rounded-xl !px-4 !py-3">
+                        <LayoutDashboard className="h-4 w-4" />
+                        Dashboard
+                      </Link>
+                      <Link href="/profile" onClick={() => setMobileOpen(false)} className="bw-action-secondary !justify-start !rounded-xl !px-4 !py-3">
+                        <User className="h-4 w-4" />
+                        Profile
+                      </Link>
+                      <button type="button" onClick={handleLogout} className="bw-action-secondary !justify-start !rounded-xl !px-4 !py-3 text-rose-600">
+                        <LogOut className="h-4 w-4" />
+                        Sign out
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link href="/login" onClick={() => setMobileOpen(false)} className="bw-action-secondary !justify-start !rounded-xl !px-4 !py-3">
+                        Sign in
+                      </Link>
+                      <Link href="/register" onClick={() => setMobileOpen(false)} className="bw-action-primary !justify-start !rounded-xl !px-4 !py-3">
+                        Get started
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    </>
                   )}
-                  <button onClick={() => { handleLogout(); setMobileOpen(false); }} className="block w-full text-left px-3 py-2.5 text-sm text-red-500 hover:bg-red-50 rounded-xl">Sign out</button>
                 </div>
-              ) : (
-                <div className="flex gap-2 px-1">
-                  <Link href="/login"    className="flex-1 py-2.5 text-sm font-semibold text-center text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50" onClick={() => setMobileOpen(false)}>Sign in</Link>
-                  <Link href="/register" className="flex-1 py-2.5 text-sm font-bold text-center text-white rounded-xl" style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }} onClick={() => setMobileOpen(false)}>Get started</Link>
-                </div>
-              )}
-            </div>
+              </div>
+            ) : null}
           </div>
-        )}
+        </div>
+        <ProductContextBar pathname={pathname} />
       </header>
-
-      <div className="h-[72px]" />
+      <div className="h-4" />
     </>
   );
 }

@@ -1,11 +1,14 @@
 "use client";
-import { useState, useEffect, Suspense } from "react";
+
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { Loader2, Search, SlidersHorizontal, X } from "lucide-react";
 import api from "@/lib/api";
-import { Navbar } from "@/components/layout/Navbar";
 import { CourseCard } from "@/components/course/CourseCard";
-import { Search, SlidersHorizontal, X, Loader2 } from "lucide-react";
+import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
+import { AppShell, EmptyStatePanel, FilterToolbar, SectionHeader, StatusBadge } from "@/components/ui/app-shell";
 
 const LEVELS = ["beginner", "intermediate", "advanced"];
 const SORT_OPTIONS = [
@@ -21,7 +24,6 @@ function SearchPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [showFilters, setShowFilters] = useState(false);
-
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const [level, setLevel] = useState(searchParams.get("level") || "");
   const [category, setCategory] = useState(searchParams.get("category") || "");
@@ -31,190 +33,160 @@ function SearchPageContent() {
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ["search", query, level, category, sortBy, maxPrice],
     queryFn: () =>
-      api.get("/courses/search", {
-        params: {
-          q: query || undefined,
-          level: level || undefined,
-          category: category || undefined,
-          sort_by: sortBy,
-          max_price: maxPrice || undefined,
-        },
-      }).then((r) => r.data),
-    enabled: !!query || !!level || !!category,
+      api
+        .get("/courses/search", {
+          params: {
+            q: query || undefined,
+            level: level || undefined,
+            category: category || undefined,
+            sort_by: sortBy,
+            max_price: maxPrice || undefined,
+          },
+        })
+        .then((response) => response.data),
+    enabled: Boolean(query || level || category),
   });
 
-  const updateUrl = () => {
-    const params = new URLSearchParams();
-    if (query) params.set("q", query);
-    if (level) params.set("level", level);
-    if (category) params.set("category", category);
-    if (sortBy !== "relevance") params.set("sort", sortBy);
-    if (maxPrice) params.set("max_price", maxPrice);
-    router.push(`/search?${params.toString()}`, { scroll: false });
-  };
-
   useEffect(() => {
-    const timeout = setTimeout(updateUrl, 500);
-    return () => clearTimeout(timeout);
-  }, [query, level, category, sortBy, maxPrice]);
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams();
+      if (query) params.set("q", query);
+      if (level) params.set("level", level);
+      if (category) params.set("category", category);
+      if (sortBy !== "relevance") params.set("sort", sortBy);
+      if (maxPrice) params.set("max_price", maxPrice);
+      router.push(`/search?${params.toString()}`, { scroll: false });
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [category, level, maxPrice, query, router, sortBy]);
 
   const courses = data?.courses || data || [];
   const total = data?.total || courses.length;
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9]">
+    <AppShell>
       <Navbar />
-
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Search Header */}
-        <div className="mb-6">
-          <div className="flex gap-3">
+      <main className="bw-shell space-y-6 pb-6">
+        <FilterToolbar className="bw-band bw-band-muted p-5 sm:p-7">
+          <SectionHeader
+            eyebrow="Search"
+            title="Search now works like a guided discovery surface."
+            description="Instead of a lonely input on a wide page, search combines structured filters, active state chips, and denser result framing."
+          />
+          <div className="mt-6 flex flex-col gap-3 lg:flex-row">
             <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search courses, topics, skills..."
-                className="w-full bg-white text-gray-900 placeholder-gray-400 rounded-xl pl-12 pr-4 py-3 outline-none focus:ring-2 focus:ring-indigo-200 border border-gray-200 focus:border-indigo-400 transition-all"
+                className="w-full rounded-[1.25rem] border border-slate-200 bg-white px-11 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
               />
-              {query && (
-                <button
-                  onClick={() => setQuery("")}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
+              {query ? (
+                <button type="button" onClick={() => setQuery("")} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
                   <X className="h-4 w-4" />
                 </button>
-              )}
+              ) : null}
             </div>
+
             <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-colors ${
-                showFilters
-                  ? "bg-indigo-600 border-indigo-600 text-white"
-                  : "bg-white border-gray-200 text-gray-600 hover:text-gray-900 hover:border-indigo-300"
+              type="button"
+              onClick={() => setShowFilters((prev) => !prev)}
+              className={`inline-flex items-center justify-center gap-2 rounded-[1.25rem] border px-4 py-3 text-sm font-semibold transition ${
+                showFilters ? "border-indigo-200 bg-indigo-50 text-indigo-700" : "border-slate-200 bg-white text-slate-600 hover:text-slate-950"
               }`}
             >
-              <SlidersHorizontal className="h-5 w-5" />
+              <SlidersHorizontal className="h-4 w-4" />
               Filters
             </button>
           </div>
 
-          {/* Filters */}
-          {showFilters && (
-            <div className="mt-4 bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <label className="text-xs text-gray-500 mb-1.5 block font-semibold">Level</label>
-                  <select
-                    value={level}
-                    onChange={(e) => setLevel(e.target.value)}
-                    className="w-full bg-white text-gray-800 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all"
-                  >
-                    <option value="">All Levels</option>
-                    {LEVELS.map((l) => (
-                      <option key={l} value={l}>{l.charAt(0).toUpperCase() + l.slice(1)}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 mb-1.5 block font-semibold">Category</label>
-                  <input
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    placeholder="e.g., Programming"
-                    className="w-full bg-white text-gray-800 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-gray-300"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 mb-1.5 block font-semibold">Max Price (INR)</label>
-                  <input
-                    type="number"
-                    value={maxPrice}
-                    onChange={(e) => setMaxPrice(e.target.value)}
-                    placeholder="No limit"
-                    min={0}
-                    className="w-full bg-white text-gray-800 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all placeholder:text-gray-300"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 mb-1.5 block font-semibold">Sort By</label>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="w-full bg-white text-gray-800 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all"
-                  >
-                    {SORT_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                </div>
+          {showFilters ? (
+            <div className="mt-4 grid gap-4 rounded-[1.5rem] border border-slate-200 bg-white p-4 md:grid-cols-4">
+              <div>
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Level</label>
+                <select value={level} onChange={(event) => setLevel(event.target.value)} className="w-full rounded-[1rem] border border-slate-200 bg-[#fcf8f3] px-4 py-3 text-sm text-slate-900 outline-none">
+                  <option value="">All Levels</option>
+                  {LEVELS.map((item) => (
+                    <option key={item} value={item}>
+                      {item.charAt(0).toUpperCase() + item.slice(1)}
+                    </option>
+                  ))}
+                </select>
               </div>
-              {(level || category || maxPrice) && (
-                <button
-                  onClick={() => { setLevel(""); setCategory(""); setMaxPrice(""); }}
-                  className="mt-3 text-xs text-indigo-600 hover:text-indigo-800 font-semibold transition-colors"
-                >
-                  Clear filters
-                </button>
-              )}
+              <div>
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Category</label>
+                <input value={category} onChange={(event) => setCategory(event.target.value)} className="w-full rounded-[1rem] border border-slate-200 bg-[#fcf8f3] px-4 py-3 text-sm text-slate-900 outline-none" placeholder="e.g. Programming" />
+              </div>
+              <div>
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Max Price</label>
+                <input type="number" value={maxPrice} onChange={(event) => setMaxPrice(event.target.value)} className="w-full rounded-[1rem] border border-slate-200 bg-[#fcf8f3] px-4 py-3 text-sm text-slate-900 outline-none" placeholder="No limit" />
+              </div>
+              <div>
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Sort By</label>
+                <select value={sortBy} onChange={(event) => setSortBy(event.target.value)} className="w-full rounded-[1rem] border border-slate-200 bg-[#fcf8f3] px-4 py-3 text-sm text-slate-900 outline-none">
+                  {SORT_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-          )}
-        </div>
+          ) : null}
+        </FilterToolbar>
 
-        {/* Results */}
-        {query || level || category ? (
-          <>
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-gray-500 text-sm">
-                {isFetching ? (
-                  <span className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" /> Searching...
-                  </span>
-                ) : (
-                  `${total} result${total !== 1 ? "s" : ""}${query ? ` for "${query}"` : ""}`
-                )}
+        <section>
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="font-display text-2xl font-extrabold text-slate-950">
+                {isFetching ? "Searching..." : query || level || category ? `${total} results` : "Start a search"}
+              </p>
+              <p className="text-sm text-slate-500">
+                {query || level || category
+                  ? "Results are shown in denser cards with stronger context and clearer pricing."
+                  : "Use search to find courses, topics, teachers, and skill paths."}
               </p>
             </div>
-
-            {isLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                  <div key={i} className="h-72 bg-gray-100 rounded-2xl animate-pulse" />
-                ))}
-              </div>
-            ) : courses.length === 0 ? (
-              <div className="text-center py-24">
-                <Search className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-700 text-lg font-semibold">No courses found</p>
-                <p className="text-gray-400 text-sm mt-1">Try different keywords or remove some filters</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {courses.map((course: any) => (
-                  <CourseCard key={course.id} course={course} />
-                ))}
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="text-center py-24">
-            <Search className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-700 text-lg font-semibold">Start searching</p>
-            <p className="text-gray-400 text-sm mt-1">Type a keyword to find courses, topics, or skills</p>
+            <div className="flex flex-wrap gap-2">
+              {query ? <StatusBadge tone="neutral">Query: {query}</StatusBadge> : null}
+              {level ? <StatusBadge tone="warning">{level}</StatusBadge> : null}
+              {category ? <StatusBadge tone="info">{category}</StatusBadge> : null}
+            </div>
           </div>
-        )}
-      </div>
-    </div>
+
+          {isLoading ? (
+            <div className="flex items-center justify-center py-24">
+              <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+            </div>
+          ) : !(query || level || category) ? (
+            <EmptyStatePanel title="Start searching" description="Type a keyword or open the filters to find topics, teachers, or learning paths." icon={Search} />
+          ) : courses.length === 0 ? (
+            <EmptyStatePanel title="No courses found" description="Try broader keywords, remove filters, or increase the max price range." icon={Search} />
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {courses.map((course: any) => (
+                <CourseCard key={course.id} course={course} />
+              ))}
+            </div>
+          )}
+        </section>
+      </main>
+      <Footer />
+    </AppShell>
   );
 }
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+        </div>
+      }
+    >
       <SearchPageContent />
     </Suspense>
   );

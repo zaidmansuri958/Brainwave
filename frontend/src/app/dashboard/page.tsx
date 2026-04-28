@@ -1,444 +1,232 @@
 "use client";
-import { motion } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
-import { enrollmentApi, certApi, materialsApi, mockTestsApi } from "@/lib/api";
-import { useAuthStore } from "@/stores/authStore";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
+
 import Link from "next/link";
-import {
-  BookOpen, Award, TrendingUp, Search, ArrowRight,
-  Play, CheckCircle2, Clock, ExternalLink, Download,
-  Sparkles, FileStack, ClipboardList, AlertCircle,
-} from "lucide-react";
-
-function SectionError({
-  label,
-  onRetry,
-}: {
-  label: string;
-  onRetry: () => void;
-}) {
-  return (
-    <div className="rounded-xl border border-rose-200 bg-rose-50/90 px-4 py-3 text-sm text-rose-900 flex flex-wrap items-center justify-between gap-2">
-      <span className="flex items-center gap-2">
-        <AlertCircle className="h-4 w-4 shrink-0" />
-        {label}
-      </span>
-      <button
-        type="button"
-        onClick={onRetry}
-        className="font-semibold text-indigo-600 hover:text-indigo-800"
-      >
-        Retry
-      </button>
-    </div>
-  );
-}
-
-function StatCard({
-  icon: Icon, label, value, sub, color,
-}: {
-  icon: React.ElementType;
-  label: string;
-  value: string | number;
-  sub?: string;
-  color: string;
-}) {
-  return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-card p-5 flex items-center gap-4">
-      <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${color}`}>
-        <Icon className="w-5 h-5" />
-      </div>
-      <div>
-        <p className="font-display font-extrabold text-2xl text-gray-900 leading-none">{value}</p>
-        <p className="text-sm font-medium text-gray-700 mt-0.5">{label}</p>
-        {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
-      </div>
-    </div>
-  );
-}
-
-function SkeletonCard() {
-  return (
-    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden animate-pulse">
-      <div className="h-40 bg-gray-100" />
-      <div className="p-4 space-y-2">
-        <div className="h-4 bg-gray-100 rounded w-3/4" />
-        <div className="h-3 bg-gray-100 rounded w-1/2" />
-        <div className="h-2 bg-gray-100 rounded-full w-full mt-3" />
-      </div>
-    </div>
-  );
-}
+import { useQuery } from "@tanstack/react-query";
+import { ArrowRight, Award, BookOpen, ClipboardList, Play, Sparkles } from "lucide-react";
+import { certApi, enrollmentApi, materialsApi, mockTestsApi } from "@/lib/api";
+import { useAuthStore } from "@/stores/authStore";
+import { Footer } from "@/components/layout/Footer";
+import { Navbar } from "@/components/layout/Navbar";
+import { AppShell, ContentBand, EmptyStatePanel, MetricCard, SectionHeader, StatusBadge } from "@/components/ui/app-shell";
 
 export default function StudentDashboard() {
   const { user } = useAuthStore();
 
-  const {
-    data: enrolledData,
-    isLoading: enrollmentsLoading,
-    isError: enrollmentsError,
-    refetch: refetchEnrollments,
-  } = useQuery({
+  const { data: enrolledData, isLoading: enrollmentsLoading, isError: enrollmentsError, refetch: refetchEnrollments } = useQuery({
     queryKey: ["my-courses"],
-    queryFn: () => enrollmentApi.myCourses().then((r) => r.data),
+    queryFn: () => enrollmentApi.myCourses().then((response) => response.data),
   });
 
-  const {
-    data: certData,
-    isError: certsError,
-    refetch: refetchCerts,
-  } = useQuery({
+  const { data: certData } = useQuery({
     queryKey: ["my-certificates"],
-    queryFn: () => certApi.myCertificates().then((r) => r.data),
+    queryFn: () => certApi.myCertificates().then((response) => response.data),
   });
 
-  const {
-    data: materialPurchases,
-    isError: materialsError,
-    refetch: refetchMaterials,
-  } = useQuery({
+  const { data: materialPurchases } = useQuery({
     queryKey: ["my-material-purchases"],
-    queryFn: () => materialsApi.myPurchases().then((r) => r.data),
+    queryFn: () => materialsApi.myPurchases().then((response) => response.data),
   });
 
-  const {
-    data: mockPkgs,
-    isError: mocksError,
-    refetch: refetchMocks,
-  } = useQuery({
+  const { data: mockPackages } = useQuery({
     queryKey: ["my-mock-packages"],
-    queryFn: () => mockTestsApi.myPackages().then((r) => r.data),
+    queryFn: () => mockTestsApi.myPackages().then((response) => response.data),
   });
 
   const courses = enrollmentsError ? [] : enrolledData?.courses || [];
   const certificates = certData?.certificates || [];
-  const matList = materialPurchases?.purchases || [];
-  const mockList = mockPkgs?.packages || [];
-  const inProgress = courses.filter((c: any) => (c.progress || 0) > 0 && (c.progress || 0) < 100);
-  const completed = courses.filter((c: any) => (c.progress || 0) >= 100);
+  const materials = materialPurchases?.purchases || [];
+  const mocks = mockPackages?.packages || [];
+
+  const inProgress = courses.filter((course: any) => (course.progress || 0) > 0 && (course.progress || 0) < 100);
+  const completed = courses.filter((course: any) => (course.progress || 0) >= 100);
+  const continueCourse = [...inProgress].sort((a: any, b: any) => (b.progress || 0) - (a.progress || 0))[0];
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9] flex flex-col">
+    <AppShell className="flex flex-col">
       <Navbar />
-
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
-
-        {/* ── Welcome ── */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
-          <div>
-            <h1 className="font-display font-extrabold text-3xl text-gray-900 leading-tight">
-              Welcome back, {user?.full_name?.split(" ")[0] || "Learner"}
-            </h1>
-            <p className="text-gray-500 mt-1 text-sm">Pick up where you left off.</p>
-          </div>
-          <Link
-            href="/courses"
-            className="inline-flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-indigo-700 shadow-button-indigo transition-colors"
-          >
-            <Search className="w-4 h-4" /> Browse courses
-          </Link>
-        </div>
-
-        {/* ── Stats ── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-          <StatCard
-            icon={BookOpen}
-            label="Enrolled"
-            value={enrollmentsError ? "—" : courses.length}
-            sub={enrollmentsError ? "Couldn't load" : "total courses"}
-            color="bg-indigo-50 text-indigo-600"
-          />
-          <StatCard
-            icon={TrendingUp}
-            label="In Progress"
-            value={enrollmentsError ? "—" : inProgress.length}
-            sub={enrollmentsError ? "Couldn't load" : "active learning"}
-            color="bg-violet-50 text-violet-600"
-          />
-          <StatCard
-            icon={CheckCircle2}
-            label="Completed"
-            value={enrollmentsError ? "—" : completed.length}
-            sub={enrollmentsError ? "Couldn't load" : "courses finished"}
-            color="bg-emerald-50 text-emerald-600"
-          />
-          <StatCard
-            icon={Award}
-            label="Certificates"
-            value={certsError ? "—" : certificates.length}
-            sub={certsError ? "Couldn't load" : "blockchain verified"}
-            color="bg-amber-50 text-amber-600"
-          />
-        </div>
-
-        {enrollmentsError && (
-          <div className="mb-6">
-            <SectionError label="We couldn't load your enrollments." onRetry={() => refetchEnrollments()} />
-          </div>
-        )}
-
-        {/* ── AI Tutor Prompt Card ── */}
-        <div className="bg-white rounded-2xl border border-indigo-100 shadow-card p-5 mb-10 flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center flex-shrink-0">
-            <Sparkles className="w-5 h-5 text-indigo-600" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-gray-900">Your AI Tutor is ready</p>
-            <p className="text-xs text-gray-500 mt-0.5">Ask anything about your enrolled courses — available 24/7.</p>
-          </div>
-          <Link
-            href="/courses"
-            className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 flex-shrink-0"
-          >
-            Browse courses <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-
-        {/* ── Continue Learning ── */}
-        <section className="mb-12">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="font-display font-bold text-xl text-gray-900">Continue learning</h2>
-            <Link href="/courses" className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
-              Browse more <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-
-          {enrollmentsLoading ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
-            </div>
-          ) : enrollmentsError ? (
-            <div className="space-y-3">
-              <p className="text-sm text-gray-600">Your course list couldn&apos;t be loaded. Check your connection and try again.</p>
-              <button
-                type="button"
-                onClick={() => refetchEnrollments()}
-                className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-semibold"
-              >
-                Retry
-              </button>
-            </div>
-          ) : courses.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-card text-center py-16 px-8">
-              <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <BookOpen className="w-8 h-8 text-indigo-400" />
+      <main className="bw-shell flex-1 space-y-6 pb-6">
+        <ContentBand muted>
+          <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+            <div>
+              <span className="eyebrow mb-4">Learning Hub</span>
+              <h1 className="font-display text-4xl font-extrabold text-slate-950">
+                Welcome back, {user?.full_name?.split(" ")[0] || "Learner"}.
+              </h1>
+              <p className="bw-muted mt-4 max-w-2xl text-sm leading-7 sm:text-base">
+                Your learner home is now denser and more guided, with a clearer next action, stronger progress visibility,
+                and faster access to practice, certificates, and AI support.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link href={continueCourse ? `/learn/${(continueCourse.course || continueCourse).slug}` : "/courses"} className="bw-action-primary">
+                  <Play className="h-4 w-4" />
+                  {continueCourse ? "Resume learning" : "Browse courses"}
+                </Link>
+                <Link href="/courses" className="bw-action-secondary">
+                  <BookOpen className="h-4 w-4" />
+                  Explore more
+                </Link>
               </div>
-              <h3 className="font-display font-bold text-lg text-gray-900 mb-2">No courses yet</h3>
-              <p className="text-gray-500 text-sm mb-6">Start learning with India&apos;s best teachers</p>
-              <Link href="/courses" className="inline-flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-semibold text-sm hover:bg-indigo-700 shadow-button-indigo transition-colors">
-                Explore courses
-              </Link>
             </div>
-          ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {courses.map((item: any) => {
-                const course = item.course || item;
-                const progress = item.progress || 0;
-                return (
-                  <div key={item.enrollment_id || course.id} className="bg-white rounded-2xl border border-gray-100 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-300 overflow-hidden">
-                    {/* Thumbnail */}
-                    <div className="h-36 bg-gradient-to-br from-indigo-100 to-violet-100 relative">
-                      {course.thumbnail_url && (
-                        <img src={course.thumbnail_url} alt={course.title} className="w-full h-full object-cover" />
-                      )}
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow">
-                          <Play className="w-4 h-4 text-indigo-600 fill-indigo-600 ml-0.5" />
-                        </div>
-                      </div>
-                      {progress > 0 && (
-                        <div className="absolute bottom-0 inset-x-0 h-1 bg-white/30">
-                          <div className="h-full bg-indigo-500" style={{ width: `${progress}%` }} />
-                        </div>
-                      )}
-                    </div>
 
-                    <div className="p-4">
-                      <h3 className="font-display font-bold text-sm text-gray-900 leading-snug mb-1 line-clamp-2">{course.title}</h3>
-                      <p className="text-xs text-gray-500 mb-3">by {course.teacher?.full_name}</p>
+            <div className="grid gap-4">
+              <div className="bw-card bw-card-tint p-5">
+                <div className="flex items-center justify-between">
+                  <p className="bw-kicker">AI Tutor</p>
+                  <StatusBadge tone="info">Always on</StatusBadge>
+                </div>
+                <p className="mt-4 font-display text-2xl font-extrabold text-slate-950">Ask about any enrolled course.</p>
+                <p className="bw-muted mt-2 text-sm leading-7">
+                  Summaries, concept explanations, revision help, and course-aware chat now surface more naturally across the learner experience.
+                </p>
+                <Link href="/courses" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-indigo-700">
+                  Open learning catalog
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
 
-                      {/* Progress */}
-                      <div className="flex items-center justify-between text-xs text-gray-500 mb-1.5">
-                        <span>{progress}% complete</span>
-                        {progress === 100 && <span className="text-emerald-600 font-semibold">Completed</span>}
-                      </div>
-                      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-4">
-                        <div
-                          className={`h-full rounded-full ${progress === 100 ? "bg-emerald-500" : "bg-indigo-500"}`}
-                          style={{ width: `${Math.max(progress, 3)}%` }}
-                        />
-                      </div>
-
-                      <Link
-                        href={`/learn/${course.slug}`}
-                        className="flex items-center justify-center gap-2 w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold text-xs hover:bg-indigo-700 transition-colors"
-                      >
-                        <Play className="w-3 h-3 fill-white" />
-                        {progress > 0 ? "Continue" : "Start learning"}
-                      </Link>
-                    </div>
-                  </div>
-                );
-              })}
+              <div className="grid gap-3 sm:grid-cols-3">
+                <MetricCard label="Enrolled" value={courses.length} detail="active learning paths" icon={BookOpen} accentClass="bg-indigo-50 text-indigo-600" />
+                <MetricCard label="In progress" value={inProgress.length} detail="currently moving" icon={Play} accentClass="bg-sky-50 text-sky-600" />
+                <MetricCard label="Certificates" value={certificates.length} detail="verified completions" icon={Award} accentClass="bg-amber-50 text-amber-600" />
+              </div>
             </div>
-          )}
-        </section>
+          </div>
+        </ContentBand>
 
-        {/* ── Materials & mocks ── */}
-        {(matList.length > 0 || mockList.length > 0 || materialsError || mocksError) && (
-          <section className="mb-12">
-            <h2 className="font-display font-bold text-xl text-gray-900 mb-5">Downloads & practice</h2>
-            <div className="grid md:grid-cols-2 gap-5">
-              {(matList.length > 0 || materialsError) && (
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4 }}
-                  className="group rounded-2xl border border-gray-100/90 bg-white p-5 shadow-card transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card-hover"
-                >
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-                      <FileStack className="w-5 h-5" />
-                    </div>
-                    <span className="font-display font-semibold text-gray-900">Study materials</span>
-                  </div>
-                  {materialsError ? (
-                    <SectionError label="Couldn't load your materials." onRetry={() => refetchMaterials()} />
-                  ) : (
-                    <>
-                      <ul className="space-y-2">
-                        {matList.map((m: { product_id: string; title: string; slug?: string }) => (
-                          <li key={m.product_id}>
-                            <Link
-                              href={m.slug ? `/catalog/materials/${m.slug}` : "/catalog/materials"}
-                              className="text-sm font-medium text-indigo-600 transition-colors hover:text-indigo-800"
-                            >
-                              {m.title}
-                              <span className="ml-1 inline-block opacity-0 transition-transform group-hover:translate-x-0.5 group-hover:opacity-100 text-indigo-400">
-                                →
-                              </span>
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                      <Link
-                        href="/catalog/materials"
-                        className="text-xs font-semibold text-gray-500 mt-4 inline-flex items-center gap-1 hover:text-indigo-600 transition-colors"
-                      >
-                        Browse catalog <ArrowRight className="w-3 h-3" />
-                      </Link>
-                    </>
-                  )}
-                </motion.div>
-              )}
-              {(mockList.length > 0 || mocksError) && (
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: 0.06 }}
-                  className="group rounded-2xl border border-gray-100/90 bg-white p-5 shadow-card transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card-hover"
-                >
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
-                      <ClipboardList className="w-5 h-5" />
-                    </div>
-                    <span className="font-display font-semibold text-gray-900">Mock tests</span>
-                  </div>
-                  {mocksError ? (
-                    <SectionError label="Couldn't load your mock tests." onRetry={() => refetchMocks()} />
-                  ) : (
-                    <>
-                      <ul className="space-y-2">
-                        {mockList.map((p: { package_id: string; title: string; papers: { id: string; title: string }[] }) => (
-                          <li key={p.package_id}>
-                            <p className="text-sm font-medium text-gray-800">{p.title}</p>
-                            <ul className="ml-2 mt-1 space-y-1">
-                              {(p.papers || []).map((paper) => (
-                                <li key={paper.id}>
-                                  <Link
-                                    href={`/mock-tests/take/${paper.id}`}
-                                    className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
-                                  >
-                                    {paper.title}
-                                  </Link>
-                                </li>
-                              ))}
-                            </ul>
-                          </li>
-                        ))}
-                      </ul>
-                      <Link
-                        href="/catalog/mock-tests"
-                        className="text-xs font-semibold text-gray-500 mt-4 inline-flex items-center gap-1 hover:text-indigo-600 transition-colors"
-                      >
-                        Browse catalog <ArrowRight className="w-3 h-3" />
-                      </Link>
-                    </>
-                  )}
-                </motion.div>
-              )}
-            </div>
-          </section>
-        )}
+        <div className="grid gap-6 lg:grid-cols-[1.12fr_0.88fr]">
+          <ContentBand className="h-full">
+            <SectionHeader
+              eyebrow="Continue Learning"
+              title="Pick up exactly where you left off."
+              action={
+                <Link href="/courses" className="bw-action-secondary">
+                  Browse more
+                </Link>
+              }
+            />
 
-        {/* ── Certificates ── */}
-        {(certificates.length > 0 || certsError) && (
-          <section>
-            <h2 className="font-display font-bold text-xl text-gray-900 mb-5">My certificates</h2>
-            {certsError ? (
-              <SectionError label="Couldn't load certificates." onRetry={() => refetchCerts()} />
+            {enrollmentsLoading ? (
+              <div className="mt-6 grid gap-4 md:grid-cols-2">
+                {[1, 2].map((item) => (
+                  <div key={item} className="bw-card h-[250px] animate-pulse bg-white/70" />
+                ))}
+              </div>
+            ) : courses.length === 0 ? (
+              <div className="mt-6">
+                <EmptyStatePanel title="No courses yet" description="Start learning with expert-led courses, AI tutoring, and progress-aware guidance." icon={BookOpen} action={<Link href="/courses" className="bw-action-primary">Explore courses</Link>} />
+              </div>
             ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {certificates.map((cert: any) => (
-                <div
-                  key={cert.id}
-                  className="bg-white rounded-2xl border border-amber-100 shadow-card p-5 hover:shadow-card-hover transition-all duration-300"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
-                      <Award className="w-5 h-5 text-amber-600" />
+              <div className="mt-6 grid gap-4 md:grid-cols-2">
+                {courses.slice(0, 4).map((item: any) => {
+                  const course = item.course || item;
+                  const progress = item.progress || 0;
+                  return (
+                    <div key={item.enrollment_id || course.id} className="bw-card overflow-hidden">
+                      <div className="h-36 bg-gradient-to-br from-indigo-100 via-sky-50 to-amber-50">
+                        {course.thumbnail_url ? <img src={course.thumbnail_url} alt={course.title} className="h-full w-full object-cover" /> : null}
+                      </div>
+                      <div className="p-5">
+                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">{course.category || "Course"}</p>
+                        <h3 className="mt-2 line-clamp-2 font-display text-lg font-bold text-slate-950">{course.title}</h3>
+                        <p className="mt-1 text-sm text-slate-500">By {course.teacher?.full_name || course.teacher_name || "Expert instructor"}</p>
+                        <div className="mt-4">
+                          <div className="mb-2 flex items-center justify-between text-xs font-medium text-slate-500">
+                            <span>{progress}% complete</span>
+                            {progress >= 100 ? <StatusBadge tone="success">Completed</StatusBadge> : null}
+                          </div>
+                          <div className="h-2 rounded-full bg-slate-100">
+                            <div className="h-2 rounded-full bg-gradient-to-r from-indigo-500 to-sky-500" style={{ width: `${Math.max(progress, 6)}%` }} />
+                          </div>
+                        </div>
+                        <Link href={`/learn/${course.slug}`} className="mt-5 inline-flex items-center gap-2 rounded-full bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-600">
+                          <Play className="h-4 w-4 fill-white" />
+                          {progress > 0 ? "Continue" : "Start learning"}
+                        </Link>
+                      </div>
                     </div>
-                    <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
-                      Blockchain verified
-                    </span>
-                  </div>
-                  <h3 className="font-display font-bold text-sm text-gray-900 mb-1 line-clamp-2">{cert.course_name}</h3>
-                  <p className="text-xs text-gray-500 mb-1">by {cert.teacher_name}</p>
-                  <p className="text-xs text-gray-400 mb-4">
-                    <Clock className="w-3 h-3 inline mr-1" />
-                    {new Date(cert.issued_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                  </p>
-                  <div className="flex gap-2">
-                    <Link
-                      href={`/verify/${cert.id}`}
-                      className="flex-1 flex items-center justify-center gap-1.5 text-xs bg-amber-600 text-white py-2 rounded-lg font-semibold hover:bg-amber-700 transition-colors"
-                    >
-                      <ExternalLink className="w-3 h-3" /> Verify
-                    </Link>
-                    {cert.pdf_url && (
-                      <a
-                        href={cert.pdf_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-1 flex items-center justify-center gap-1.5 text-xs border border-amber-200 text-amber-700 py-2 rounded-lg font-semibold hover:bg-amber-50 transition-colors"
-                      >
-                        <Download className="w-3 h-3" /> Download
-                      </a>
-                    )}
+                  );
+                })}
+              </div>
+            )}
+
+            {enrollmentsError ? (
+              <button type="button" onClick={() => refetchEnrollments()} className="mt-4 bw-action-secondary">
+                Retry course load
+              </button>
+            ) : null}
+          </ContentBand>
+
+          <div className="grid gap-6">
+            <ContentBand muted className="h-full">
+              <SectionHeader eyebrow="Practice & Assets" title="Keep momentum with quick-access tools." />
+              <div className="mt-6 grid gap-3">
+                <div className="bw-card p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+                      <Sparkles className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="font-display text-lg font-bold text-slate-950">AI support</p>
+                      <p className="text-sm text-slate-500">Course-aware explanations and revision help.</p>
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-            )}
-          </section>
-        )}
-      </main>
+                <div className="bw-card p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-50 text-sky-600">
+                      <BookOpen className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="font-display text-lg font-bold text-slate-950">{materials.length} study materials</p>
+                      <p className="text-sm text-slate-500">Purchased resources and downloadable packs.</p>
+                    </div>
+                  </div>
+                  <Link href="/catalog/materials" className="mt-4 inline-flex text-sm font-semibold text-indigo-700">
+                    Open materials
+                  </Link>
+                </div>
+                <div className="bw-card p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
+                      <ClipboardList className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="font-display text-lg font-bold text-slate-950">{mocks.length} mock test packages</p>
+                      <p className="text-sm text-slate-500">Revision and assessment shortcuts without extra hunting.</p>
+                    </div>
+                  </div>
+                  <Link href="/catalog/mock-tests" className="mt-4 inline-flex text-sm font-semibold text-indigo-700">
+                    Open practice
+                  </Link>
+                </div>
+              </div>
+            </ContentBand>
 
+            {certificates.length > 0 ? (
+              <ContentBand className="h-full">
+                <SectionHeader eyebrow="Certificates" title="Your verified achievements" />
+                <div className="mt-6 space-y-3">
+                  {certificates.slice(0, 3).map((certificate: any) => (
+                    <div key={certificate.id} className="bw-card p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="font-display text-base font-bold text-slate-950">{certificate.course_name}</p>
+                          <p className="text-sm text-slate-500">By {certificate.teacher_name}</p>
+                        </div>
+                        <StatusBadge tone="success">Verified</StatusBadge>
+                      </div>
+                      <Link href={`/verify/${certificate.id}`} className="mt-3 inline-flex text-sm font-semibold text-indigo-700">
+                        View certificate
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              </ContentBand>
+            ) : null}
+          </div>
+        </div>
+      </main>
       <Footer />
-    </div>
+    </AppShell>
   );
 }

@@ -11,6 +11,7 @@ import {
   ArrowRight, Share2, Heart, BarChart3, FileText, HelpCircle, Calendar,
   RefreshCw,
 } from "lucide-react";
+import { AIBadge } from "@/components/ui/ai-badge";
 
 // ─── Razorpay loader ───────────────────────────────────────────────────────────
 function loadRazorpay(): Promise<boolean> {
@@ -454,57 +455,57 @@ export function CourseDetailClient({ course }: { course: Course }) {
   );
 
   // ─── Card / Section wrapper component ─────────────────────────────────────
-  const Card = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
-    <div className={`bg-white rounded-2xl border border-gray-100 shadow-card p-6 ${className}`}>
+  const Card = ({ children, className = "", id }: { children: React.ReactNode; className?: string; id?: string }) => (
+    <div id={id} className={`bg-white rounded-2xl border border-gray-100 shadow-card p-6 ${className}`}>
       {children}
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9]">
+    <div className="min-h-screen bg-white">
 
       {/* ── Hero strip ── */}
-      <div className="bg-gray-950">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="border-b border-[#e2e5ec] bg-white">
+        <div className="bw-shell py-12">
           <div className="max-w-3xl">
             {/* Breadcrumb */}
-            <div className="flex items-center gap-2 text-xs text-gray-500 mb-5 flex-wrap">
-              <Link href="/courses" className="hover:text-gray-300 transition-colors">Courses</Link>
-              {course.category && <><span className="text-gray-700">/</span><span className="text-gray-400">{course.category}</span></>}
-              <span className="text-gray-700">/</span>
-              <span className="text-gray-300 truncate max-w-[200px]">{course.title}</span>
+            <div className="mb-5 flex flex-wrap items-center gap-2 text-xs text-ink-muted">
+              <Link href="/courses" className="transition-colors hover:text-ink-heading">Courses</Link>
+              {course.category && <><span>/</span><span>{course.category}</span></>}
+              <span>/</span>
+              <span className="max-w-[200px] truncate text-ink-body">{course.title}</span>
             </div>
 
             {course.category && (
-              <span className="inline-block text-xs font-bold px-3 py-1 rounded-full bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 mb-4">
+              <span className="mb-4 inline-block rounded-full border border-[#e2e5ec] bg-[#ebebff] px-3 py-1 text-xs font-bold text-brand-primary">
                 {course.category}
               </span>
             )}
 
-            <h1 className="font-display font-extrabold text-white leading-tight tracking-[-0.02em] mb-4"
+            <h1 className="mb-4 font-display font-extrabold leading-tight tracking-[-0.02em] text-ink-heading"
               style={{ fontSize: "clamp(1.75rem, 3.5vw, 2.75rem)" }}>
               {course.title}
             </h1>
 
             {course.short_description && (
-              <p className="text-gray-400 text-base leading-relaxed mb-6 max-w-2xl">{course.short_description}</p>
+              <p className="mb-6 max-w-2xl text-base leading-relaxed text-ink-body">{course.short_description}</p>
             )}
 
             {/* Stats */}
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm mb-6">
+            <div className="mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
               {Number(course.avg_rating) > 0 && (
                 <div className="flex items-center gap-1.5">
                   {[1,2,3,4,5].map(s => (
-                    <Star key={s} className={`h-4 w-4 ${s <= Math.round(Number(course.avg_rating)) ? "text-amber-400 fill-amber-400" : "text-gray-600"}`} />
+                    <Star key={s} className={`h-4 w-4 ${s <= Math.round(Number(course.avg_rating)) ? "fill-amber-400 text-amber-400" : "text-gray-300"}`} />
                   ))}
-                  <span className="text-amber-400 font-bold ml-1">{Number(course.avg_rating).toFixed(1)}</span>
-                  <span className="text-gray-500">({course.review_count?.toLocaleString()} reviews)</span>
+                  <span className="ml-1 font-bold text-ink-heading">{Number(course.avg_rating).toFixed(1)}</span>
+                  <span className="text-ink-muted">({course.review_count?.toLocaleString()} reviews)</span>
                 </div>
               )}
-              <div className="flex items-center gap-1 text-gray-400"><Users className="h-4 w-4" />{course.enrolled_count?.toLocaleString()} students</div>
-              {course.total_duration_minutes > 0 && <div className="flex items-center gap-1 text-gray-400"><Clock className="h-4 w-4" />{fmtMin(course.total_duration_minutes)}</div>}
-              {course.difficulty_level && <div className="flex items-center gap-1 text-gray-400"><BarChart3 className="h-4 w-4" />{course.difficulty_level}</div>}
-              {course.language && <div className="flex items-center gap-1 text-gray-400"><Globe className="h-4 w-4" />{course.language}</div>}
+              <div className="flex items-center gap-1 text-ink-muted"><Users className="h-4 w-4" />{course.enrolled_count?.toLocaleString()} students</div>
+              {course.total_duration_minutes > 0 && <div className="flex items-center gap-1 text-ink-muted"><Clock className="h-4 w-4" />{fmtMin(course.total_duration_minutes)}</div>}
+              {course.difficulty_level && <div className="flex items-center gap-1 text-ink-muted"><BarChart3 className="h-4 w-4" />{course.difficulty_level}</div>}
+              {course.language && <div className="flex items-center gap-1 text-ink-muted"><Globe className="h-4 w-4" />{course.language}</div>}
             </div>
 
             {/* Teacher */}
@@ -512,22 +513,39 @@ export function CourseDetailClient({ course }: { course: Course }) {
               <div className="flex items-center gap-2.5">
                 {course.teacher.avatar_url
                   ? <img src={course.teacher.avatar_url} alt={course.teacher.full_name} className="h-9 w-9 rounded-full object-cover ring-2 ring-indigo-500/30" />
-                  : <div className="h-9 w-9 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center">
+                  : <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-primary">
                       <span className="text-white font-bold text-sm">{course.teacher.full_name.charAt(0)}</span>
                     </div>
                 }
                 <div>
-                  <p className="text-gray-500 text-xs">Created by</p>
-                  <p className="text-indigo-400 text-sm font-semibold">{course.teacher.full_name}</p>
+                  <p className="text-xs text-ink-muted">Created by</p>
+                  <p className="text-sm font-semibold text-brand-primary">{course.teacher.full_name}</p>
                 </div>
               </div>
             )}
           </div>
         </div>
       </div>
+      <div className="sticky top-[84px] z-30 border-b border-[#e2e5ec] bg-white/95 backdrop-blur">
+        <div className="bw-shell flex items-center gap-6 py-3 text-sm font-medium text-ink-muted">
+          <a href="#overview" className="border-b-2 border-brand-primary pb-2 text-brand-primary">Overview</a>
+          <a href="#curriculum" className="pb-2 hover:text-ink-heading">Curriculum</a>
+          <a href="#reviews" className="pb-2 hover:text-ink-heading">Reviews</a>
+          <a href="#ai-features" className="pb-2 hover:text-ink-heading">AI Features</a>
+        </div>
+      </div>
 
       {/* ── Body ── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="bw-shell py-10">
+            <Card id="ai-features" className="border-l-4 border-l-brand-primary bg-[#eff6ff]">
+              <h2 className="font-display text-xl font-bold text-ink-heading">AI Features</h2>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <AIBadge label="AI Transcript Available" />
+                <AIBadge label="Auto-Generated Quiz" />
+                <AIBadge label="Course AI Chatbot" />
+              </div>
+            </Card>
+
         <div className="flex flex-col lg:flex-row gap-8">
 
           {/* Left */}
@@ -535,6 +553,7 @@ export function CourseDetailClient({ course }: { course: Course }) {
 
             {/* What you'll learn */}
             <motion.div
+              id="overview"
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
             >
               <Card>
@@ -586,7 +605,7 @@ export function CourseDetailClient({ course }: { course: Course }) {
 
             {/* Curriculum */}
             {course.chapters && course.chapters.length > 0 && (
-              <Card>
+              <Card id="curriculum">
                 <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
                   <h2 className="font-display font-bold text-xl text-gray-900">Course curriculum</h2>
                   <span className="text-gray-400 text-xs">
@@ -634,6 +653,14 @@ export function CourseDetailClient({ course }: { course: Course }) {
                 </div>
               </Card>
             )}
+
+            <Card id="reviews">
+              <h2 className="font-display text-xl font-bold text-ink-heading">Student Reviews</h2>
+              <p className="mt-2 text-sm text-ink-muted">
+                {course.avg_rating ? `${Number(course.avg_rating).toFixed(1)} average rating` : "New course"} from{" "}
+                {course.review_count?.toLocaleString() || 0} learners.
+              </p>
+            </Card>
 
             {/* Doubt Sessions — only shown to enrolled students */}
             {enrolled && (

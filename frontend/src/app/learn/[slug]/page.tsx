@@ -15,7 +15,10 @@ import {
   Lock,
   ListVideo,
   X,
+  SendHorizontal,
 } from "lucide-react";
+import { AIBadge } from "@/components/ui/ai-badge";
+import { ProgressRing } from "@/components/ui/progress-ring";
 import { useCourseStore } from "@/stores/courseStore";
 import { toast } from "@/hooks/use-toast";
 
@@ -50,8 +53,8 @@ function LearnLessonList({
     <div className="flex-1 overflow-y-auto min-h-0">
       {chapters.map((chapter: Chapter) => (
           <div key={chapter.id}>
-            <div className="px-4 py-2.5 bg-[#060B18] sticky top-0 border-b border-white/[0.04] z-10">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{chapter.title}</p>
+            <div className="sticky top-0 z-10 border-b border-slate-200 bg-[#fcf7f1] px-4 py-2.5">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{chapter.title}</p>
             </div>
             {(chapter.lessons || []).map((lesson: any) => {
               const lessonProgress = progressMap[lesson.id];
@@ -73,8 +76,8 @@ function LearnLessonList({
                       onPickLesson?.();
                     }}
                     disabled={!unlocked}
-                    className={`w-full flex items-start gap-3 px-4 py-3 hover:bg-white/[0.03] transition-colors text-left disabled:opacity-40 disabled:cursor-not-allowed ${
-                      isActive ? "bg-blue-500/[0.08] border-l-2 border-blue-500" : "border-l-2 border-transparent"
+                    className={`w-full border-l-2 px-4 py-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                      isActive ? "border-l-indigo-500 bg-indigo-50" : "border-l-transparent hover:bg-[#fcf7f1]"
                     }`}
                   >
                     <div className="flex-shrink-0 mt-0.5">
@@ -83,7 +86,7 @@ function LearnLessonList({
                       ) : isDone ? (
                         <CheckCircle className="h-4 w-4 text-emerald-500" />
                       ) : isActive ? (
-                        <Play className="h-4 w-4 text-blue-400 fill-blue-400" />
+                        <Play className="h-4 w-4 fill-indigo-500 text-indigo-500" />
                       ) : (
                         <div className="h-4 w-4 rounded-full border border-slate-700" />
                       )}
@@ -91,13 +94,13 @@ function LearnLessonList({
                     <div className="min-w-0">
                       <p
                         className={`text-xs font-medium leading-snug ${
-                          isActive ? "text-blue-400" : isDone ? "text-slate-400" : "text-slate-500"
+                          isActive ? "text-indigo-700" : isDone ? "text-slate-400" : "text-slate-600"
                         }`}
                       >
                         {lesson.title}
                       </p>
                       {lesson.duration_seconds && (
-                        <p className="text-[10px] text-slate-700 mt-0.5">{Math.floor(lesson.duration_seconds / 60)}m</p>
+                        <p className="mt-0.5 text-[10px] text-slate-400">{Math.floor(lesson.duration_seconds / 60)}m</p>
                       )}
                     </div>
                   </button>
@@ -105,7 +108,7 @@ function LearnLessonList({
                     <div className="px-4 pb-2 -mt-1">
                       <Link
                         href={`/courses/${courseSlug}/quiz/${meta.required_quiz_id}`}
-                        className="text-[10px] font-semibold text-amber-400 hover:text-amber-300 underline underline-offset-2"
+                        className="text-[10px] font-semibold text-amber-700 underline underline-offset-2 hover:text-amber-800"
                       >
                         Pass previous chapter quiz to unlock →
                       </Link>
@@ -270,36 +273,37 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
   }
 
   const sidebarProgressHeader = (
-    <div className="p-4 border-b border-white/[0.06]">
-      <div className="flex justify-between text-xs text-slate-500 mb-2">
+    <div className="border-b border-slate-200 p-4">
+      <div className="mb-2 flex justify-between text-xs text-slate-500">
         <span>Your Progress</span>
-        <span className="font-semibold text-white">{overallProgress}%</span>
+        <span className="font-semibold text-slate-950">{overallProgress}%</span>
       </div>
-      <div className="bg-white/[0.06] rounded-full h-1.5">
+      <div className="h-1.5 rounded-full bg-slate-100">
         <div
-          className="bg-gradient-to-r from-blue-500 to-violet-500 h-1.5 rounded-full transition-all"
+          className="h-1.5 rounded-full bg-gradient-to-r from-indigo-500 to-sky-500 transition-all"
           style={{ width: `${overallProgress}%` }}
         />
       </div>
-      <p className="text-[11px] text-slate-600 mt-1.5">
+      <p className="mt-1.5 text-[11px] text-slate-400">
         {completedCount} of {totalLessons} lessons completed
       </p>
     </div>
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#060B18]">
-      <div className="bg-[#080F20]/80 backdrop-blur-xl border-b border-white/[0.06] py-3 px-4 flex items-center gap-3">
-        <Link href="/dashboard" className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/5 transition-colors shrink-0">
+    <div className="min-h-screen flex flex-col">
+      <div className="bw-shell">
+        <div className="bw-band mb-4 flex items-center gap-3 px-4 py-3">
+        <Link href="/dashboard" className="shrink-0 rounded-full bg-white p-2 text-slate-500 transition-colors hover:text-slate-950">
           <ChevronLeft className="h-5 w-5" />
         </Link>
-        <h1 className="text-white font-semibold truncate flex-1 text-sm min-w-0">{course.title}</h1>
-        <div className="text-xs text-slate-500 hidden md:flex items-center gap-1.5 shrink-0">
-          <span className="text-slate-300 font-semibold">{overallProgress}%</span> complete
+        <h1 className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-950">{course.title}</h1>
+        <div className="hidden shrink-0 items-center gap-1.5 text-xs text-slate-500 md:flex">
+          <span className="font-semibold text-slate-950">{overallProgress}%</span> complete
         </div>
         <button
           type="button"
-          className="md:hidden flex items-center gap-1.5 text-xs font-semibold text-slate-200 bg-white/[0.08] border border-white/[0.1] px-3 py-1.5 rounded-xl shrink-0"
+          className="shrink-0 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 md:hidden"
           onClick={() => setLessonDrawerOpen(true)}
           aria-expanded={lessonDrawerOpen}
           aria-controls="learn-lesson-drawer"
@@ -310,37 +314,40 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
         <div className="flex items-center gap-2 shrink-0">
           <Link
             href={`/learn/${params.slug}/chat`}
-            className="flex items-center gap-1.5 text-xs font-semibold bg-gradient-to-r from-blue-500 to-violet-600 text-white px-3 py-1.5 rounded-xl shadow-lg shadow-blue-500/20"
+            className="flex items-center gap-1.5 rounded-full bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white"
           >
             <Sparkles className="h-3.5 w-3.5" /> <span className="hidden sm:inline">AI Tutor</span>
           </Link>
           <Link
             href={`/learn/${params.slug}/community`}
-            className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-slate-300 hover:text-white px-3 py-1.5 rounded-xl border border-white/[0.08]"
+            className="hidden rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 sm:flex"
           >
             <Users className="h-3.5 w-3.5" /> Community
           </Link>
         </div>
       </div>
+      </div>
 
       {user?.role === "student" && accessData?.access && (
-        <div className="px-4 py-2.5 bg-violet-500/10 border-b border-violet-500/20 text-[11px] text-violet-100 flex flex-wrap items-center gap-x-3 gap-y-1">
+        <div className="bw-shell">
+        <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[1.25rem] border border-violet-200 bg-violet-50 px-4 py-2.5 text-[11px] text-violet-800">
           <span>
             {accessData.access.type === "lifetime" || !accessData.access.expires_at
               ? "Enrollment: lifetime access"
               : `Enrollment: access ends ${new Date(accessData.access.expires_at).toLocaleString()}`}
           </span>
           {accessData.module_lock_enabled && (
-            <span className="text-slate-400">
+            <span className="text-violet-700/80">
               Modules unlock when you complete the previous chapter and pass its quiz.
             </span>
           )}
         </div>
+        </div>
       )}
 
-      <div className="flex-1 flex overflow-hidden min-h-0">
-        <div className="flex-1 flex flex-col min-w-0">
-          <div className="bg-black aspect-video flex items-center justify-center shrink-0">
+      <div className="bw-shell flex min-h-0 flex-1 gap-4 pb-6">
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white/86">
+          <div className="flex aspect-video shrink-0 items-center justify-center bg-black">
             {videoData?.master_url || lessonData?.video_url ? (
               <video
                 key={videoData?.master_url || lessonData?.video_url}
@@ -369,18 +376,18 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
           </div>
 
           {lessonData && (
-            <div className="bg-[#080F20] border-t border-white/[0.06] p-5">
-              <h2 className="text-white font-bold text-base">{lessonData.title}</h2>
+            <div className="border-t border-slate-200 bg-white p-5">
+              <h2 className="text-base font-bold text-slate-950">{lessonData.title}</h2>
               {lessonData.ai_summary && (
-                <div className="mt-3 p-3.5 bg-blue-500/[0.07] border border-blue-500/[0.12] rounded-xl">
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <Sparkles className="h-3.5 w-3.5 text-blue-400" />
-                    <p className="text-xs text-blue-400 font-semibold">AI Summary</p>
+                <div className="mt-3 rounded-xl border border-sky-200 bg-sky-50 p-3.5">
+                  <div className="mb-1.5 flex items-center gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5 text-sky-600" />
+                    <p className="text-xs font-semibold text-sky-700">AI Summary</p>
                   </div>
-                  <p className="text-sm text-slate-300 leading-relaxed">{lessonData.ai_summary}</p>
+                  <p className="text-sm leading-relaxed text-slate-700">{lessonData.ai_summary}</p>
                 </div>
               )}
-              <div className="flex gap-3 mt-4">
+              <div className="mt-4 flex gap-3">
                 {prevLesson && (
                   <button
                     type="button"
@@ -388,7 +395,7 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
                       setCurrentLesson(prevLesson);
                       setActiveLessonId(prevLesson.id);
                     }}
-                    className="flex items-center gap-2 text-sm text-slate-400 hover:text-white px-3 py-2 rounded-xl border border-white/[0.07] hover:border-white/[0.14] hover:bg-white/5 transition-all"
+                    className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-600 transition-all hover:bg-[#f8f2eb] hover:text-slate-950"
                   >
                     <ChevronLeft className="h-4 w-4" /> Previous
                   </button>
@@ -400,7 +407,7 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
                       setCurrentLesson(nextLesson);
                       setActiveLessonId(nextLesson.id);
                     }}
-                    className="ml-auto flex items-center gap-2 text-sm text-white bg-gradient-to-r from-blue-500 to-violet-600 px-4 py-2 rounded-xl shadow-lg shadow-blue-500/20 hover:shadow-blue-500/35 transition-shadow"
+                    className="ml-auto flex items-center gap-2 rounded-full bg-slate-950 px-4 py-2 text-sm text-white transition hover:bg-indigo-600"
                   >
                     Next Lesson <ChevronRight className="h-4 w-4" />
                   </button>
@@ -410,7 +417,7 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
           )}
         </div>
 
-        <div className="w-72 lg:w-80 bg-[#080F20] border-l border-white/[0.06] flex flex-col overflow-hidden hidden md:flex min-h-0">
+        <div className="hidden min-h-0 w-72 flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white md:flex lg:w-80">
           {sidebarProgressHeader}
           <LearnLessonList
             chapters={chapters}
@@ -425,6 +432,43 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
             courseSlug={params.slug}
           />
         </div>
+
+        <div className="hidden min-h-0 w-[360px] flex-col overflow-hidden rounded-[2rem] border border-[#e2e5ec] bg-white lg:flex">
+          <div className="border-b border-[#e2e5ec] p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-ink-heading">AI Tutor</p>
+              <AIBadge label="Powered by course material" />
+            </div>
+            <div className="mt-4 flex items-center gap-3 rounded-lg bg-[#f7f8fa] p-3">
+              <ProgressRing value={overallProgress} size={56} strokeWidth={6} />
+              <div>
+                <p className="text-xs text-ink-muted">Lesson progress</p>
+                <p className="text-sm font-semibold text-ink-heading">{completedCount} of {totalLessons} completed</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex-1 space-y-3 overflow-y-auto p-4">
+            <div className="max-w-[85%] rounded-lg border border-[#e2e5ec] bg-white p-3 text-sm text-ink-body">
+              Great work finishing this module. Want a quick recap or quiz?
+            </div>
+            <div className="ml-auto max-w-[85%] rounded-lg bg-[#1a1aff] p-3 text-sm text-white">
+              Quiz me on the key definitions from this lesson.
+            </div>
+            <div className="max-w-[85%] rounded-lg border border-[#e2e5ec] bg-white p-3 text-sm text-ink-body">
+              Sure. First question: what is gradient descent optimizing in neural training?
+            </div>
+          </div>
+          <div className="border-t border-[#e2e5ec] p-4">
+            <div className="mb-2 flex flex-wrap gap-2">
+              <button className="rounded-full border border-[#e2e5ec] bg-[#f7f8fa] px-3 py-1 text-xs font-medium text-ink-body">Summarize this lesson</button>
+              <button className="rounded-full border border-[#e2e5ec] bg-[#f7f8fa] px-3 py-1 text-xs font-medium text-ink-body">Quiz me</button>
+            </div>
+            <div className="flex items-center gap-2 rounded-md border border-[#e2e5ec] px-3 py-2">
+              <input className="flex-1 bg-transparent text-sm outline-none" placeholder="Ask anything about this lesson" />
+              <button className="rounded-md bg-brand-primary p-2 text-white"><SendHorizontal className="h-4 w-4" /></button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {lessonDrawerOpen && (
@@ -437,16 +481,16 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
           />
           <div
             id="learn-lesson-drawer"
-            className="absolute bottom-0 left-0 right-0 max-h-[78vh] bg-[#080F20] border-t border-white/[0.1] rounded-t-2xl flex flex-col shadow-2xl"
+            className="absolute bottom-0 left-0 right-0 flex max-h-[78vh] flex-col rounded-t-2xl border-t border-slate-200 bg-white shadow-2xl"
           >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
-              <h2 id="learn-drawer-title" className="text-sm font-semibold text-white">
+            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+              <h2 id="learn-drawer-title" className="text-sm font-semibold text-slate-950">
                 Lessons
               </h2>
               <button
                 type="button"
                 onClick={() => setLessonDrawerOpen(false)}
-                className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10"
+                className="rounded-lg p-2 text-slate-400 hover:bg-[#f8f2eb] hover:text-slate-950"
                 aria-label="Close"
               >
                 <X className="h-5 w-5" />

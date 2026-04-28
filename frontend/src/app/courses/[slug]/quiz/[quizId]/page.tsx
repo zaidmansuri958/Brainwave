@@ -4,7 +4,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { quizApi } from "@/lib/api";
 import { Navbar } from "@/components/layout/Navbar";
 import Link from "next/link";
-import { CheckCircle, XCircle, Trophy, Loader2 } from "lucide-react";
+import { XCircle, Trophy, Loader2 } from "lucide-react";
 import { CourseQuizRunner } from "@/components/quiz/CourseQuizRunner";
 
 export default function QuizPage({ params }: { params: { slug: string; quizId: string } }) {
@@ -27,10 +27,10 @@ export default function QuizPage({ params }: { params: { slug: string; quizId: s
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#FAFAF9]">
+      <div className="bw-page min-h-screen">
         <Navbar />
         <div className="flex items-center justify-center h-96">
-          <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#ff6b00]" />
         </div>
       </div>
     );
@@ -45,35 +45,35 @@ export default function QuizPage({ params }: { params: { slug: string; quizId: s
     const pct = result.score_percent ?? result.percentage ?? 0;
 
     return (
-      <div className="min-h-screen bg-[#FAFAF9]">
+      <div className="bw-page min-h-screen">
         <Navbar />
-        <div className="max-w-2xl mx-auto px-4 py-12">
-          <div className={`rounded-3xl p-8 text-center border ${passed ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
-            <div className={`inline-flex p-4 rounded-full mb-4 ${passed ? "bg-green-100" : "bg-red-100"}`}>
+        <div className="bw-shell max-w-2xl px-4 py-12">
+          <div className={`rounded-[30px] border-2 p-8 text-center shadow-[6px_6px_0_#111111] ${passed ? "border-black bg-[#dff8df]" : "border-black bg-[#ffd6d6]"}`}>
+            <div className={`neo-icon-badge mx-auto mb-4 h-20 w-20 ${passed ? "bg-white text-[#246b31]" : "bg-white text-[#b93131]"}`}>
               {passed ? <Trophy className="h-10 w-10 text-amber-500" /> : <XCircle className="h-10 w-10 text-red-500" />}
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            <h2 className="mb-2 font-display text-2xl font-bold uppercase text-gray-900">
               {passed ? "Congratulations!" : "Better luck next time!"}
             </h2>
-            <p className="text-gray-500 mb-6">
+            <p className="mb-6 text-gray-600">
               {passed ? "You passed the quiz." : "You did not pass this time. Review the material and try again."}
             </p>
 
-            <div className="grid grid-cols-2 gap-4 mb-8">
-              <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-                <p className="text-3xl font-bold text-gray-900">{typeof pct === "number" ? pct.toFixed(1) : pct}%</p>
-                <p className="text-xs text-gray-500 mt-1">Score</p>
+            <div className="mb-8 grid grid-cols-2 gap-4">
+              <div className="neo-panel bg-white p-4">
+                <p className="font-display text-3xl font-bold uppercase text-gray-900">{typeof pct === "number" ? pct.toFixed(1) : pct}%</p>
+                <p className="mt-1 text-xs font-extrabold uppercase text-gray-500">Score</p>
               </div>
-              <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-                <p className="text-3xl font-bold text-gray-900">{questions.length}</p>
-                <p className="text-xs text-gray-500 mt-1">Questions</p>
+              <div className="neo-panel bg-white p-4">
+                <p className="font-display text-3xl font-bold uppercase text-gray-900">{questions.length}</p>
+                <p className="mt-1 text-xs font-extrabold uppercase text-gray-500">Questions</p>
               </div>
             </div>
 
-            <div className="flex gap-3 justify-center">
+            <div className="flex justify-center gap-3">
               <Link
                 href={`/learn/${params.slug}`}
-                className="bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 transition-colors font-semibold text-sm"
+                className="neo-primary-btn px-6 py-3 text-sm"
               >
                 Back to Course
               </Link>
@@ -85,7 +85,7 @@ export default function QuizPage({ params }: { params: { slug: string; quizId: s
                     setResult(null);
                     setAttemptKey((k) => k + 1);
                   }}
-                  className="bg-gray-100 text-gray-700 px-6 py-3 rounded-xl hover:bg-gray-200 transition-colors font-semibold text-sm"
+                  className="neo-secondary-btn px-6 py-3 text-sm"
                 >
                   Retry Quiz
                 </button>
@@ -98,7 +98,7 @@ export default function QuizPage({ params }: { params: { slug: string; quizId: s
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9]">
+    <div className="bw-page min-h-screen">
       <Navbar />
       <CourseQuizRunner
         key={attemptKey}

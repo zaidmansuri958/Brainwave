@@ -35,8 +35,8 @@ const sidebarSections: { id: Section; label: string; icon: React.ElementType; de
   { id: "publish", label: "Review & Publish", icon: Rocket,  description: "Go live to students" },
 ];
 
-const labelClass = "block text-sm font-semibold text-gray-700 mb-1.5";
-const inputClass = "w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all placeholder:text-gray-400";
+const labelClass = "mb-1.5 block text-sm font-extrabold uppercase text-gray-700";
+const inputClass = "w-full bg-white px-4 py-3 text-sm text-gray-900";
 
 export default function CreateCoursePage() {
   const router = useRouter();
@@ -196,9 +196,9 @@ export default function CreateCoursePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9] flex flex-col">
+    <div className="bw-page min-h-screen flex flex-col">
       {/* Studio topbar */}
-      <header className="bg-white border-b border-gray-200 px-6 h-14 flex items-center justify-between sticky top-0 z-30">
+      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b-2 border-black bg-[#fff4d6] px-6">
         <div className="flex items-center gap-3">
           <Link href="/teacher/courses" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors">
             <ArrowLeft className="w-4 h-4" />
@@ -221,14 +221,14 @@ export default function CreateCoursePage() {
           <button
             onClick={handleSaveDraft}
             disabled={saving || !info.title}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:bg-gray-50 transition-all disabled:opacity-50"
+            className="neo-secondary-btn px-4 py-2 text-sm font-bold normal-case disabled:opacity-50"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save draft"}
           </button>
           {aiDone && (
             <button
               onClick={handlePublish}
-              className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors shadow-button-indigo flex items-center gap-1.5"
+              className="neo-primary-btn px-4 py-2 text-sm"
             >
               <Rocket className="w-4 h-4" />
               Publish course
@@ -239,9 +239,9 @@ export default function CreateCoursePage() {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <aside className="w-64 bg-white border-r border-gray-100 flex-shrink-0 flex flex-col">
-          <div className="p-4 border-b border-gray-50">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Course Studio</p>
+        <aside className="flex w-64 flex-shrink-0 flex-col border-r-2 border-black bg-white">
+          <div className="border-b-2 border-black p-4">
+            <p className="text-xs font-extrabold uppercase tracking-wider text-gray-500">Course Studio</p>
           </div>
           <nav className="flex-1 p-3 space-y-1">
             {sidebarSections.map((s, i) => {

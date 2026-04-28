@@ -7,8 +7,8 @@ import { Footer } from "@/components/layout/Footer";
 import { Video, Plus, Calendar, Users, ExternalLink, Loader2, X } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
-const labelClass = "block text-sm font-semibold text-gray-700 mb-1.5";
-const inputClass = "w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all placeholder:text-gray-400";
+const labelClass = "mb-1.5 block text-sm font-extrabold uppercase text-gray-700";
+const inputClass = "w-full bg-white px-4 py-3 text-sm text-gray-900";
 
 export default function TeacherLiveSessionsPage() {
   const queryClient = useQueryClient();
@@ -48,7 +48,7 @@ export default function TeacherLiveSessionsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9] flex flex-col">
+    <div className="bw-page min-h-screen flex flex-col">
       <Navbar />
 
       <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 py-10 w-full">
@@ -59,7 +59,7 @@ export default function TeacherLiveSessionsPage() {
           </div>
           <button
             onClick={() => setShowForm(true)}
-            className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-xl hover:bg-indigo-700 transition-colors text-sm font-semibold shadow-button-indigo"
+            className="neo-primary-btn px-4 py-2.5 text-sm"
           >
             <Plus className="h-4 w-4" /> Schedule Session
           </button>
@@ -67,7 +67,7 @@ export default function TeacherLiveSessionsPage() {
 
         {/* Create Form */}
         {showForm && (
-          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-card mb-6">
+          <div className="neo-panel mb-6 p-6">
             <div className="flex items-center justify-between mb-5">
               <h2 className="font-display font-bold text-gray-900">New Live Session</h2>
               <button onClick={() => setShowForm(false)} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
@@ -132,13 +132,13 @@ export default function TeacherLiveSessionsPage() {
                 <button
                   onClick={() => createSession.mutate(form)}
                   disabled={!form.title || !form.scheduled_at || createSession.isPending}
-                  className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-button-indigo"
+                  className="neo-primary-btn px-5 py-2.5 text-sm disabled:opacity-50"
                 >
                   {createSession.isPending ? "Creating…" : "Create Session"}
                 </button>
                 <button
                   onClick={() => setShowForm(false)}
-                  className="text-gray-500 hover:text-gray-800 px-4 py-2.5 rounded-xl text-sm font-medium border border-gray-200 hover:border-gray-300 transition-colors"
+                  className="neo-secondary-btn px-4 py-2.5 text-sm normal-case"
                 >
                   Cancel
                 </button>
@@ -150,12 +150,12 @@ export default function TeacherLiveSessionsPage() {
         {/* Sessions List */}
         {isLoading ? (
           <div className="flex items-center justify-center py-24">
-            <Loader2 className="h-8 w-8 text-indigo-500 animate-spin" />
+            <Loader2 className="h-8 w-8 animate-spin text-[#ff6b00]" />
           </div>
         ) : !sessions?.length ? (
           <div className="text-center py-24">
-            <div className="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-5">
-              <Video className="h-8 w-8 text-indigo-400" />
+            <div className="neo-icon-badge mx-auto mb-5 h-16 w-16 bg-[#8ed8ff]">
+              <Video className="h-8 w-8 text-black" />
             </div>
             <p className="text-gray-900 text-lg font-bold mb-1">No sessions scheduled</p>
             <p className="text-gray-400 text-sm">Create a live session to connect with your students in real time</p>
@@ -167,7 +167,7 @@ export default function TeacherLiveSessionsPage() {
               const isLive = session.status === "live";
 
               return (
-                <div key={session.id} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-card">
+            <div key={session.id} className="neo-panel p-5">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
@@ -207,7 +207,7 @@ export default function TeacherLiveSessionsPage() {
                         <button
                           onClick={() => joinSession.mutate(session.id)}
                           disabled={joinSession.isPending}
-                          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-button-indigo"
+                          className="neo-primary-btn px-4 py-2.5 text-sm"
                         >
                           <ExternalLink className="h-4 w-4" />
                           {isLive ? "Join Now" : "Start"}

@@ -1,28 +1,30 @@
 "use client";
-import { useState, useEffect } from "react";
+
+import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { Loader2, Save, Shield, X } from "lucide-react";
 import { authApi, teacherApi } from "@/lib/api";
-import { useAuthStore } from "@/stores/authStore";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
-import { User, Save, Loader2, Shield, X } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { getApiErrorMessage } from "@/lib/apiError";
+import { Footer } from "@/components/layout/Footer";
+import { Navbar } from "@/components/layout/Navbar";
+import { useToast } from "@/hooks/use-toast";
+import { useAuthStore } from "@/stores/authStore";
+import { AppShell, ContentBand, SectionHeader, StatusBadge } from "@/components/ui/app-shell";
 
-const inputCls = "w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder:text-gray-400 transition-all";
-const labelCls = "block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5";
+const inputClass =
+  "w-full rounded-[1rem] border border-slate-200 bg-[#fcf8f3] px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100";
 
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
+function ProfileCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-card p-6 space-y-4">
-      <h2 className="font-display font-bold text-gray-900 text-base">{title}</h2>
-      {children}
+    <div className="bw-card p-6">
+      <h2 className="font-display text-xl font-bold text-slate-950">{title}</h2>
+      <div className="mt-5 space-y-4">{children}</div>
     </div>
   );
 }
 
 export default function ProfilePage() {
-  const { user, setUser } = useAuthStore();
+  const { user } = useAuthStore();
   const { toast } = useToast();
   const isTeacher = user?.role === "teacher";
 
@@ -37,24 +39,24 @@ export default function ProfilePage() {
   const [newExpertise, setNewExpertise] = useState("");
 
   useEffect(() => {
-    if (user) setForm((p) => ({ ...p, full_name: user.full_name || "" }));
+    if (user) setForm((prev) => ({ ...prev, full_name: user.full_name || "" }));
   }, [user]);
 
   const { data: teacherProfile } = useQuery({
     queryKey: ["teacher-profile"],
-    queryFn: () => teacherApi.dashboard().then((r) => r.data?.teacher_profile),
+    queryFn: () => teacherApi.dashboard().then((response) => response.data?.teacher_profile),
     enabled: isTeacher,
   });
 
   useEffect(() => {
     if (teacherProfile) {
-      setForm((p) => ({
-        ...p,
-        bio:                  teacherProfile.bio || "",
-        expertise_areas:      teacherProfile.expertise_areas || [],
-        payout_upi_id:        teacherProfile.payout_upi_id || "",
-        payout_bank_account:  teacherProfile.payout_bank_account || "",
-        payout_ifsc:          teacherProfile.payout_ifsc || "",
+      setForm((prev) => ({
+        ...prev,
+        bio: teacherProfile.bio || "",
+        expertise_areas: teacherProfile.expertise_areas || [],
+        payout_upi_id: teacherProfile.payout_upi_id || "",
+        payout_bank_account: teacherProfile.payout_bank_account || "",
+        payout_ifsc: teacherProfile.payout_ifsc || "",
       }));
     }
   }, [teacherProfile]);
@@ -65,177 +67,120 @@ export default function ProfilePage() {
       return authApi.me();
     },
     onSuccess: () => toast({ title: "Profile updated" }),
-    onError: (e) =>
-      toast({
-        title: "Couldn't update profile",
-        description: getApiErrorMessage(e),
-        variant: "destructive",
-      }),
+    onError: (error) => toast({ title: "Couldn't update profile", description: getApiErrorMessage(error), variant: "destructive" }),
   });
 
   const addExpertise = () => {
     if (!newExpertise.trim()) return;
-    setForm((p) => ({ ...p, expertise_areas: [...p.expertise_areas, newExpertise.trim()] }));
+    setForm((prev) => ({ ...prev, expertise_areas: [...prev.expertise_areas, newExpertise.trim()] }));
     setNewExpertise("");
   };
 
-  const removeExpertise = (i: number) => {
-    setForm((p) => ({ ...p, expertise_areas: p.expertise_areas.filter((_, idx) => idx !== i) }));
-  };
-
-  const roleColor: Record<string, string> = {
-    teacher: "bg-indigo-50 text-indigo-700 border-indigo-100",
-    admin:   "bg-rose-50 text-rose-700 border-rose-100",
-    student: "bg-gray-100 text-gray-600 border-gray-200",
+  const removeExpertise = (index: number) => {
+    setForm((prev) => ({ ...prev, expertise_areas: prev.expertise_areas.filter((_, itemIndex) => itemIndex !== index) }));
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9] flex flex-col">
+    <AppShell className="flex flex-col">
       <Navbar />
-
-      <main className="flex-1 max-w-2xl mx-auto px-4 sm:px-6 py-10 w-full">
-        <h1 className="font-display font-extrabold text-2xl text-gray-900 mb-8">My Profile</h1>
-
-        {/* Avatar card */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-card p-6 mb-5 flex items-center gap-5">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-2xl font-bold text-white flex-shrink-0">
-            {user?.full_name?.[0]?.toUpperCase() || "?"}
-          </div>
-          <div className="min-w-0">
-            <p className="font-display font-bold text-gray-900 text-lg truncate">{user?.full_name}</p>
-            <p className="text-gray-400 text-sm truncate">{user?.email}</p>
-            <div className="flex items-center gap-2 mt-2">
-              <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border capitalize ${roleColor[user?.role || "student"] || roleColor.student}`}>
-                {user?.role}
-              </span>
-              {user?.is_verified && (
-                <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
-                  <Shield className="h-3 w-3" /> Verified
-                </span>
-              )}
+      <main className="bw-shell flex-1 space-y-6 pb-6">
+        <ContentBand muted>
+          <SectionHeader eyebrow="Profile" title="Account settings with stronger hierarchy and less dead space." description="Identity, teaching profile, and payout details now sit inside clearer grouped panels instead of one long plain form." />
+          <div className="mt-6 bw-card flex flex-col gap-5 p-6 sm:flex-row sm:items-center">
+            <div className="flex h-20 w-20 items-center justify-center rounded-[1.5rem] bg-gradient-to-br from-indigo-500 to-sky-500 text-3xl font-bold text-white">
+              {user?.full_name?.[0]?.toUpperCase() || "?"}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-display text-2xl font-extrabold text-slate-950">{user?.full_name}</p>
+              <p className="mt-1 text-sm text-slate-500">{user?.email}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <StatusBadge tone="info">{user?.role || "student"}</StatusBadge>
+                {user?.is_verified ? (
+                  <StatusBadge tone="success">
+                    <Shield className="mr-1 h-3 w-3" />
+                    Verified
+                  </StatusBadge>
+                ) : null}
+              </div>
             </div>
           </div>
-        </div>
+        </ContentBand>
 
-        <form onSubmit={(e) => { e.preventDefault(); updateProfile.mutate(); }} className="space-y-4">
+        <form onSubmit={(event) => { event.preventDefault(); updateProfile.mutate(); }} className="grid gap-6 xl:grid-cols-[1fr_0.95fr]">
+          <div className="space-y-6">
+            <ProfileCard title="Basic Information">
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">Full Name</label>
+                <input value={form.full_name} onChange={(event) => setForm({ ...form, full_name: event.target.value })} className={inputClass} placeholder="Your full name" />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">Email Address</label>
+                <input value={user?.email || ""} disabled className={`${inputClass} opacity-60`} />
+              </div>
+            </ProfileCard>
 
-          {/* Basic Info */}
-          <Card title="Basic Information">
-            <div>
-              <label className={labelCls}>Full Name</label>
-              <input
-                value={form.full_name}
-                onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-                className={inputCls}
-                placeholder="Your full name"
-              />
-            </div>
-            <div>
-              <label className={labelCls}>Email address</label>
-              <input
-                value={user?.email || ""}
-                disabled
-                className={`${inputCls} opacity-50 cursor-not-allowed`}
-              />
-              <p className="text-xs text-gray-400 mt-1">Email cannot be changed.</p>
-            </div>
-          </Card>
-
-          {/* Teacher-only sections */}
-          {isTeacher && (
-            <>
-              <Card title="Teacher Profile">
+            {isTeacher ? (
+              <ProfileCard title="Teacher Profile">
                 <div>
-                  <label className={labelCls}>Bio</label>
-                  <textarea
-                    value={form.bio}
-                    onChange={(e) => setForm({ ...form, bio: e.target.value })}
-                    rows={4}
-                    placeholder="Tell students about your background, expertise, and teaching style..."
-                    className={`${inputCls} resize-none`}
-                  />
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">Bio</label>
+                  <textarea value={form.bio} onChange={(event) => setForm({ ...form, bio: event.target.value })} rows={5} className={`${inputClass} resize-none`} placeholder="Tell students about your background and teaching style..." />
                 </div>
                 <div>
-                  <label className={labelCls}>Expertise Areas</label>
-                  <div className="flex gap-2 mb-3">
-                    <input
-                      value={newExpertise}
-                      onChange={(e) => setNewExpertise(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addExpertise())}
-                      placeholder="e.g. Machine Learning"
-                      className={inputCls}
-                    />
-                    <button
-                      type="button"
-                      onClick={addExpertise}
-                      className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors flex-shrink-0"
-                    >
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">Expertise Areas</label>
+                  <div className="flex gap-2">
+                    <input value={newExpertise} onChange={(event) => setNewExpertise(event.target.value)} onKeyDown={(event) => event.key === "Enter" && (event.preventDefault(), addExpertise())} className={inputClass} placeholder="e.g. Machine Learning" />
+                    <button type="button" onClick={addExpertise} className="bw-action-primary !rounded-[1rem] !px-4 !py-3">
                       Add
                     </button>
                   </div>
-                  {form.expertise_areas.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {form.expertise_areas.map((area, i) => (
-                        <span key={i} className="flex items-center gap-1.5 bg-indigo-50 text-indigo-700 border border-indigo-100 text-xs font-semibold px-3 py-1.5 rounded-full">
-                          {area}
-                          <button type="button" onClick={() => removeExpertise(i)} className="hover:text-indigo-900 transition-colors">
-                            <X className="w-3 h-3" />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {form.expertise_areas.map((area, index) => (
+                      <span key={area + index} className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-sm font-semibold text-indigo-700">
+                        {area}
+                        <button type="button" onClick={() => removeExpertise(index)}>
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </Card>
+              </ProfileCard>
+            ) : null}
+          </div>
 
-              <Card title="Payout Details">
-                <p className="text-sm text-gray-500 -mt-1">Your earnings are transferred every 2 weeks to your bank account.</p>
+          <div className="space-y-6">
+            {isTeacher ? (
+              <ProfileCard title="Payout Details">
                 <div>
-                  <label className={labelCls}>UPI ID</label>
-                  <input
-                    value={form.payout_upi_id}
-                    onChange={(e) => setForm({ ...form, payout_upi_id: e.target.value })}
-                    placeholder="yourname@upi"
-                    className={inputCls}
-                  />
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">UPI ID</label>
+                  <input value={form.payout_upi_id} onChange={(event) => setForm({ ...form, payout_upi_id: event.target.value })} className={inputClass} placeholder="yourname@upi" />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className={labelCls}>Bank Account Number</label>
-                    <input
-                      value={form.payout_bank_account}
-                      onChange={(e) => setForm({ ...form, payout_bank_account: e.target.value })}
-                      placeholder="Account number"
-                      className={inputCls}
-                    />
-                  </div>
-                  <div>
-                    <label className={labelCls}>IFSC Code</label>
-                    <input
-                      value={form.payout_ifsc}
-                      onChange={(e) => setForm({ ...form, payout_ifsc: e.target.value })}
-                      placeholder="SBIN0001234"
-                      className={inputCls}
-                    />
-                  </div>
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">Bank Account Number</label>
+                  <input value={form.payout_bank_account} onChange={(event) => setForm({ ...form, payout_bank_account: event.target.value })} className={inputClass} placeholder="Account number" />
                 </div>
-              </Card>
-            </>
-          )}
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">IFSC Code</label>
+                  <input value={form.payout_ifsc} onChange={(event) => setForm({ ...form, payout_ifsc: event.target.value })} className={inputClass} placeholder="SBIN0001234" />
+                </div>
+              </ProfileCard>
+            ) : (
+              <ProfileCard title="Account Summary">
+                <p className="text-sm leading-7 text-slate-600">
+                  Your profile has been moved into a calmer, more grouped layout. This page is ready to grow with additional account
+                  preferences, saved learning settings, and communication controls.
+                </p>
+              </ProfileCard>
+            )}
 
-          <button
-            type="submit"
-            disabled={updateProfile.isPending}
-            className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white py-3.5 rounded-xl font-bold text-sm hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-button-indigo"
-          >
-            {updateProfile.isPending
-              ? <><Loader2 className="h-4 w-4 animate-spin" />Saving…</>
-              : <><Save className="h-4 w-4" />Save Changes</>}
-          </button>
+            <button type="submit" disabled={updateProfile.isPending} className="bw-action-primary w-full !rounded-[1rem] !py-3.5">
+              {updateProfile.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              {updateProfile.isPending ? "Saving..." : "Save changes"}
+            </button>
+          </div>
         </form>
       </main>
-
       <Footer />
-    </div>
+    </AppShell>
   );
 }

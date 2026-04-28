@@ -1,89 +1,62 @@
 "use client";
-import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
-import { UserPlus, Search, GraduationCap } from "lucide-react";
 
-const steps = [
+import { motion } from "framer-motion";
+import { BookOpen, Sparkles, TrendingUp } from "lucide-react";
+import { SectionHeader } from "@/components/ui/app-shell";
+
+const flows = [
   {
-    n:    "01",
-    icon: UserPlus,
-    title: "Create your account",
-    description:
-      "Sign up in 30 seconds. No credit card required. Get instant access to free courses and your AI tutor.",
+    step: "01",
+    title: "Discover with more context",
+    body: "Category shortcuts, richer filters, proof-forward cards, and denser hero sections reduce friction above the fold.",
+    icon: BookOpen,
+    tone: "bg-sky-50 text-sky-600",
   },
   {
-    n:    "02",
-    icon: Search,
-    title: "Pick your subject",
-    description:
-      "Browse 500+ expert-led courses. Use AI-powered recommendations to find exactly what matches your goal.",
+    step: "02",
+    title: "Engage inside guided product spaces",
+    body: "Dashboards, player shells, notifications, and community spaces surface the next best action without long blank gaps.",
+    icon: Sparkles,
+    tone: "bg-indigo-50 text-indigo-600",
   },
   {
-    n:    "03",
-    icon: GraduationCap,
-    title: "Learn and earn",
-    description:
-      "Study at your own pace with live sessions, an AI tutor, and smart quizzes. Earn a verified certificate on completion.",
+    step: "03",
+    title: "Grow with stronger operational clarity",
+    body: "Teacher studio and admin areas gain tighter grids, better hierarchy, and clearer status, payout, and moderation workflows.",
+    icon: TrendingUp,
+    tone: "bg-amber-50 text-amber-600",
   },
 ];
 
 export function HowItWorksSection() {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-60px" });
-
   return (
-    <section ref={ref} className="bg-[#FAFAF9] py-24 lg:py-32">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8">
-        {/* Header */}
-        <div className="text-center max-w-xl mx-auto mb-16">
-          <motion.p
-            initial={{ opacity: 0, y: 12 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.45 }}
-            className="eyebrow mb-3"
-          >
-            How it works
-          </motion.p>
-          <motion.h2
-            initial={{ opacity: 0, y: 16 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.5, delay: 0.06 }}
-            className="font-display font-extrabold text-gray-900 tracking-tight leading-[1.08]"
-            style={{ fontSize: "clamp(2rem, 4vw, 3rem)" }}
-          >
-            Up and running in
-            <br />
-            <span className="text-gradient-indigo">three steps.</span>
-          </motion.h2>
-        </div>
-
-        {/* Steps */}
-        <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
-          {steps.map((s, i) => {
-            const Icon = s.icon;
+    <section className="bw-shell py-4 sm:py-6">
+      <div className="bw-band">
+        <SectionHeader
+          eyebrow="Interaction Flow"
+          title="Designed to reduce whitespace, increase clarity, and keep momentum high."
+          description="Instead of isolated blocks, the new experience uses stacked narrative panels, contextual action rails, and denser 2-column compositions across the platform."
+        />
+        <div className="mt-8 grid gap-4 lg:grid-cols-3">
+          {flows.map((flow, index) => {
+            const Icon = flow.icon;
             return (
               <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 24 }}
-                animate={inView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.5, delay: 0.1 + i * 0.12 }}
-                className="relative flex flex-col items-center text-center group"
+                key={flow.step}
+                initial={{ opacity: 0, y: 18 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.35, delay: index * 0.06 }}
+                className="bw-card p-5"
               >
-                {/* Connector line — only between cards, not after the last */}
-                {i < steps.length - 1 && (
-                  <div className="hidden md:block absolute top-8 left-[calc(50%+2.5rem)] right-0 h-px -translate-y-1/2 bg-gradient-to-r from-indigo-200 to-transparent pointer-events-none" />
-                )}
-
-                {/* Step icon circle */}
-                <div className="relative w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center mb-6 shadow-button-indigo group-hover:shadow-button-hover group-hover:-translate-y-1 transition-all duration-300">
-                  <Icon className="w-7 h-7 text-white" />
-                  <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-white border-2 border-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-700 shadow-sm">
-                    {i + 1}
-                  </span>
+                <div className="flex items-start justify-between gap-4">
+                  <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${flow.tone}`}>
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <span className="bw-chip">{flow.step}</span>
                 </div>
-
-                <h3 className="font-display font-bold text-xl text-gray-900 mb-3">{s.title}</h3>
-                <p className="text-sm text-gray-500 leading-relaxed max-w-xs">{s.description}</p>
+                <h3 className="mt-5 font-display text-xl font-bold text-slate-950">{flow.title}</h3>
+                <p className="bw-muted mt-3 text-sm leading-7">{flow.body}</p>
               </motion.div>
             );
           })}

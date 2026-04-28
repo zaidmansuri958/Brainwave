@@ -147,24 +147,24 @@ export default function TeacherOnboardingPage() {
 
   if (isLoading || !status) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#FAFAF9]">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+      <div className="bw-page flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-[#ff6b00]" />
       </div>
     );
   }
 
   if (status.onboarding_status === "approved") {
     return (
-      <div className="min-h-screen bg-[#FAFAF9]">
+      <div className="bw-page min-h-screen">
         <Navbar />
         <div className="max-w-lg mx-auto px-4 py-16 text-center">
           <CheckCircle className="h-14 w-14 text-emerald-500 mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-gray-900">You are verified</h1>
+          <h1 className="font-display text-xl font-bold uppercase text-gray-900">You are verified</h1>
           <p className="text-gray-600 mt-2">You can create and publish courses.</p>
           <button
             type="button"
             onClick={() => router.push("/teacher/courses/new")}
-            className="mt-6 bg-indigo-600 text-white px-6 py-3 rounded-xl font-semibold shadow-button-indigo"
+            className="neo-primary-btn mt-6 px-6 py-3"
           >
             Create a course
           </button>
@@ -180,17 +180,17 @@ export default function TeacherOnboardingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9]">
+    <div className="bw-page min-h-screen">
       <Navbar />
       <div className="max-w-xl mx-auto px-4 py-10">
-        <h1 className="font-display text-2xl font-bold text-gray-900">Teacher verification</h1>
+        <h1 className="font-display text-2xl font-bold uppercase text-gray-900">Teacher verification</h1>
         <p className="text-sm text-gray-600 mt-2">
           Status: <span className="font-semibold capitalize">{status.onboarding_status}</span>
           {status.rejection_reason && (
             <span className="block text-rose-600 mt-1">{status.rejection_reason}</span>
           )}
         </p>
-        <p className="text-xs text-gray-500 mt-3 rounded-xl bg-white border border-gray-100 px-3 py-2">
+        <p className="mt-3 rounded-xl border-2 border-black bg-white px-3 py-2 text-xs text-gray-500 shadow-[3px_3px_0_#111111]">
           Submitting sends your current answers to the server. You can still use <strong>Save draft</strong> anytime.
         </p>
 
@@ -241,8 +241,8 @@ export default function TeacherOnboardingPage() {
               return (
                 <div
                   key={x.k}
-                  className={`rounded-xl border px-4 py-3 transition-colors ${
-                    uploaded ? "border-emerald-200 bg-emerald-50/50" : "border-gray-200 bg-white"
+                  className={`rounded-xl border-2 px-4 py-3 transition-colors shadow-[3px_3px_0_#111111] ${
+                    uploaded ? "border-black bg-[#dff8df]" : "border-black bg-white"
                   }`}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -270,12 +270,12 @@ export default function TeacherOnboardingPage() {
                           href={x.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800"
+                          className="inline-flex items-center gap-1 text-xs font-extrabold uppercase text-[#ff6b00]"
                         >
                           Open <ExternalLink className="h-3 w-3" />
                         </a>
                       )}
-                      <label className="inline-flex cursor-pointer items-center rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-indigo-600 ring-1 ring-indigo-200 hover:bg-indigo-50">
+                      <label className="neo-secondary-btn cursor-pointer rounded-lg px-3 py-1.5 text-xs">
                         {uploaded ? "Replace" : "Choose file"}
                         <input
                           type="file"
@@ -303,7 +303,7 @@ export default function TeacherOnboardingPage() {
               type="button"
               onClick={() => save.mutate()}
               disabled={save.isPending}
-              className="flex-1 border border-gray-300 rounded-xl py-3 font-semibold text-gray-800 bg-white hover:bg-gray-50 transition-colors"
+              className="neo-secondary-btn flex-1 py-3 text-sm"
             >
               {save.isPending ? <Loader2 className="h-5 w-5 animate-spin mx-auto" /> : "Save draft"}
             </button>
@@ -311,7 +311,7 @@ export default function TeacherOnboardingPage() {
               type="button"
               onClick={() => submit.mutate()}
               disabled={submit.isPending || status.onboarding_status === "submitted"}
-              className="flex-1 bg-indigo-600 text-white rounded-xl py-3 font-semibold shadow-button-indigo hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+              className="neo-primary-btn flex-1 py-3 text-sm disabled:opacity-50"
             >
               {submit.isPending ? <Loader2 className="h-5 w-5 animate-spin mx-auto" /> : "Submit for review"}
             </button>

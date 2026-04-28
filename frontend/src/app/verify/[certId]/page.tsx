@@ -28,24 +28,22 @@ export default async function CertificateVerifyPage({ params }: { params: { cert
   const cert = await getCertificate(params.certId);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAFAF9]">
+    <div className="bw-page flex min-h-screen flex-col">
       <Navbar />
-      <main className="flex-1 flex items-center justify-center py-12 px-4">
-        <div className="max-w-xl w-full">
+      <main className="flex-1 flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-xl">
           {cert.valid ? (
-            <div className="bg-white rounded-2xl shadow-sm border border-green-200 overflow-hidden">
-              {/* Header */}
-              <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 text-white text-center">
+            <div className="overflow-hidden rounded-[28px] border-2 border-black bg-white shadow-[6px_6px_0_#111111]">
+              <div className="border-b-2 border-black bg-[#dff8df] p-6 text-center text-[#111111]">
                 <CheckCircle className="h-16 w-16 mx-auto mb-3" />
-                <h1 className="text-2xl font-bold">Certificate Verified</h1>
-                <p className="text-green-100 mt-1">This certificate is authentic and issued by Brainwave.ai</p>
+                <h1 className="font-display text-2xl font-bold uppercase">Certificate Verified</h1>
+                <p className="mt-1 font-medium">This certificate is authentic and issued by Brainwave.ai</p>
               </div>
 
-              {/* Certificate Details */}
               <div className="p-6 space-y-4">
-                <div className="text-center border-b border-gray-100 pb-4">
+                <div className="border-b-2 border-black pb-4 text-center">
                   <Award className="h-10 w-10 text-amber-500 mx-auto mb-2" />
-                  <h2 className="text-xl font-bold text-gray-900">
+                  <h2 className="font-display text-xl font-bold uppercase text-gray-900">
                     Certificate of Completion
                   </h2>
                 </div>
@@ -70,7 +68,7 @@ export default async function CertificateVerifyPage({ params }: { params: { cert
                     href={cert.pdf_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700 transition-colors mt-4"
+                    className="neo-primary-btn mt-4 flex w-full py-3"
                   >
                     Download Certificate PDF
                   </a>
@@ -78,11 +76,11 @@ export default async function CertificateVerifyPage({ params }: { params: { cert
               </div>
             </div>
           ) : (
-            <div className="bg-white rounded-2xl shadow-sm border border-red-200 overflow-hidden">
-              <div className="bg-gradient-to-r from-red-500 to-rose-600 p-6 text-white text-center">
+            <div className="overflow-hidden rounded-[28px] border-2 border-black bg-white shadow-[6px_6px_0_#111111]">
+              <div className="border-b-2 border-black bg-[#ffd6d6] p-6 text-center text-[#111111]">
                 <XCircle className="h-16 w-16 mx-auto mb-3" />
-                <h1 className="text-2xl font-bold">Invalid Certificate</h1>
-                <p className="text-red-100 mt-1">This certificate could not be verified</p>
+                <h1 className="font-display text-2xl font-bold uppercase">Invalid Certificate</h1>
+                <p className="mt-1 font-medium">This certificate could not be verified</p>
               </div>
               <div className="p-6 text-center text-gray-500">
                 <p>This certificate may be expired, revoked, or the ID is incorrect.</p>
@@ -98,8 +96,8 @@ export default async function CertificateVerifyPage({ params }: { params: { cert
 
 function InfoRow({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return (
-    <div className="flex justify-between items-start">
-      <span className="text-sm text-gray-500">{label}:</span>
+    <div className="flex items-start justify-between gap-4 rounded-[16px] border-2 border-black bg-[#fff4d6] px-4 py-3 shadow-[3px_3px_0_#111111]">
+      <span className="text-sm font-extrabold uppercase text-gray-500">{label}</span>
       <span className={`text-sm font-semibold text-gray-900 max-w-xs text-right ${mono ? "font-mono" : ""}`}>
         {value}
       </span>
