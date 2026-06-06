@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { ArrowLeft, Loader2, Plus, Power } from "lucide-react";
+import { ArrowLeft, Loader2, Plus, Power, Trash2 } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { CourseManageNav } from "@/components/teacher/CourseManageNav";
 import { promotionsApi, teacherApi } from "@/lib/api";
@@ -71,75 +71,84 @@ export default function PromotionsPage({ params }: { params: { id: string } }) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["promotions", id] }),
   });
 
+  const deletePromo = useMutation({
+    mutationFn: (promotionId: string) => promotionsApi.delete(promotionId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["promotions", id] });
+      toast({ title: "Promotion deleted" });
+    },
+    onError: () => toast({ title: "Couldn't delete promotion", variant: "destructive" }),
+  });
+
   if (isLoading) {
     return (
-      <div className="bw-page min-h-screen">
+      <div className="min-h-screen bg-gray-50">
         <Navbar />
         <div className="flex justify-center py-24">
-          <Loader2 className="h-8 w-8 animate-spin text-[#ff6b00]" />
+          <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bw-page min-h-screen">
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className="max-w-3xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="flex items-center gap-4 mb-6">
-          <Link href="/teacher/courses" className="neo-secondary-btn h-10 w-10 rounded-full px-0 py-0 text-gray-700">
-            <ArrowLeft className="h-5 w-5" />
+          <Link href="/teacher/courses" className="flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-white shadow-sm transition-transform hover:-translate-y-1 hover:-translate-x-1 hover:shadow-md">
+            <ArrowLeft className="h-6 w-6 text-black" strokeWidth={3} />
           </Link>
           <div>
-            <h1 className="font-display text-2xl font-extrabold uppercase text-gray-900">Promotions</h1>
-            <p className="text-gray-500 text-sm">{course?.title}</p>
+            <h1 className=" text-3xl  uppercase tracking-tight text-gray-900">Promotions</h1>
+            <p className="text-sm font-bold text-gray-600">{course?.title}</p>
           </div>
         </div>
 
         <CourseManageNav courseId={id} />
 
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm mb-8">
-          <h2 className="font-display font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <Plus className="h-5 w-5 text-indigo-600" /> New promotion
+        <div className="rounded-xl border border-gray-200 bg-white p-8 sm:p-10 shadow-sm mb-10 mt-8">
+          <h2 className=" text-2xl  uppercase tracking-tight text-gray-900 mb-2 flex items-center gap-3 border-b-4 border-black pb-2 inline-flex">
+            <Plus className="h-6 w-6 text-black" strokeWidth={3} /> New Promotion
           </h2>
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm font-bold text-gray-600 mb-6 mt-4">
             Set either a <strong>discount %</strong> or a fixed <strong>price override</strong> (INR). Leave one blank.
           </p>
-          <div className="grid sm:grid-cols-2 gap-4 mb-4">
+          <div className="grid sm:grid-cols-2 gap-6 mb-8">
             <div>
-              <label className="text-xs font-semibold text-gray-500">Discount %</label>
+              <label className="mb-2 block text-sm font-semibold text-gray-800">Discount %</label>
               <input
                 type="number"
-                className="mt-1 w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm"
+                className="w-full rounded-lg border border-gray-200 bg-gray-50 px-5 py-4 text-base font-bold text-gray-900 shadow-sm outline-none transition-shadow focus:bg-white focus:shadow-[6px_6px_0_#ff6b00]"
                 placeholder="e.g. 20"
                 value={discount}
                 onChange={(e) => setDiscount(e.target.value)}
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-500">Price override (₹)</label>
+              <label className="mb-2 block text-sm font-semibold text-gray-800">Price override (₹)</label>
               <input
                 type="number"
-                className="mt-1 w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm"
+                className="w-full rounded-lg border border-gray-200 bg-gray-50 px-5 py-4 text-base font-bold text-gray-900 shadow-sm outline-none transition-shadow focus:bg-white focus:shadow-[6px_6px_0_#ff6b00]"
                 placeholder="e.g. 499"
                 value={override}
                 onChange={(e) => setOverride(e.target.value)}
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-500">Starts</label>
+              <label className="mb-2 block text-sm font-semibold text-gray-800">Starts</label>
               <input
                 type="datetime-local"
-                className="mt-1 w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm"
+                className="w-full rounded-lg border border-gray-200 bg-gray-50 px-5 py-4 text-base font-bold text-gray-900 shadow-sm outline-none transition-shadow focus:bg-white focus:shadow-[6px_6px_0_#ff6b00]"
                 value={starts}
                 onChange={(e) => setStarts(e.target.value)}
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-500">Ends</label>
+              <label className="mb-2 block text-sm font-semibold text-gray-800">Ends</label>
               <input
                 type="datetime-local"
-                className="mt-1 w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm"
+                className="w-full rounded-lg border border-gray-200 bg-gray-50 px-5 py-4 text-base font-bold text-gray-900 shadow-sm outline-none transition-shadow focus:bg-white focus:shadow-[6px_6px_0_#ff6b00]"
                 value={ends}
                 onChange={(e) => setEnds(e.target.value)}
               />
@@ -149,44 +158,54 @@ export default function PromotionsPage({ params }: { params: { id: string } }) {
             type="button"
             disabled={createPromo.isPending}
             onClick={() => createPromo.mutate()}
-            className="neo-primary-btn px-5 py-2.5 text-sm disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-yellow-300 px-8 py-4 text-base font-semibold text-black shadow-sm transition-all hover:-translate-y-1 hover:-translate-x-1 hover:shadow-md disabled:opacity-50"
           >
-            {createPromo.isPending ? "Creating…" : "Create promotion"}
+            {createPromo.isPending ? <Loader2 className="h-6 w-6 animate-spin" strokeWidth={3} /> : "Create Promotion"}
           </button>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100">
-            <h2 className="font-display font-bold text-gray-900">Active & scheduled</h2>
-            <p className="text-sm text-gray-500">Base price: {formatPrice(course?.price ?? 0)}</p>
+        <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden mb-20">
+          <div className="px-8 py-6 border-b-4 border-black bg-amber-50">
+            <h2 className=" text-2xl  uppercase tracking-tight text-gray-900">Active & Scheduled</h2>
+            <p className="text-sm font-bold text-gray-600 mt-1">Base price: {formatPrice(course?.price ?? 0)}</p>
           </div>
           {promotions.length === 0 ? (
-            <p className="p-8 text-center text-gray-400 text-sm">No promotions yet.</p>
+            <p className="p-12 text-center text-lg  uppercase tracking-tight text-gray-400">No promotions yet.</p>
           ) : (
-            <ul className="divide-y divide-gray-50">
+            <ul className="divide-y-4 divide-black">
               {promotions.map((p: any) => (
-                <li key={p.id} className="px-5 py-4 flex flex-wrap items-center justify-between gap-3">
+                <li key={p.id} className="px-8 py-6 flex flex-wrap items-center justify-between gap-6 transition-colors hover:bg-slate-50">
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">
+                    <p className="text-xl  uppercase tracking-tight text-gray-900">
                       {p.discount_percent != null ? `${p.discount_percent}% off` : ""}
                       {p.price_override != null ? `Override ${formatPrice(p.price_override)}` : ""}
                     </p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-sm font-bold text-gray-500 mt-2">
                       {new Date(p.starts_at).toLocaleString()} → {new Date(p.ends_at).toLocaleString()}
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => toggle.mutate(p.id)}
-                    className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border ${
-                      p.is_active
-                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                        : "bg-gray-100 text-gray-500 border-gray-200"
-                    }`}
-                  >
-                    <Power className="h-3.5 w-3.5" />
-                    {p.is_active ? "Active" : "Off"}
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => toggle.mutate(p.id)}
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 text-xs font-semibold  transition-transform hover:-translate-y-1 ${
+                        p.is_active
+                          ? "bg-green-100 text-black"
+                          : "bg-white text-black"
+                      }`}
+                    >
+                      <Power className="h-4 w-4" strokeWidth={3} />
+                      {p.is_active ? "Active" : "Off"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { if (confirm("Delete this promotion?")) deletePromo.mutate(p.id); }}
+                      disabled={deletePromo.isPending}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 bg-white text-xs font-semibold  transition-transform hover:-translate-y-1 hover:bg-red-100 disabled:opacity-50"
+                    >
+                      <Trash2 className="h-4 w-4" strokeWidth={3} />
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>

@@ -55,20 +55,20 @@ export default function CourseCommunityPage({ params }: { params: { slug: string
     <div className="min-h-screen flex flex-col">
       <div className="bw-shell">
         <div className="bw-band mb-4 flex items-center gap-3 px-4 py-3">
-          <Link href={`/learn/${params.slug}`} className="rounded-full bg-white p-2 text-slate-500 transition hover:text-slate-950">
+          <Link href={`/learn/${params.slug}`} className="rounded-full bg-white p-2 text-gray-500 transition hover:text-gray-900">
             <ChevronLeft className="h-5 w-5" />
           </Link>
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500 text-white">
             <MessageSquare className="h-4 w-4" />
           </div>
           <div className="min-w-0 flex-1">
-            <h1 className="text-sm font-semibold text-slate-950">Community</h1>
-            <p className="truncate text-xs text-slate-500">{course?.title || "Loading..."}</p>
+            <h1 className="text-sm font-semibold text-gray-900">Community</h1>
+            <p className="truncate text-xs text-gray-500">{course?.title || "Loading..."}</p>
           </div>
-          <Link href={`/learn/${params.slug}/chat`} className="hidden items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs text-slate-600 sm:flex">
+          <Link href={`/learn/${params.slug}/chat`} className="hidden items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs text-gray-600 sm:flex">
             <Sparkles className="h-3.5 w-3.5" /> AI Tutor
           </Link>
-          <Link href={`/learn/${params.slug}`} className="hidden items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs text-slate-600 sm:flex">
+          <Link href={`/learn/${params.slug}`} className="hidden items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs text-gray-600 sm:flex">
             <BookOpen className="h-3.5 w-3.5" /> Course
           </Link>
           <button type="button" onClick={() => setShowForm(true)} className="bw-action-primary !rounded-full !px-4 !py-2.5">
@@ -83,12 +83,12 @@ export default function CourseCommunityPage({ params }: { params: { slug: string
           {showForm ? (
             <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="bw-card p-5">
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="font-display text-xl font-bold text-slate-950">Start a discussion</h3>
-                <button type="button" onClick={() => setShowForm(false)} className="rounded-lg p-2 text-slate-400 transition hover:bg-[#f8f2eb] hover:text-slate-950">
+                <h3 className=" text-xl font-bold text-gray-900">Start a discussion</h3>
+                <button type="button" onClick={() => setShowForm(false)} className="rounded-lg p-2 text-slate-400 transition hover:bg-[#f8f2eb] hover:text-gray-900">
                   <X className="h-4 w-4" />
                 </button>
               </div>
-              <textarea value={newPost} onChange={(event) => setNewPost(event.target.value)} rows={4} className="w-full rounded-[1rem] border border-slate-200 bg-[#fcf8f3] px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100" placeholder="Share a question, insight, or challenge..." />
+              <textarea value={newPost} onChange={(event) => setNewPost(event.target.value)} rows={4} className="w-full rounded-[1rem] border border-slate-200 bg-[#fcf8f3] px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100" placeholder="Share a question, insight, or challenge..." />
               <div className="mt-3 flex gap-3">
                 <button type="button" onClick={() => createPost.mutate(newPost)} disabled={!newPost.trim() || createPost.isPending} className="bw-action-primary !rounded-[1rem] !px-4 !py-3">
                   {createPost.isPending ? "Posting..." : "Post discussion"}
@@ -112,8 +112,8 @@ export default function CourseCommunityPage({ params }: { params: { slug: string
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-[1.5rem] bg-indigo-50 text-indigo-600">
               <Users className="h-7 w-7" />
             </div>
-            <p className="font-display text-lg font-bold text-slate-950">No discussions yet</p>
-            <p className="mt-2 text-sm text-slate-500">Be the first to start a conversation for this course.</p>
+            <p className=" text-lg font-bold text-gray-900">No discussions yet</p>
+            <p className="mt-2 text-sm text-gray-500">Be the first to start a conversation for this course.</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -125,15 +125,15 @@ export default function CourseCommunityPage({ params }: { params: { slug: string
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-semibold text-slate-950">{post.user?.full_name}</span>
+                      <span className="font-semibold text-gray-900">{post.user?.full_name}</span>
                       <span className="text-xs text-slate-400">{formatDate(post.created_at)}</span>
                     </div>
-                    <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-700">{post.content}</p>
+                    <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-gray-700">{post.content}</p>
                     <div className="mt-4 flex items-center gap-4">
-                      <button type="button" onClick={() => upvotePost.mutate(post.id)} className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+                      <button type="button" onClick={() => upvotePost.mutate(post.id)} className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500">
                         <ThumbsUp className="h-3.5 w-3.5" /> {post.upvote_count || 0}
                       </button>
-                      <button type="button" onClick={() => setReplyTo(replyTo === post.id ? null : post.id)} className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+                      <button type="button" onClick={() => setReplyTo(replyTo === post.id ? null : post.id)} className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500">
                         <MessageSquare className="h-3.5 w-3.5" /> {post.replies?.length || 0} replies
                       </button>
                     </div>
@@ -143,10 +143,10 @@ export default function CourseCommunityPage({ params }: { params: { slug: string
                         {post.replies.map((reply: any) => (
                           <div key={reply.id} className="rounded-[1rem] bg-[#fcf8f3] px-4 py-3">
                             <div className="flex flex-wrap items-center gap-2">
-                              <span className="text-xs font-semibold text-slate-950">{reply.user?.full_name}</span>
+                              <span className="text-xs font-semibold text-gray-900">{reply.user?.full_name}</span>
                               {reply.is_official_answer ? <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">Official answer</span> : null}
                             </div>
-                            <p className="mt-2 text-xs leading-6 text-slate-600">{reply.content}</p>
+                            <p className="mt-2 text-xs leading-6 text-gray-600">{reply.content}</p>
                           </div>
                         ))}
                       </div>
@@ -163,7 +163,7 @@ export default function CourseCommunityPage({ params }: { params: { slug: string
                               if (replyContent.trim()) createReply.mutate({ postId: post.id, content: replyContent });
                             }
                           }}
-                          className="flex-1 rounded-[1rem] border border-slate-200 bg-[#fcf8f3] px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
+                          className="flex-1 rounded-[1rem] border border-slate-200 bg-[#fcf8f3] px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
                           placeholder="Write a reply..."
                         />
                         <button type="button" onClick={() => createReply.mutate({ postId: post.id, content: replyContent })} disabled={!replyContent.trim() || createReply.isPending} className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-950 text-white disabled:opacity-40">

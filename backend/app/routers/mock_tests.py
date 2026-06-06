@@ -448,6 +448,205 @@ async def submit_attempt(
     return {"score_percent": round(pct, 2), "total_score": earned, "max_score": total}
 
 
+class PackageUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    price: Optional[float] = None
+
+
+@router.patch("/packages/{package_id}")
+async def update_package(
+    package_id: str,
+    data: PackageUpdate,
+    current_user: User = Depends(get_current_verified_teacher),
+    db: Session = Depends(get_db),
+):
+    pkg = db.query(MockTestPackage).filter(
+        MockTestPackage.id == package_id, MockTestPackage.teacher_id == current_user.id
+    ).first()
+    if not pkg:
+        raise HTTPException(status_code=404, detail="Not found")
+    for k, v in data.dict(exclude_none=True).items():
+        setattr(pkg, k, v)
+    db.commit()
+    return {"message": "updated"}
+
+
+@router.delete("/packages/{package_id}")
+async def delete_package(
+    package_id: str,
+    current_user: User = Depends(get_current_verified_teacher),
+    db: Session = Depends(get_db),
+):
+    pkg = db.query(MockTestPackage).filter(
+        MockTestPackage.id == package_id, MockTestPackage.teacher_id == current_user.id
+    ).first()
+    if not pkg:
+        raise HTTPException(status_code=404, detail="Not found")
+    pkg.status = "archived"
+    db.commit()
+    return {"message": "Package archived"}
+
+
+class PaperUpdate(BaseModel):
+    title: Optional[str] = None
+    time_limit_minutes: Optional[int] = None
+    total_marks: Optional[float] = None
+    order_index: Optional[int] = None
+
+
+@router.patch("/papers/{paper_id}")
+async def update_paper(
+    paper_id: str,
+    data: PaperUpdate,
+    current_user: User = Depends(get_current_verified_teacher),
+    db: Session = Depends(get_db),
+):
+    paper = db.query(MockTestPaper).filter(MockTestPaper.id == paper_id).first()
+    if not paper:
+        raise HTTPException(status_code=404, detail="Not found")
+    pkg = db.query(MockTestPackage).filter(MockTestPackage.id == paper.package_id).first()
+    if not pkg or str(pkg.teacher_id) != str(current_user.id):
+        raise HTTPException(status_code=403, detail="Forbidden")
+    for k, v in data.dict(exclude_none=True).items():
+        setattr(paper, k, v)
+    db.commit()
+    return {"message": "updated"}
+
+
+@router.delete("/papers/{paper_id}")
+async def delete_paper(
+    paper_id: str,
+    current_user: User = Depends(get_current_verified_teacher),
+    db: Session = Depends(get_db),
+):
+    paper = db.query(MockTestPaper).filter(MockTestPaper.id == paper_id).first()
+    if not paper:
+        raise HTTPException(status_code=404, detail="Not found")
+    pkg = db.query(MockTestPackage).filter(MockTestPackage.id == paper.package_id).first()
+    if not pkg or str(pkg.teacher_id) != str(current_user.id):
+        raise HTTPException(status_code=403, detail="Forbidden")
+    db.delete(paper)
+    db.commit()
+    return {"message": "Paper deleted"}
+
+
+class QuestionUpdate(BaseModel):
+    question_text: Optional[str] = None
+    question_type: Optional[str] = None
+    options: Optional[Any] = None
+    correct_answer: Optional[str] = None
+    marks: Optional[float] = None
+    order_index: Optional[int] = None
+
+
+@router.patch("/questions/{question_id}")
+async def update_question(
+    question_id: str,
+    data: QuestionUpdate,
+    current_user: User = Depends(get_current_verified_teacher),
+    db: Session = Depends(get_db),
+):
+    q = db.query(MockTestQuestion).filter(MockTestQuestion.id == question_id).first()
+    if not q:
+        raise HTTPException(status_code=404, detail="Not found")
+    sec = db.query(MockTestSection).filter(MockTestSection.id == q.section_id).first()
+    paper = db.query(MockTestPaper).filter(MockTestPaper.id == sec.paper_id).first()
+    pkg = db.query(MockTestPackage).filter(MockTestPackage.id == paper.package_id).first()
+    if not pkg or str(pkg.teacher_id) != str(current_user.id):
+        raise HTTPException(status_code=403, detail="Forbidden")
+    for k, v in data.dict(exclude_none=True).items():
+        setattr(q, k, v)
+    db.commit()
+    return {"message": "updated"}
+
+
+@router.delete("/questions/{question_id}")
+async def delete_question(
+    question_id: str,
+    current_user: User = Depends(get_current_verified_teacher),
+    db: Session = Depends(get_db),
+):
+    q = db.query(MockTestQuestion).filter(MockTestQuestion.id == question_id).first()
+    if not q:
+        raise HTTPException(status_code=404, detail="Not found")
+    sec = db.query(MockTestSection).filter(MockTestSection.id == q.section_id).first()
+    paper = db.query(MockTestPaper).filter(MockTestPaper.id == sec.paper_id).first()
+    pkg = db.query(MockTestPackage).filter(MockTestPackage.id == paper.package_id).first()
+    if not pkg or str(pkg.teacher_id) != str(current_user.id):
+        raise HTTPException(status_code=403, detail="Forbidden")
+    db.delete(q)
+    db.commit()
+    return {"message": "Question deleted"}
+
+
+@router.get("/papers/{paper_id}/attempts")
+async def list_attempts(
+    paper_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    attempts = db.query(MockTestAttempt).filter(
+        MockTestAttempt.paper_id == paper_id,
+        MockTestAttempt.student_id == current_user.id
+    ).order_by(MockTestAttempt.submitted_at.desc()).all()
+    return {
+        "attempts": [
+            {
+                "id": str(a.id),
+                "score_percent": float(a.score_percent or 0),
+                "total_score": float(a.total_score or 0),
+                "submitted_at": a.submitted_at.isoformat() if a.submitted_at else None,
+            }
+            for a in attempts
+        ]
+    }
+
+
+@router.get("/papers/{paper_id}/attempts/{attempt_id}")
+async def get_attempt_detail(
+    paper_id: str,
+    attempt_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    attempt = db.query(MockTestAttempt).filter(
+        MockTestAttempt.id == attempt_id,
+        MockTestAttempt.paper_id == paper_id,
+        MockTestAttempt.student_id == current_user.id
+    ).first()
+    if not attempt:
+        raise HTTPException(status_code=404, detail="Attempt not found")
+
+    # Build per-question review
+    paper = db.query(MockTestPaper).filter(MockTestPaper.id == paper_id).first()
+    sections = db.query(MockTestSection).filter(MockTestSection.paper_id == paper_id).all()
+    review = []
+    for sec in sections:
+        questions = db.query(MockTestQuestion).filter(MockTestQuestion.section_id == sec.id).all()
+        for q in questions:
+            student_ans = (attempt.answers or {}).get(str(q.id), "")
+            correct = str(q.correct_answer or "").lower().strip()
+            is_correct = str(student_ans).lower().strip() == correct
+            review.append({
+                "question_id": str(q.id),
+                "question_text": q.question_text,
+                "student_answer": student_ans,
+                "correct_answer": q.correct_answer,
+                "is_correct": is_correct,
+                "marks": float(q.marks or 0),
+                "section_title": sec.title,
+            })
+
+    return {
+        "attempt_id": str(attempt.id),
+        "score_percent": float(attempt.score_percent or 0),
+        "total_score": float(attempt.total_score or 0),
+        "submitted_at": attempt.submitted_at.isoformat() if attempt.submitted_at else None,
+        "review": review,
+    }
+
+
 @router.get("/my-packages")
 async def my_packages(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     rows = db.query(MockTestPurchase).filter(MockTestPurchase.student_id == current_user.id).all()

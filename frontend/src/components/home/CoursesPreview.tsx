@@ -2,10 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { AlertCircle, ArrowRight } from "lucide-react";
+import { ArrowRight, BookOpen } from "lucide-react";
 import { CourseCard } from "@/components/course/CourseCard";
-import { SectionHeader } from "@/components/ui/app-shell";
 
 interface Course {
   id: string;
@@ -20,20 +18,10 @@ interface Course {
   category?: string;
 }
 
-const DEMO_COURSES: Course[] = [
-  { id: "demo-1", slug: "ml-fundamentals", title: "Machine Learning Fundamentals", category: "Data Science", teacher_name: "Dr. Amit Kumar", rating: 4.9, total_students: 12400, price: 999 },
-  { id: "demo-2", slug: "web-dev-bootcamp", title: "Full-Stack Web Dev Bootcamp", category: "Programming", teacher_name: "Priya Sharma", rating: 4.8, total_students: 8900, price: 1299 },
-  { id: "demo-3", slug: "jee-advanced-maths", title: "JEE Advanced Mathematics", category: "Competitive", teacher_name: "Prof. R. Gupta", rating: 4.9, total_students: 21000, price: 799 },
-  { id: "demo-4", slug: "ui-ux-design", title: "UI/UX Design Masterclass", category: "Design", teacher_name: "Sneha Kapoor", rating: 4.7, total_students: 5600, price: 1499 },
-];
-
-function SkeletonCard() {
-  return <div className="bw-card h-[320px] animate-pulse bg-white/70" />;
-}
 
 export function CoursesPreview() {
   const [courses, setCourses] = useState<Course[]>([]);
-  const [phase, setPhase] = useState<"loading" | "live" | "demo" | "error">("loading");
+  const [phase, setPhase] = useState<"loading" | "live" | "empty" | "error">("loading");
 
   useEffect(() => {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
@@ -49,8 +37,8 @@ export function CoursesPreview() {
           setCourses(list);
           setPhase("live");
         } else {
-          setCourses(DEMO_COURSES);
-          setPhase("demo");
+          setCourses([]);
+          setPhase("empty");
         }
       })
       .catch(() => {
@@ -60,51 +48,54 @@ export function CoursesPreview() {
   }, []);
 
   return (
-    <section className="bg-transparent py-14">
-      <div className="bw-shell">
-        <SectionHeader
-          eyebrow="Course Catalog"
-          title="Discover courses that feel easy to scan and hard to ignore."
-          description="The catalog shifts to bold cards, stronger labels, and clearer price and category signals while keeping the same data and flow."
-          action={<Link href="/courses" className="bw-action-secondary">Browse All Courses <ArrowRight className="h-4 w-4" /></Link>}
-        />
+    <section className="section-padding bg-gray-50">
+      <div className="page-container">
+        <div className="flex items-end justify-between mb-10">
+          <div>
+            <span className="section-eyebrow">Top Courses</span>
+            <h2 className="section-title">Popular learning paths</h2>
+          </div>
+          <Link href="/courses" className="btn btn-md btn-secondary hidden sm:flex items-center gap-2 shrink-0">
+            View all <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
 
         {phase === "loading" ? (
-          <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {[1, 2, 3, 4].map((item) => (
-              <SkeletonCard key={item} />
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="card animate-pulse">
+                <div className="aspect-video bg-gray-100 rounded-t-xl" />
+                <div className="p-5 space-y-3">
+                  <div className="h-4 bg-gray-100 rounded w-3/4" />
+                  <div className="h-3 bg-gray-100 rounded w-1/2" />
+                  <div className="h-3 bg-gray-100 rounded w-1/3" />
+                </div>
+              </div>
             ))}
           </div>
         ) : phase === "error" ? (
-          <div className="mt-8 rounded-[1.5rem] border-2 border-black bg-[#ffd6d6] p-8 text-center shadow-[5px_5px_0_#111111]">
-            <AlertCircle className="mx-auto h-10 w-10 text-rose-600" />
-            <p className="mt-4 font-display text-xl font-bold uppercase text-slate-950">Couldn&apos;t load courses</p>
-            <p className="mt-2 text-sm text-slate-600">The layout is ready, but course data could not be fetched just now.</p>
+          <div className="card p-10 text-center">
+            <p className="text-sm text-gray-500">Could not load courses right now. <Link href="/courses" className="text-blue-600 font-medium">Browse catalog →</Link></p>
+          </div>
+        ) : phase === "empty" ? (
+          <div className="card p-12 text-center">
+            <BookOpen className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+            <p className="text-gray-600 font-medium">No courses published yet</p>
+            <p className="text-sm text-gray-400 mt-1">Check back soon.</p>
           </div>
         ) : (
-          <>
-            {phase === "demo" ? (
-              <p className="mt-6 inline-flex rounded-full border-2 border-black bg-[#ffe500] px-3 py-1 text-xs font-extrabold uppercase text-black shadow-[2px_2px_0_#111111]">
-                Showing demo examples until published courses are available.
-              </p>
-            ) : null}
-            <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {courses.map((course, index) => (
-                <motion.div
-                  key={course.id}
-                  initial={{ opacity: 0, y: 16 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.35, delay: index * 0.05 }}
-                >
-                  <div className="[&>*]:!bg-white">
-                    <CourseCard course={course} />
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {courses.map((course) => (
+              <CourseCard key={course.id} course={course} />
+            ))}
+          </div>
         )}
+
+        <div className="sm:hidden mt-6 text-center">
+          <Link href="/courses" className="btn btn-md btn-secondary inline-flex items-center gap-2">
+            View all courses <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
       </div>
     </section>
   );

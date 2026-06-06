@@ -35,81 +35,89 @@ function RegisterPageContent() {
   };
 
   return (
-    <div className="bw-page flex min-h-screen items-center justify-center px-4 py-10">
-      <div className="grid w-full max-w-6xl overflow-hidden rounded-[2rem] border-2 border-black bg-white shadow-[8px_8px_0_#111111] lg:grid-cols-[1.05fr_0.95fr]">
-        <div className="hidden bg-[#fff4d6] p-10 lg:block">
-          <span className="eyebrow mb-5">Create an account</span>
-          <h1 className="font-display text-5xl font-extrabold uppercase leading-[1.02] text-slate-950">
-            Join Brainwave as a learner or educator.
-          </h1>
-          <div className="mt-8 grid gap-3">
-            <div className="rounded-[1.3rem] border-2 border-black bg-white p-5 shadow-[4px_4px_0_#111111]">
-              <p className="font-display text-xl font-bold uppercase text-slate-950">Learners</p>
-              <p className="mt-2 text-sm leading-7 text-slate-700">Get guided dashboards, AI tutoring, practice assets, community, and verified certificates.</p>
-            </div>
-            <div className="rounded-[1.3rem] border-2 border-black bg-[#8ed8ff] p-5 shadow-[4px_4px_0_#111111]">
-              <p className="font-display text-xl font-bold uppercase text-slate-950">Teachers</p>
-              <p className="mt-2 text-sm leading-7 text-slate-800">Launch from the creator studio with AI course building, payouts, analytics, and learner operations.</p>
-            </div>
+    <div className="min-h-screen flex bg-gray-50">
+      {/* Left panel */}
+      <div className="hidden lg:flex flex-col justify-between w-[45%] bg-blue-600 p-12 text-white">
+        <Link href="/" className="flex items-center gap-2.5">
+          <div className="h-8 w-8 rounded-lg bg-white/20 flex items-center justify-center">
+            <Sparkles className="h-4 w-4 text-white" />
+          </div>
+          <span className="text-lg font-bold">Brainwave</span>
+        </Link>
+        <div>
+          <h1 className="text-4xl font-extrabold leading-tight mb-4">Join India&apos;s fastest growing learning platform</h1>
+          <p className="text-blue-200 text-lg leading-relaxed mb-8">
+            Whether you&apos;re here to learn or to teach, Brainwave gives you the tools to succeed.
+          </p>
+          <div className="grid gap-4">
+            {[
+              { title: "Students", desc: "AI tutoring, quizzes, live sessions, and certificates." },
+              { title: "Teachers", desc: "AI course builder, analytics, payouts, and doubt sessions." },
+            ].map((item) => (
+              <div key={item.title} className="bg-white/10 rounded-xl p-5">
+                <p className="font-bold text-white">{item.title}</p>
+                <p className="text-blue-200 text-sm mt-1">{item.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
+        <p className="text-blue-300 text-sm">© 2024 Brainwave. All rights reserved.</p>
+      </div>
 
-        <div className="p-6 sm:p-10">
-          <Link href="/" className="inline-flex items-center gap-3">
-            <div className="neo-icon-badge h-11 w-11 bg-[#ffe500] text-black">
-              <Sparkles className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="font-display text-lg font-extrabold uppercase text-slate-950">Brainwave.ai</p>
-              <p className="text-sm font-bold uppercase tracking-[0.12em] text-slate-500">Premium education platform</p>
-            </div>
-          </Link>
-
-          <div className="mt-10">
-            <h2 className="font-display text-3xl font-extrabold uppercase text-slate-950">Create your account</h2>
-            <p className="mt-2 text-sm text-slate-600">Pick a role, then step into the redesigned learning or teaching experience.</p>
+      {/* Right panel */}
+      <div className="flex-1 flex items-center justify-center px-6 py-12">
+        <div className="w-full max-w-md">
+          <div className="lg:hidden mb-8">
+            <Link href="/" className="flex items-center gap-2.5">
+              <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center">
+                <Sparkles className="h-4 w-4 text-white" />
+              </div>
+              <span className="text-lg font-bold text-gray-900">Brainwave</span>
+            </Link>
           </div>
 
-          <div className="neo-tabbar mt-8 grid sm:grid-cols-2">
-            {[
-              { role: "student", label: "I want to learn" },
-              { role: "teacher", label: "I want to teach" },
-            ].map((option) => (
-              <button
-                key={option.role}
-                type="button"
-                onClick={() => setFormData({ ...formData, role: option.role })}
-                className={`neo-tab ${formData.role === option.role ? "neo-tab-active" : ""}`}
-              >
-                {option.label}
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-900">Create your account</h2>
+            <p className="text-sm text-gray-500 mt-1">Choose your role to get started</p>
+          </div>
+
+          {/* Role toggle */}
+          <div className="flex gap-2 p-1 bg-gray-100 rounded-xl mb-6">
+            {[{ role: "student", label: "I want to learn" }, { role: "teacher", label: "I want to teach" }].map((opt) => (
+              <button key={opt.role} type="button"
+                onClick={() => setFormData({ ...formData, role: opt.role })}
+                className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all ${
+                  formData.role === opt.role
+                    ? "bg-white text-blue-600 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}>
+                {opt.label}
               </button>
             ))}
           </div>
 
-          <form onSubmit={handleRegister} className="mt-6 space-y-4">
+          <form onSubmit={handleRegister} className="space-y-4">
             <div>
-              <label className="mb-2 block text-sm font-extrabold uppercase text-slate-700">Full Name</label>
-              <input type="text" value={formData.full_name} onChange={(event) => setFormData({ ...formData, full_name: event.target.value })} required className="w-full px-4 py-3 text-sm" placeholder="Your full name" />
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Full name</label>
+              <input type="text" value={formData.full_name} onChange={(e) => setFormData({ ...formData, full_name: e.target.value })} required className="input" placeholder="Your full name" />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-extrabold uppercase text-slate-700">Email</label>
-              <input type="email" value={formData.email} onChange={(event) => setFormData({ ...formData, email: event.target.value })} required className="w-full px-4 py-3 text-sm" placeholder="you@example.com" />
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email address</label>
+              <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} required className="input" placeholder="you@example.com" />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-extrabold uppercase text-slate-700">Password</label>
-              <input type="password" value={formData.password} onChange={(event) => setFormData({ ...formData, password: event.target.value })} required minLength={8} className="w-full px-4 py-3 text-sm" placeholder="Minimum 8 characters" />
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+              <input type="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} required minLength={8} className="input" placeholder="Minimum 8 characters" />
             </div>
-            <button type="submit" disabled={loading} className="bw-action-primary w-full !rounded-[1rem] !py-3.5">
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              {loading ? "Creating account..." : `Create ${formData.role === "teacher" ? "teacher" : "student"} account`}
+            <button type="submit" disabled={loading} className="btn btn-lg btn-primary w-full justify-center mt-2 disabled:opacity-60">
+              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+              {loading ? "Creating account..." : `Create ${formData.role} account`}
             </button>
           </form>
 
-          <p className="mt-6 text-sm text-slate-600">
+          <p className="mt-6 text-center text-sm text-gray-500">
             Already have an account?{" "}
-            <Link href="/login" className="font-extrabold uppercase text-[#ff6b00]">
-              Sign in
-            </Link>
+            <Link href="/login" className="text-blue-600 font-semibold hover:text-blue-700">Sign in</Link>
           </p>
         </div>
       </div>
@@ -119,7 +127,7 @@ function RegisterPageContent() {
 
 export default function RegisterPage() {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-[#ff6b00]" /></div>}>
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div>}>
       <RegisterPageContent />
     </Suspense>
   );

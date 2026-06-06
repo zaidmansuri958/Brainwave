@@ -2,6 +2,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+from pydantic import BaseModel
+from typing import Optional
 
 from app.database import get_db
 from app.middleware.auth_middleware import get_current_user
@@ -45,6 +47,95 @@ def _chapter_lessons_completed(db: Session, student_id, course_id: str, chapter:
         if not pr:
             return False
     return True
+
+
+@router.get("/courses/{slug}/progress")
+async def get_course_progress(
+    slug: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    course = db.query(Course).filter(Course.slug == slug).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    enrollment = get_valid_enrollment(db, current_user.id, str(course.id))
+    if not enrollment:
+        raise HTTPException(status_code=403, detail="Not enrolled or access expired")
+
+    progress_rows = db.query(StudentProgress).filter(
+        StudentProgress.student_id == current_user.id,
+        StudentProgress.course_id == course.id,
+    ).all()
+
+    total_lessons = db.query(func.count(Lesson.id)).join(
+        Chapter, Lesson.chapter_id == Chapter.id
+    ).filter(Chapter.course_id == course.id, Lesson.is_published == True).scalar() or 0
+
+    completed_lesson_ids = [str(p.lesson_id) for p in progress_rows if p.completed]
+    last_watched = max(
+        (p for p in progress_rows if p.last_watched_at),
+        key=lambda p: p.last_watched_at,
+        default=None
+    )
+
+    return {
+        "course_id": str(course.id),
+        "completed_lesson_ids": completed_lesson_ids,
+        "last_lesson_id": str(last_watched.lesson_id) if last_watched else None,
+        "last_position_seconds": last_watched.watch_duration_seconds if last_watched else 0,
+        "overall_percent": round(len(completed_lesson_ids) / total_lessons * 100) if total_lessons else 0,
+        "total_lessons": total_lessons,
+    }
+
+
+class ProgressWrite(BaseModel):
+    lesson_id: str
+    completed: Optional[bool] = False
+    watch_position_seconds: Optional[int] = 0
+
+
+@router.post("/courses/{slug}/progress")
+async def write_course_progress(
+    slug: str,
+    data: ProgressWrite,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    course = db.query(Course).filter(Course.slug == slug).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    enrollment = get_valid_enrollment(db, current_user.id, str(course.id))
+    if not enrollment:
+        raise HTTPException(status_code=403, detail="Not enrolled or access expired")
+
+    from datetime import datetime, timezone
+    existing = db.query(StudentProgress).filter(
+        StudentProgress.student_id == current_user.id,
+        StudentProgress.lesson_id == data.lesson_id,
+        StudentProgress.course_id == course.id,
+    ).first()
+
+    if existing:
+        if data.completed:
+            existing.completed = True
+        if data.watch_position_seconds:
+            existing.watch_duration_seconds = data.watch_position_seconds
+        existing.last_watched_at = datetime.now(timezone.utc)
+    else:
+        existing = StudentProgress(
+            student_id=current_user.id,
+            lesson_id=data.lesson_id,
+            course_id=course.id,
+            completed=data.completed or False,
+            watch_duration_seconds=data.watch_position_seconds or 0,
+            last_watched_at=datetime.now(timezone.utc),
+        )
+        db.add(existing)
+
+    db.commit()
+    return {"message": "Progress recorded"}
 
 
 @router.get("/courses/{slug}/access")

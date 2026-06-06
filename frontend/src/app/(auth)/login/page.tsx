@@ -35,68 +35,80 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="bw-page flex min-h-screen items-center justify-center px-4 py-10">
-      <div className="grid w-full max-w-6xl overflow-hidden rounded-[2rem] border-2 border-black bg-white shadow-[8px_8px_0_#111111] lg:grid-cols-[1.05fr_0.95fr]">
-        <div className="hidden bg-[#fff4d6] p-10 lg:block">
-          <span className="eyebrow mb-5">Welcome Back</span>
-          <h1 className="font-display text-5xl font-extrabold uppercase leading-[1.02] text-slate-950">
-            Sign in to a bolder Brainwave experience.
+    <div className="min-h-screen flex bg-gray-50">
+      {/* Left panel */}
+      <div className="hidden lg:flex flex-col justify-between w-[45%] bg-blue-600 p-12 text-white">
+        <Link href="/" className="flex items-center gap-2.5">
+          <div className="h-8 w-8 rounded-lg bg-white/20 flex items-center justify-center">
+            <Sparkles className="h-4 w-4 text-white" />
+          </div>
+          <span className="text-lg font-bold">Brainwave</span>
+        </Link>
+        <div>
+          <h1 className="text-4xl font-extrabold leading-tight mb-4">
+            Welcome back to your learning journey
           </h1>
-          <p className="mt-5 max-w-lg text-base leading-8 text-slate-700">
-            Students return to guided learning hubs. Teachers return to creator tools, analytics, and revenue visibility.
-            The redesigned interface keeps everything clearer and closer to action.
+          <p className="text-blue-200 text-lg leading-relaxed mb-8">
+            Students get guided dashboards. Teachers get the creator studio. Pick up exactly where you left off.
           </p>
-          <div className="mt-8 grid gap-3">
-            {["Guided learner dashboard", "Teacher studio workflows", "AI tutor, certificates, and progress surfaces"].map((item, index) => (
-              <div key={item} className={`flex items-center gap-3 rounded-[1.2rem] border-2 border-black px-4 py-3 text-sm font-bold text-slate-800 shadow-[4px_4px_0_#111111] ${index === 0 ? "bg-white" : index === 1 ? "bg-[#8ed8ff]" : "bg-[#7dde92]"}`}>
-                <Sparkles className="h-4 w-4 text-black" />
+          <div className="space-y-3">
+            {["AI-powered course summaries", "Live and doubt sessions", "Verified certificates"].map((item) => (
+              <div key={item} className="flex items-center gap-3 text-sm text-blue-100">
+                <div className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                  <svg className="h-3 w-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                </div>
                 {item}
               </div>
             ))}
           </div>
         </div>
+        <p className="text-blue-300 text-sm">© 2024 Brainwave. All rights reserved.</p>
+      </div>
 
-        <div className="p-6 sm:p-10">
-          <Link href="/" className="inline-flex items-center gap-3">
-            <div className="neo-icon-badge h-11 w-11 bg-[#ffe500] text-black">
-              <Sparkles className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="font-display text-lg font-extrabold uppercase text-slate-950">Brainwave.ai</p>
-              <p className="text-sm font-bold uppercase tracking-[0.12em] text-slate-500">Premium education platform</p>
-            </div>
-          </Link>
-
-          <div className="mt-10">
-            <h2 className="font-display text-3xl font-extrabold uppercase text-slate-950">Sign in</h2>
-            <p className="mt-2 text-sm text-slate-600">Continue learning, teaching, or managing the platform.</p>
+      {/* Right panel */}
+      <div className="flex-1 flex items-center justify-center px-6 py-12">
+        <div className="w-full max-w-md">
+          <div className="lg:hidden mb-8">
+            <Link href="/" className="flex items-center gap-2.5">
+              <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center">
+                <Sparkles className="h-4 w-4 text-white" />
+              </div>
+              <span className="text-lg font-bold text-gray-900">Brainwave</span>
+            </Link>
           </div>
 
-          <form onSubmit={handleLogin} className="mt-8 space-y-4">
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-900">Sign in to your account</h2>
+            <p className="text-sm text-gray-500 mt-1">Enter your credentials to continue</p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-5">
             <div>
-              <label className="mb-2 block text-sm font-extrabold uppercase text-slate-700">Email</label>
-              <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required className="w-full px-4 py-3 text-sm" placeholder="you@example.com" />
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email address</label>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
+                className="input" placeholder="you@example.com" />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-extrabold uppercase text-slate-700">Password</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
               <div className="relative">
-                <input type={showPass ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} required className="w-full px-4 py-3 pr-12 text-sm" placeholder="Enter your password" />
-                <button type="button" onClick={() => setShowPass((prev) => !prev)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500">
-                  {showPass ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                <input type={showPass ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required
+                  className="input pr-10" placeholder="Enter your password" />
+                <button type="button" onClick={() => setShowPass((p) => !p)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
-            <button type="submit" disabled={loading} className="bw-action-primary w-full !rounded-[1rem] !py-3.5">
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            <button type="submit" disabled={loading}
+              className="btn btn-lg btn-primary w-full justify-center mt-2 disabled:opacity-60">
+              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
               {loading ? "Signing in..." : "Sign in"}
             </button>
           </form>
 
-          <p className="mt-6 text-sm text-slate-600">
+          <p className="mt-6 text-center text-sm text-gray-500">
             Don&apos;t have an account?{" "}
-            <Link href="/register" className="font-extrabold uppercase text-[#ff6b00]">
-              Create one
-            </Link>
+            <Link href="/register" className="text-blue-600 font-semibold hover:text-blue-700">Create one</Link>
           </p>
         </div>
       </div>

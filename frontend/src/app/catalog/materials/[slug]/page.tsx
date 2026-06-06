@@ -94,7 +94,7 @@ export default function MaterialDetailPublicPage({ params }: { params: { slug: s
       }),
   });
 
-  if (isLoading || !product) {
+  if (isLoading) {
     return (
       <LightStudioLayout maxWidthClassName="max-w-2xl">
         <div className="animate-pulse space-y-6">
@@ -109,6 +109,18 @@ export default function MaterialDetailPublicPage({ params }: { params: { slug: s
     );
   }
 
+  if (!product) {
+    return (
+      <LightStudioLayout maxWidthClassName="max-w-2xl">
+        <StudioBackLink href="/catalog/materials">Back to catalog</StudioBackLink>
+        <div className="mt-12 rounded-2xl border border-red-200 bg-red-50 p-8 text-center">
+          <p className="text-lg font-semibold text-red-700">Study material not found</p>
+          <p className="mt-2 text-sm text-red-500">This product may have been removed or the link is incorrect.</p>
+        </div>
+      </LightStudioLayout>
+    );
+  }
+
   return (
     <LightStudioLayout maxWidthClassName="max-w-2xl">
       <StudioBackLink href="/catalog/materials">Back to catalog</StudioBackLink>
@@ -117,34 +129,36 @@ export default function MaterialDetailPublicPage({ params }: { params: { slug: s
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45 }}
-        className="rounded-2xl border border-gray-100/90 bg-white p-6 sm:p-8 shadow-card"
+        className="rounded-xl border border-gray-200 bg-white p-6 sm:p-10 shadow-sm"
       >
-        <p className="eyebrow mb-2">Study material</p>
-        <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-gray-900 tracking-tight">{product.title}</h1>
-        {product.description && <p className="text-gray-600 mt-3 leading-relaxed">{product.description}</p>}
+        <span className="inline-block mb-4 border border-gray-200 bg-blue-100 px-3 py-1 text-xs font-semibold text-black ">Study material</span>
+        <h1 className="  uppercase text-3xl sm:text-4xl text-gray-900 tracking-tight leading-none">{product.title}</h1>
+        {product.description && <p className="text-gray-700 mt-6 text-lg font-bold leading-relaxed">{product.description}</p>}
 
-        <div className="mt-6 flex flex-wrap items-baseline gap-3">
-          <span className="text-3xl font-bold text-gray-900 tabular-nums">{formatPrice(product.price)}</span>
-          <span className="text-sm text-gray-400">{product.file_count ?? 0} files included</span>
+        <div className="mt-8 flex flex-wrap items-baseline gap-4 rounded-xl border border-gray-200 bg-amber-50 p-6 shadow-sm">
+          <span className=" text-4xl  text-gray-900 uppercase tabular-nums">{formatPrice(product.price)}</span>
+          <span className="text-sm font-semibold text-gray-500">{product.file_count ?? 0} files included</span>
         </div>
 
         {owned ? (
-          <div className="mt-8 rounded-xl border border-emerald-100 bg-emerald-50/50 p-5">
-            <p className="font-semibold text-emerald-800 mb-3 flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 shrink-0" /> Your downloads
+          <div className="mt-8 rounded-xl border border-gray-200 bg-green-100 p-6 shadow-md">
+            <p className=" text-xl  uppercase tracking-tight text-gray-900 mb-4 flex items-center gap-3">
+              <CheckCircle2 className="h-6 w-6 shrink-0" strokeWidth={3} /> Your downloads
             </p>
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {(filesData?.files || []).map((f: { id: string; file_name: string; file_url: string }) => (
                 <li key={f.id}>
                   <a
                     href={f.file_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="group inline-flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                    className="group flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-[3px_3px_0_#111111] transition-all hover:-translate-y-1 hover:shadow-[5px_5px_0_#111111]"
                   >
-                    <Lock className="h-3.5 w-3.5 opacity-60" />
-                    <span className="group-hover:underline">{f.file_name}</span>
-                    <ArrowRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 transition-all group-hover:opacity-100 group-hover:translate-x-0" />
+                    <span className="flex items-center gap-3 text-sm font-bold text-gray-900">
+                      <Lock className="h-4 w-4 text-gray-400" strokeWidth={3} />
+                      {f.file_name}
+                    </span>
+                    <ArrowRight className="h-5 w-5 text-black opacity-0 -translate-x-2 transition-all group-hover:opacity-100 group-hover:translate-x-0" strokeWidth={3} />
                   </a>
                 </li>
               ))}
@@ -155,7 +169,7 @@ export default function MaterialDetailPublicPage({ params }: { params: { slug: s
             type="button"
             onClick={() => buy.mutate()}
             disabled={buy.isPending}
-            className={`mt-8 w-full sm:w-auto px-8 py-3.5 text-sm ${studioBtnPrimary}`}
+            className={`mt-10 w-full sm:w-auto px-10 py-4 text-base ${studioBtnPrimary}`}
           >
             {buy.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : "Buy now"}
           </button>

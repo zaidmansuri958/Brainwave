@@ -235,6 +235,68 @@ async def purchase_confirm(
     return {"success": True}
 
 
+class ProductUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    price: Optional[float] = None
+
+
+@router.patch("/{product_id}")
+async def update_product(
+    product_id: str,
+    data: ProductUpdate,
+    current_user: User = Depends(get_current_verified_teacher),
+    db: Session = Depends(get_db),
+):
+    prod = db.query(StudyMaterialProduct).filter(
+        StudyMaterialProduct.id == product_id, StudyMaterialProduct.teacher_id == current_user.id
+    ).first()
+    if not prod:
+        raise HTTPException(status_code=404, detail="Not found")
+    for k, v in data.dict(exclude_none=True).items():
+        setattr(prod, k, v)
+    db.commit()
+    return {"message": "updated"}
+
+
+@router.delete("/{product_id}")
+async def delete_product(
+    product_id: str,
+    current_user: User = Depends(get_current_verified_teacher),
+    db: Session = Depends(get_db),
+):
+    prod = db.query(StudyMaterialProduct).filter(
+        StudyMaterialProduct.id == product_id, StudyMaterialProduct.teacher_id == current_user.id
+    ).first()
+    if not prod:
+        raise HTTPException(status_code=404, detail="Not found")
+    prod.status = "archived"
+    db.commit()
+    return {"message": "Product archived"}
+
+
+@router.delete("/{product_id}/files/{file_id}")
+async def delete_file(
+    product_id: str,
+    file_id: str,
+    current_user: User = Depends(get_current_verified_teacher),
+    db: Session = Depends(get_db),
+):
+    prod = db.query(StudyMaterialProduct).filter(
+        StudyMaterialProduct.id == product_id, StudyMaterialProduct.teacher_id == current_user.id
+    ).first()
+    if not prod:
+        raise HTTPException(status_code=404, detail="Product not found")
+    f = db.query(StudyMaterialFile).filter(
+        StudyMaterialFile.id == file_id, StudyMaterialFile.product_id == product_id
+    ).first()
+    if not f:
+        raise HTTPException(status_code=404, detail="File not found")
+    db.delete(f)
+    db.commit()
+    return {"message": "File deleted"}
+
+
 @router.get("/my-purchases")
 async def my_purchases(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     rows = db.query(StudyMaterialPurchase).filter(StudyMaterialPurchase.student_id == current_user.id).all()

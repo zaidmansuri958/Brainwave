@@ -30,7 +30,7 @@ async def admin_dashboard(
 
     # Pending verifications
     pending_verifications = db.query(TeacherProfile).filter(
-        TeacherProfile.identity_verified == False
+        TeacherProfile.onboarding_status == "submitted"
     ).count()
 
     top_courses = db.query(Course).filter(Course.status == "published").order_by(
@@ -81,13 +81,26 @@ async def get_all_teachers(
     return {"teachers": result}
 
 
+def _kyc_presign(raw_url: str | None) -> str | None:
+    if not raw_url:
+        return None
+    try:
+        from app.services.storage_service import get_presigned_url
+        parts = raw_url.split("/kyc-documents/", 1)
+        if len(parts) == 2:
+            return get_presigned_url("kyc-documents", parts[1], expiry=3600)
+    except Exception:
+        pass
+    return raw_url
+
+
 @router.get("/teachers/pending-verification")
 async def pending_verifications(
     current_user: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
     profiles = db.query(TeacherProfile).filter(
-        or_(TeacherProfile.identity_verified == False, TeacherProfile.onboarding_status == "submitted")
+        TeacherProfile.onboarding_status == "submitted"
     ).all()
     result = []
     for p in profiles:
@@ -102,9 +115,9 @@ async def pending_verifications(
             "years_teaching": p.years_teaching,
             "past_employers": p.past_employers,
             "highest_degree": p.highest_degree,
-            "degree_proof_url": p.degree_proof_url,
-            "aadhaar_doc_url": p.aadhaar_doc_url,
-            "pan_doc_url": p.pan_doc_url,
+            "degree_proof_url": _kyc_presign(p.degree_proof_url),
+            "aadhaar_doc_url": _kyc_presign(p.aadhaar_doc_url),
+            "pan_doc_url": _kyc_presign(p.pan_doc_url),
             "created_at": p.created_at.isoformat()
         })
     return {"pending": result}

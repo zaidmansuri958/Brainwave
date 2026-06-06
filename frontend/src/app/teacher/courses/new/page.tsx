@@ -5,7 +5,7 @@ import { courseApi, teacherApi } from "@/lib/api";
 import { useDropzone } from "react-dropzone";
 import {
   Upload, CheckCircle, Loader2, X, FileVideo, FileText, Mic,
-  ArrowLeft, BookOpen, Rocket, Sparkles, ChevronRight,
+  ArrowLeft, ArrowRight, BookOpen, Rocket, Sparkles, ChevronRight,
   Users, DollarSign, Globe, Layers, Brain, Search, Image, Lightbulb,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -198,52 +198,51 @@ export default function CreateCoursePage() {
   return (
     <div className="bw-page min-h-screen flex flex-col">
       {/* Studio topbar */}
-      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b-2 border-black bg-[#fff4d6] px-6">
-        <div className="flex items-center gap-3">
-          <Link href="/teacher/courses" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-            My courses
+      <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b-4 border-black bg-yellow-300 px-6 shadow-[0_4px_0_#111111]">
+        <div className="flex items-center gap-4">
+          <Link href="/teacher/courses" className="flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-white shadow-sm transition-transform hover:-translate-y-1 hover:-translate-x-1 hover:shadow-md">
+            <ArrowLeft className="h-6 w-6 text-black" strokeWidth={3} />
           </Link>
-          <span className="text-gray-200">|</span>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-gray-900 truncate max-w-xs">
-              {info.title || "Untitled course"}
+          <div className="flex flex-col">
+            <span className="text-xs font-semibold text-black/70">
+              New Course
             </span>
-            {courseId && (
-              <span className="text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-100 px-2 py-0.5 rounded-full">
-                Draft
-              </span>
-            )}
+            <span className="text-xl  uppercase tracking-tight text-gray-900 truncate max-w-xs sm:max-w-md">
+              {info.title || "Untitled Course"}
+            </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           <button
             onClick={handleSaveDraft}
             disabled={saving || !info.title}
-            className="neo-secondary-btn px-4 py-2 text-sm font-bold normal-case disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-6 py-3 text-sm font-semibold text-black shadow-sm transition-all hover:-translate-y-1 hover:-translate-x-1 hover:bg-blue-100 hover:shadow-md disabled:opacity-50"
           >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save draft"}
+            {saving ? <Loader2 className="h-5 w-5 animate-spin" strokeWidth={3} /> : "Save Draft"}
           </button>
           {aiDone && (
             <button
               onClick={handlePublish}
-              className="neo-primary-btn px-4 py-2 text-sm"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-orange-500 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-1 hover:-translate-x-1 hover:shadow-md"
             >
-              <Rocket className="w-4 h-4" />
-              Publish course
+              <Rocket className="h-5 w-5" strokeWidth={3} />
+              Publish
             </button>
           )}
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative z-10">
         {/* Sidebar */}
-        <aside className="flex w-64 flex-shrink-0 flex-col border-r-2 border-black bg-white">
-          <div className="border-b-2 border-black p-4">
-            <p className="text-xs font-extrabold uppercase tracking-wider text-gray-500">Course Studio</p>
+        <aside className="flex w-72 flex-shrink-0 flex-col border-r-4 border-black bg-white">
+          <div className="border-b-4 border-black p-6 bg-amber-50">
+            <p className="text-xl  uppercase tracking-tight text-gray-900 flex items-center gap-2">
+              <Sparkles className="h-6 w-6 text-black" strokeWidth={3} />
+              Course Studio
+            </p>
           </div>
-          <nav className="flex-1 p-3 space-y-1">
+          <nav className="flex-1 p-4 space-y-4">
             {sidebarSections.map((s, i) => {
               const Icon   = s.icon;
               const status = sectionStatus(s.id);
@@ -254,39 +253,39 @@ export default function CreateCoursePage() {
                   key={s.id}
                   onClick={() => !locked && setActiveSection(s.id)}
                   disabled={locked}
-                  className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all ${
+                  className={`w-full flex items-start gap-4 px-4 py-4 rounded-xl border-4 text-left transition-all ${
                     active
-                      ? "bg-indigo-50 border border-indigo-100"
+                      ? "border-black bg-blue-100 shadow-sm"
                       : locked
-                      ? "opacity-40 cursor-not-allowed"
-                      : "hover:bg-gray-50"
+                      ? "border-transparent opacity-50 cursor-not-allowed"
+                      : "border-transparent hover:border-black hover:bg-slate-50 hover:shadow-sm"
                   }`}
                 >
                   {/* Step number / status */}
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                    status === "done"    ? "bg-emerald-100 text-emerald-600"
-                    : active            ? "bg-indigo-600 text-white"
-                    : "bg-gray-100 text-gray-500"
+                  <div className={`mt-0.5 flex h-8 w-8 items-center justify-center rounded-full border-4 flex-shrink-0 ${
+                    status === "done"    ? "border-black bg-green-100"
+                    : active            ? "border-black bg-white"
+                    : "border-black bg-white"
                   }`}>
-                    {status === "done" ? <CheckCircle className="w-3.5 h-3.5" /> : i + 1}
+                    {status === "done" ? <CheckCircle className="h-4 w-4 text-black" strokeWidth={3} /> : <span className="text-sm ">{i + 1}</span>}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-semibold truncate ${active ? "text-indigo-700" : "text-gray-900"}`}>
+                    <p className={`text-base  uppercase tracking-tight truncate ${active ? "text-black" : "text-gray-900"}`}>
                       {s.label}
                     </p>
-                    <p className="text-xs text-gray-400 truncate">{s.description}</p>
+                    <p className="text-xs font-bold text-gray-700 leading-snug mt-1 truncate">{s.description}</p>
                   </div>
-                  {!locked && !active && <ChevronRight className="w-3.5 h-3.5 text-gray-300 flex-shrink-0" />}
+                  {!locked && !active && <ChevronRight className="h-5 w-5 text-black flex-shrink-0 mt-1" strokeWidth={3} />}
                 </button>
               );
             })}
           </nav>
 
           {/* Sidebar tip */}
-          <div className="p-4 border-t border-gray-50">
-            <div className="bg-indigo-50 rounded-xl p-3">
-              <p className="text-xs font-semibold text-indigo-700 mb-1 flex items-center gap-1.5"><Lightbulb className="w-3.5 h-3.5" />Pro tip</p>
-              <p className="text-xs text-indigo-600 leading-relaxed">
+          <div className="p-4 border-t-4 border-black">
+            <div className="rounded-xl border border-gray-200 bg-yellow-300 p-5 shadow-sm">
+              <p className="text-sm font-semibold text-black mb-2 flex items-center gap-2"><Lightbulb className="h-5 w-5" strokeWidth={3} />Pro tip</p>
+              <p className="text-xs font-bold text-black/80 leading-relaxed">
                 Just record yourself teaching. Our AI handles structuring, quizzes, and even the thumbnail.
               </p>
             </div>
@@ -294,44 +293,43 @@ export default function CreateCoursePage() {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 overflow-y-auto">
-          <div className="max-w-2xl mx-auto px-8 py-8">
+        <main className="flex-1 overflow-y-auto bg-white">
+          <div className="max-w-3xl mx-auto px-8 py-12">
 
             {/* ── Section: Info ── */}
             {activeSection === "info" && (
-              <div>
-                <div className="mb-8">
-                  <h1 className="font-display font-bold text-2xl text-gray-900 mb-1">Course information</h1>
-                  <p className="text-gray-500 text-sm">The basics. Fill this in, then upload your materials.</p>
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="mb-10">
+                  <h1 className="  text-4xl uppercase tracking-tight text-gray-900 mb-3 border-b-4 border-black pb-2 inline-block">Course Information</h1>
+                  <p className="text-gray-600 font-bold text-base">The basics. Fill this in, then upload your materials.</p>
                 </div>
 
-                <div className="space-y-5">
+                <div className="rounded-xl border border-gray-200 bg-white p-8 sm:p-10 shadow-sm space-y-6">
                   <div>
-                    <label className={labelClass}>Course title <span className="text-red-500">*</span></label>
+                    <label className="mb-2 block text-sm font-semibold text-gray-800">Course title <span className="text-orange-500">*</span></label>
                     <input
                       type="text"
                       value={info.title}
                       onChange={(e) => setInfo({ ...info, title: e.target.value })}
-                      className={inputClass}
+                      className="w-full rounded-lg border border-gray-200 bg-gray-50 px-5 py-4 text-base font-bold text-gray-900 shadow-sm outline-none transition-shadow focus:bg-white focus:shadow-[6px_6px_0_#ff6b00]"
                       placeholder="e.g., Complete Physics for JEE Advanced"
                     />
                   </div>
 
                   <div>
-                    <label className={labelClass}>Description</label>
+                    <label className="mb-2 block text-sm font-semibold text-gray-800">Description</label>
                     <textarea
                       value={info.description}
                       onChange={(e) => setInfo({ ...info, description: e.target.value })}
                       rows={4}
-                      className={inputClass + " resize-none"}
+                      className="w-full resize-none rounded-lg border border-gray-200 bg-gray-50 px-5 py-4 text-base font-bold text-gray-900 shadow-sm outline-none transition-shadow focus:bg-white focus:shadow-[6px_6px_0_#ff6b00]"
                       placeholder="Describe what students will learn. AI will enhance this from your uploaded materials…"
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-6">
                     <div>
-                      <label className={labelClass}>
-                        <DollarSign className="w-3.5 h-3.5 inline -mt-0.5 mr-1 text-gray-400" />
+                      <label className="mb-2 block text-sm font-semibold text-gray-800">
                         Price (₹)
                       </label>
                       <input
@@ -339,19 +337,18 @@ export default function CreateCoursePage() {
                         value={info.price}
                         onChange={(e) => setInfo({ ...info, price: e.target.value })}
                         min="0"
-                        className={inputClass}
+                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-5 py-4 text-base font-bold text-gray-900 shadow-sm outline-none transition-shadow focus:bg-white focus:shadow-[6px_6px_0_#ff6b00]"
                         placeholder="0 = Free"
                       />
                     </div>
                     <div>
-                      <label className={labelClass}>
-                        <BookOpen className="w-3.5 h-3.5 inline -mt-0.5 mr-1 text-gray-400" />
+                      <label className="mb-2 block text-sm font-semibold text-gray-800">
                         Category
                       </label>
                       <select
                         value={info.category}
                         onChange={(e) => setInfo({ ...info, category: e.target.value })}
-                        className={inputClass}
+                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-5 py-4 text-base font-bold text-gray-900 shadow-sm outline-none cursor-pointer focus:bg-white focus:shadow-[6px_6px_0_#ff6b00]"
                       >
                         <option value="">Select category</option>
                         {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -359,16 +356,15 @@ export default function CreateCoursePage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-6">
                     <div>
-                      <label className={labelClass}>
-                        <Users className="w-3.5 h-3.5 inline -mt-0.5 mr-1 text-gray-400" />
+                      <label className="mb-2 block text-sm font-semibold text-gray-800">
                         Difficulty level
                       </label>
                       <select
                         value={info.difficulty_level}
                         onChange={(e) => setInfo({ ...info, difficulty_level: e.target.value })}
-                        className={inputClass}
+                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-5 py-4 text-base font-bold text-gray-900 shadow-sm outline-none cursor-pointer focus:bg-white focus:shadow-[6px_6px_0_#ff6b00]"
                       >
                         <option value="beginner">Beginner</option>
                         <option value="intermediate">Intermediate</option>
@@ -376,32 +372,30 @@ export default function CreateCoursePage() {
                       </select>
                     </div>
                     <div>
-                      <label className={labelClass}>
-                        <Globe className="w-3.5 h-3.5 inline -mt-0.5 mr-1 text-gray-400" />
+                      <label className="mb-2 block text-sm font-semibold text-gray-800">
                         Language
                       </label>
                       <select
                         value={info.language}
                         onChange={(e) => setInfo({ ...info, language: e.target.value })}
-                        className={inputClass}
+                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-5 py-4 text-base font-bold text-gray-900 shadow-sm outline-none cursor-pointer focus:bg-white focus:shadow-[6px_6px_0_#ff6b00]"
                       >
                         {LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
                       </select>
                     </div>
                   </div>
 
-                  <div>
-                    <label className={labelClass}>
-                      <Mic className="w-3.5 h-3.5 inline -mt-0.5 mr-1 text-gray-400" />
+                  <div className="border-t-4 border-black pt-6 mt-6">
+                    <label className="mb-2 block text-sm font-semibold text-gray-800">
                       Transcription language
                     </label>
-                    <p className="text-xs text-gray-500 mb-1.5">
+                    <p className="text-xs font-bold text-gray-500 mb-3">
                       Used only for Whisper when transcribing your video/audio. Course UI stays in your chosen language above.
                     </p>
                     <select
                       value={info.transcript_language}
                       onChange={(e) => setInfo({ ...info, transcript_language: e.target.value })}
-                      className={inputClass}
+                      className="w-full rounded-lg border border-gray-200 bg-white px-5 py-4 text-base font-bold text-gray-900 shadow-sm outline-none cursor-pointer focus:shadow-[6px_6px_0_#ff6b00]"
                     >
                       {TRANSCRIPTION_LANGS.map((l) => (
                         <option key={l.value || "auto"} value={l.value}>
@@ -414,10 +408,11 @@ export default function CreateCoursePage() {
                   <button
                     onClick={handleSaveDraft}
                     disabled={saving || !info.title}
-                    className="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-button-indigo flex items-center justify-center gap-2"
+                    className="w-full mt-8 inline-flex items-center justify-center gap-3 rounded-full border border-gray-200 bg-orange-500 px-8 py-5 text-lg font-semibold text-white shadow-md transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-lg disabled:opacity-50"
                   >
-                    {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                    Save & continue to upload →
+                    {saving && <Loader2 className="h-6 w-6 animate-spin" strokeWidth={3} />}
+                    Save & Continue
+                    <ArrowRight className="h-6 w-6" strokeWidth={3} />
                   </button>
                 </div>
               </div>
@@ -425,253 +420,179 @@ export default function CreateCoursePage() {
 
             {/* ── Section: Media ── */}
             {activeSection === "media" && (
-              <div>
-                <div className="mb-8">
-                  <h1 className="font-display font-bold text-2xl text-gray-900 mb-1">Upload course materials</h1>
-                  <p className="text-gray-500 text-sm">Add your lecture videos, PDFs, or audio recordings. AI does the rest.</p>
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="mb-10">
+                  <h1 className="  text-4xl uppercase tracking-tight text-gray-900 mb-3 border-b-4 border-black pb-2 inline-block">Upload Materials</h1>
+                  <p className="text-gray-600 font-bold text-base">Add your lecture videos, PDFs, or audio recordings. AI does the rest.</p>
                 </div>
 
-                {/* Dropzone */}
-                <div
-                  {...getRootProps()}
-                  className={`border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all ${
-                    isDragActive
-                      ? "border-indigo-500 bg-indigo-50"
-                      : "border-gray-200 hover:border-indigo-400 hover:bg-indigo-50/40 bg-white"
-                  }`}
-                >
-                  <input {...getInputProps()} />
-                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-4">
-                    <Upload className="h-6 w-6 text-indigo-600" />
-                  </div>
-                  <p className="text-gray-800 font-semibold text-base mb-1">
-                    {isDragActive ? "Drop files here" : "Drag & drop your files here"}
-                  </p>
-                  <p className="text-gray-400 text-sm">or <span className="text-indigo-600 font-medium">click to browse</span></p>
-                  <p className="text-gray-300 text-xs mt-3">
-                    Video: MP4, MOV, AVI, WebM (max 30 minutes, 2GB). Audio: MP3, WAV, M4A. Documents: PDF.
-                    Server also accepts Word/PPT uploads when encoded as doc/ppt MIME types.
-                  </p>
-                </div>
-
-                {/* File list */}
-                {files.length > 0 && (
-                  <div className="mt-4 space-y-2">
-                    {files.map((file, i) => (
-                      <div key={i} className="flex items-center gap-3 p-3.5 bg-white border border-gray-100 rounded-xl shadow-card">
-                        <div className="w-9 h-9 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0">
-                          {getFileIcon(file)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
-                          <p className="text-xs text-gray-400">{(file.size / 1024 / 1024).toFixed(1)} MB</p>
-                        </div>
-                        <button
-                          onClick={() => setFiles(files.filter((_, j) => j !== i))}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Tip */}
-                <div className="mt-5 p-4 bg-amber-50 border border-amber-100 rounded-xl flex items-start gap-3">
-                  <Lightbulb className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-semibold text-amber-800">Just record yourself teaching</p>
-                    <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
-                      Even a phone recording works. AI will transcribe, create chapters, write quizzes, and build a beautiful course automatically.
+                <div className="rounded-xl border border-gray-200 bg-white p-8 sm:p-10 shadow-sm">
+                  {/* Dropzone */}
+                  <div
+                    {...getRootProps()}
+                    className={`rounded-xl border-4 border-dashed p-12 text-center cursor-pointer transition-all ${
+                      isDragActive
+                        ? "border-[#ff6b00] bg-amber-50"
+                        : "border-black bg-gray-50 hover:border-[#ff6b00] hover:bg-white"
+                    }`}
+                  >
+                    <input {...getInputProps()} />
+                    <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-xl border border-gray-200 bg-white shadow-sm">
+                      <Upload className="h-8 w-8 text-black" strokeWidth={3} />
+                    </div>
+                    <p className=" text-2xl  uppercase tracking-tight text-gray-900 mb-2">
+                      {isDragActive ? "Drop files here" : "Drag & drop files"}
                     </p>
+                    <p className="text-sm font-bold text-gray-500 mb-6">or <span className="text-orange-500 underline">click to browse</span></p>
+                    <div className="inline-block rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-600 ">
+                      Video, Audio, PDF supported
+                    </div>
                   </div>
-                </div>
 
-                <button
-                  onClick={handleUpload}
-                  disabled={files.length === 0 || uploading || !courseId}
-                  className="w-full mt-5 bg-indigo-600 text-white py-3.5 rounded-xl font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-button-indigo flex items-center justify-center gap-2"
-                >
-                  {uploading ? (
-                    <><Loader2 className="h-4 w-4 animate-spin" /> Uploading…</>
-                  ) : (
-                    <><Sparkles className="h-4 w-4" /> Upload & start AI processing</>
+                  {/* File list */}
+                  {files.length > 0 && (
+                    <div className="mt-8 space-y-4">
+                      <h3 className="font-semibold text-gray-900 text-sm mb-4">Files to upload</h3>
+                      {files.map((file, i) => (
+                        <div key={i} className="flex items-center gap-4 rounded-xl border border-gray-200 bg-amber-50 p-4 shadow-sm">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-gray-200 bg-white  flex-shrink-0">
+                            {getFileIcon(file)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-base  uppercase tracking-tight text-gray-900 truncate">{file.name}</p>
+                            <p className="text-sm font-bold text-gray-600">{(file.size / 1024 / 1024).toFixed(1)} MB</p>
+                          </div>
+                          <button
+                            onClick={() => setFiles(files.filter((_, j) => j !== i))}
+                            className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-black hover:bg-red-500 hover:text-white transition-colors"
+                          >
+                            <X className="h-5 w-5" strokeWidth={3} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   )}
-                </button>
+
+                  <button
+                    onClick={handleUpload}
+                    disabled={files.length === 0 || uploading || !courseId}
+                    className="w-full mt-10 inline-flex items-center justify-center gap-3 rounded-full border border-gray-200 bg-blue-100 px-8 py-5 text-lg font-semibold text-black shadow-md transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-lg disabled:opacity-50"
+                  >
+                    {uploading ? (
+                      <><Loader2 className="h-6 w-6 animate-spin" strokeWidth={3} /> Uploading…</>
+                    ) : (
+                      <><Sparkles className="h-6 w-6" strokeWidth={3} /> Start AI Processing</>
+                    )}
+                  </button>
+                </div>
               </div>
             )}
 
             {/* ── Section: AI Processing ── */}
             {activeSection === "ai" && (
-              <div>
-                <div className="mb-8">
-                  <h1 className="font-display font-bold text-2xl text-gray-900 mb-1">AI is building your course</h1>
-                  <p className="text-gray-500 text-sm">This takes 5–10 minutes. You'll get an email when it's ready.</p>
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="mb-10">
+                  <h1 className="  text-4xl uppercase tracking-tight text-gray-900 mb-3 border-b-4 border-black pb-2 inline-block">AI is Building</h1>
+                  <p className="text-gray-600 font-bold text-base">This takes a few minutes. Grab a coffee.</p>
                 </div>
 
-                {/* Overall progress */}
-                <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-card mb-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-semibold text-gray-700">Overall progress</span>
-                    <span className="text-sm font-bold text-indigo-600">{aiProgress}%</span>
+                <div className="rounded-xl border border-gray-200 bg-white p-8 sm:p-10 shadow-sm">
+                  {/* Overall progress */}
+                  <div className="mb-10">
+                    <div className="flex items-end justify-between mb-4">
+                      <span className="text-lg font-semibold text-gray-900">Total Progress</span>
+                      <span className=" text-4xl  text-orange-500">{aiProgress}%</span>
+                    </div>
+                    <div className="h-6 rounded-full border border-gray-200 bg-gray-50 overflow-hidden">
+                      <div
+                        className="h-full bg-yellow-300 border-r-4 border-black transition-all duration-700"
+                        style={{ width: `${aiProgress}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-indigo-600 rounded-full transition-all duration-700"
-                      style={{ width: `${aiProgress}%` }}
-                    />
-                  </div>
-                </div>
 
-                {/* Step checklist */}
-                <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-card space-y-3">
-                  {AI_STEPS.map((s, idx) => {
-                    const done    = completedSteps.includes(s.id);
-                    const current = !done && completedSteps.length === idx;
-                    return (
-                      <div key={s.id} className={`flex items-center gap-4 p-3 rounded-xl transition-colors ${
-                        current ? "bg-indigo-50" : ""
-                      }`}>
-                        <s.icon className="w-4 h-4 text-indigo-500 flex-shrink-0" />
-                        <span className={`flex-1 text-sm ${
-                          done ? "text-gray-400 line-through" : current ? "text-indigo-700 font-medium" : "text-gray-500"
+                  {/* Step checklist */}
+                  <div className="space-y-4">
+                    {AI_STEPS.map((s, idx) => {
+                      const done    = completedSteps.includes(s.id);
+                      const current = !done && completedSteps.length === idx;
+                      return (
+                        <div key={s.id} className={`flex items-center gap-6 rounded-xl border border-gray-200 p-5 transition-colors ${
+                          current ? "bg-blue-100 shadow-sm" : done ? "bg-white" : "bg-gray-50 opacity-50"
                         }`}>
-                          {s.label}
-                        </span>
-                        {done ? (
-                          <CheckCircle className="h-5 w-5 text-emerald-500 flex-shrink-0" />
-                        ) : current ? (
-                          <Loader2 className="h-5 w-5 text-indigo-600 animate-spin flex-shrink-0" />
-                        ) : (
-                          <div className="h-5 w-5 rounded-full border-2 border-gray-200 flex-shrink-0" />
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {aiDone && (
-                  <div className="mt-4 p-4 bg-emerald-50 border border-emerald-100 rounded-xl text-center">
-                    <p className="text-emerald-700 font-semibold">Done! Your course is ready to review.</p>
-                    <button
-                      onClick={() => setActiveSection("publish")}
-                      className="mt-3 text-sm font-semibold text-indigo-600 hover:text-indigo-700"
-                    >
-                      Continue to publish →
-                    </button>
+                          <div className={`flex h-12 w-12 items-center justify-center rounded-[14px] border border-gray-200 bg-white  flex-shrink-0 ${done ? "text-green-400" : "text-black"}`}>
+                            {done ? <CheckCircle className="h-6 w-6" strokeWidth={3} /> : <s.icon className="h-6 w-6" strokeWidth={3} />}
+                          </div>
+                          <span className={`flex-1 text-base font-semibold ${
+                            done ? "line-through text-gray-500" : "text-gray-900"
+                          }`}>
+                            {s.label}
+                          </span>
+                          {current && <Loader2 className="h-6 w-6 animate-spin text-black flex-shrink-0" strokeWidth={3} />}
+                        </div>
+                      );
+                    })}
                   </div>
-                )}
+
+                  {aiDone && (
+                    <div className="mt-10 rounded-xl border border-gray-200 bg-green-100 p-6 shadow-sm text-center">
+                      <p className=" text-2xl  uppercase tracking-tight text-black mb-4">Course is Ready!</p>
+                      <button
+                        onClick={() => setActiveSection("publish")}
+                        className="inline-flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-8 py-4 text-base font-semibold text-black shadow-sm transition-transform hover:-translate-y-1 hover:shadow-md"
+                      >
+                        Continue to Publish <ArrowRight className="h-5 w-5" strokeWidth={3} />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
             {/* ── Section: Publish ── */}
             {activeSection === "publish" && (
-              <div>
-                <div className="mb-8">
-                  <h1 className="font-display font-bold text-2xl text-gray-900 mb-1">Ready to go live?</h1>
-                  <p className="text-gray-500 text-sm">Review the AI-generated content, then publish to 50,000+ students.</p>
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="mb-10">
+                  <h1 className="  text-4xl uppercase tracking-tight text-gray-900 mb-3 border-b-4 border-black pb-2 inline-block">Ready to Publish</h1>
+                  <p className="text-gray-600 font-bold text-base">Review the AI-generated content, then launch to students.</p>
                 </div>
 
-                {/* Summary card */}
-                <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-card mb-6">
-                  <h3 className="font-semibold text-gray-900 mb-4">Course summary</h3>
-                  <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-xl border border-gray-200 bg-white p-8 sm:p-10 shadow-sm">
+                  <h3 className="text-xl  uppercase tracking-tight text-gray-900 mb-6 border-b-4 border-black pb-2 inline-block">Summary</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
                     {[
-                      { label: "Title",      value: info.title || "–" },
-                      { label: "Category",   value: info.category || "Not set" },
-                      { label: "Price",      value: info.price === "0" ? "Free" : `₹${info.price}` },
-                      { label: "Level",      value: info.difficulty_level },
-                      { label: "Language",   value: info.language },
-                      { label: "Files",      value: `${files.length} uploaded` },
+                      { label: "Title",      value: info.title || "–", color: "bg-blue-100" },
+                      { label: "Category",   value: info.category || "Not set", color: "bg-amber-50" },
+                      { label: "Price",      value: info.price === "0" ? "Free" : `₹${info.price}`, color: "bg-green-100" },
+                      { label: "Level",      value: info.difficulty_level, color: "bg-pink-100" },
                     ].map((item) => (
-                      <div key={item.label} className="p-3 bg-gray-50 rounded-xl">
-                        <p className="text-xs text-gray-400 mb-0.5">{item.label}</p>
-                        <p className="text-sm font-semibold text-gray-900 truncate">{item.value}</p>
+                      <div key={item.label} className={`rounded-xl border border-gray-200 ${item.color} p-5 shadow-sm`}>
+                        <p className="text-xs font-semibold text-black/60 mb-1">{item.label}</p>
+                        <p className="text-lg  uppercase tracking-tight text-black truncate">{item.value}</p>
                       </div>
                     ))}
                   </div>
-                </div>
 
-                <div className="space-y-3">
-                  <button
-                    onClick={() => courseId && router.push(`/teacher/courses/${courseId}/edit`)}
-                    className="w-full py-3.5 rounded-xl font-semibold text-sm border-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300 transition-all"
-                  >
-                    Review & edit AI-generated structure
-                  </button>
-                  <button
-                    onClick={handlePublish}
-                    className="w-full py-3.5 rounded-xl font-semibold text-sm bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-button-indigo flex items-center justify-center gap-2"
-                  >
-                    <Rocket className="w-4 h-4" />
-                    Publish course now
-                  </button>
+                  <div className="flex flex-col gap-4">
+                    <button
+                      onClick={() => courseId && router.push(`/teacher/courses/${courseId}/edit`)}
+                      className="w-full inline-flex items-center justify-center gap-3 rounded-full border border-gray-200 bg-white px-8 py-5 text-lg font-semibold text-black shadow-sm transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-md"
+                    >
+                      Review & Edit Details
+                    </button>
+                    <button
+                      onClick={handlePublish}
+                      className="w-full inline-flex items-center justify-center gap-3 rounded-full border border-gray-200 bg-orange-500 px-8 py-5 text-lg font-semibold text-white shadow-md transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-sm"
+                    >
+                      <Rocket className="h-6 w-6" strokeWidth={3} />
+                      Publish Now
+                    </button>
+                  </div>
                 </div>
-
-                <p className="text-xs text-center text-gray-400 mt-4">
-                  You can unpublish or edit your course at any time after publishing.
-                </p>
               </div>
             )}
           </div>
         </main>
-
-        {/* Right panel: live preview */}
-        <aside className="w-72 bg-white border-l border-gray-100 hidden xl:flex flex-col">
-          <div className="p-5 border-b border-gray-50">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Live preview</p>
-          </div>
-          <div className="flex-1 overflow-y-auto p-5">
-            {/* Course preview card */}
-            <div className="bg-gray-50 rounded-2xl border border-gray-100 overflow-hidden mb-5">
-              <div className="aspect-video bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center">
-                <BookOpen className="w-10 h-10 text-indigo-300" />
-              </div>
-              <div className="p-4">
-                <p className="font-display font-bold text-gray-900 text-sm leading-snug mb-1 line-clamp-2">
-                  {info.title || "Your course title"}
-                </p>
-                <p className="text-xs text-gray-400 mb-3">
-                  {info.category || "Category"} · {info.difficulty_level}
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-gray-900 text-sm">
-                    {info.price === "0" ? "Free" : info.price ? `₹${info.price}` : "₹0"}
-                  </span>
-                  <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg">
-                    Enroll
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Status panel */}
-            <div className="space-y-2">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Status</p>
-              {sidebarSections.map((s) => {
-                const status = sectionStatus(s.id);
-                return (
-                  <div key={s.id} className="flex items-center gap-2.5 py-2">
-                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                      status === "done"    ? "bg-emerald-500"
-                      : status === "current" ? "bg-indigo-500 animate-pulse"
-                      : "bg-gray-200"
-                    }`} />
-                    <span className={`text-xs ${
-                      status === "done"    ? "text-gray-500 line-through"
-                      : status === "current" ? "text-indigo-700 font-medium"
-                      : "text-gray-400"
-                    }`}>
-                      {s.label}
-                    </span>
-                    {status === "done" && <CheckCircle className="w-3 h-3 text-emerald-500 ml-auto" />}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </aside>
       </div>
     </div>
   );

@@ -1,67 +1,38 @@
-"use client";
-
-import { motion } from "framer-motion";
-import { BarChart3, Brain, GraduationCap, Shield, Sparkles, Video } from "lucide-react";
-
-const coreModules = [
-  {
-    title: "Create",
-    description: "Teacher uploads become polished learning products with AI-generated structure, summaries, quizzes, and thumbnails.",
-    icon: Sparkles,
-    accentClass: "bg-[#ebebff] text-[#1a1aff]",
-  },
-  {
-    title: "Teach",
-    description: "Live sessions, doubt workflows, curriculum tools, and command-center dashboards bring stronger creator control.",
-    icon: GraduationCap,
-    accentClass: "bg-[#ebebff] text-[#1a1aff]",
-  },
-  {
-    title: "Learn",
-    description: "Students get less clutter and more guidance: resume points, practice shortcuts, AI support, and clear progress.",
-    icon: Brain,
-    accentClass: "bg-[#ebebff] text-[#1a1aff]",
-  },
-  {
-    title: "Track",
-    description: "Analytics, risk signals, payouts, and completion visibility now sit inside denser, more legible panels.",
-    icon: BarChart3,
-    accentClass: "bg-[#ebebff] text-[#1a1aff]",
-  },
-  {
-    title: "Earn",
-    description: "Pricing, payouts, promotions, and trust mechanics feel more premium and transparent for both teachers and students.",
-    icon: Shield,
-    accentClass: "bg-[#ebebff] text-[#1a1aff]",
-  },
-  {
-    title: "Connect",
-    description: "Community, live classes, AI tutor entry points, and notifications become first-class, clearly surfaced experiences.",
-    icon: Video,
-    accentClass: "bg-[#ebebff] text-[#1a1aff]",
-  },
+﻿"use client";
+import { Bot, Video, Brain, Users, Award, BarChart3 } from "lucide-react";
+const features = [
+  { icon: Bot, title: "AI-Powered Learning", desc: "Personalised course recommendations, smart summaries, and AI tutor 24/7.", color: "bg-violet-50 text-violet-600" },
+  { icon: Video, title: "Live Classes & Recordings", desc: "Join interactive live classes and access recordings anytime, anywhere.", color: "bg-orange-50 text-orange-500" },
+  { icon: Brain, title: "Smart Quizzes & Assessments", desc: "AI-generated quizzes with instant feedback to track your progress.", color: "bg-blue-50 text-blue-600" },
+  { icon: Users, title: "Doubt Sessions", desc: "Book 1-on-1 or group sessions with experts and clear your doubts.", color: "bg-green-50 text-green-600" },
+  { icon: BarChart3, title: "Community & Discussions", desc: "Connect with learners, ask questions, and grow together.", color: "bg-pink-50 text-pink-600" },
+  { icon: Award, title: "Certificates & Achievements", desc: "Earn verified certificates and showcase your skills with confidence.", color: "bg-amber-50 text-amber-600" },
 ];
-
 export function FeaturesSection() {
   return (
-    <section className="bw-shell py-10">
-      <div className="mb-6 text-center">
-        <p className="bw-kicker">Feature Stack</p>
-        <h2 className="mt-2 font-display text-4xl uppercase text-ink-heading">Built for standout learning outcomes</h2>
-      </div>
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-        {coreModules.map((module, index) => {
-          const Icon = module.icon;
-          return (
-            <motion.div key={module.title} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.35, delay: index * 0.05 }} className={index === 2 ? "rounded-[24px] border-2 border-black bg-[#111111] p-6 text-white shadow-[5px_5px_0_#111111]" : "bw-card p-6"}>
-              <div className={`inline-flex rounded-[14px] border-2 border-black p-3 ${index === 2 ? "bg-[#ffe500] text-black" : module.accentClass}`}>
+    <section className="py-16 bg-white">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 text-sm font-semibold text-violet-600 mb-3">
+            <span className="h-px w-6 bg-violet-300" /> Why Learnova? <span className="h-px w-6 bg-violet-300" />
+          </div>
+          <h2 className="text-3xl font-extrabold text-gray-900">
+            Everything You Need to <span className="text-violet-600">Succeed</span>
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {features.map(({ icon: Icon, title, desc, color }) => (
+            <div key={title} className="flex gap-4 p-5 rounded-2xl hover:bg-gray-50 transition-colors">
+              <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${color}`}>
                 <Icon className="h-5 w-5" />
               </div>
-              <h3 className={`mt-4 font-display text-xl font-semibold uppercase ${index === 2 ? "text-white" : "text-ink-heading"}`}>{module.title}</h3>
-              <p className={`mt-2 text-sm leading-7 ${index === 2 ? "text-white/80" : "text-ink-body"}`}>{module.description}</p>
-            </motion.div>
-          );
-        })}
+              <div>
+                <h3 className="text-sm font-bold text-gray-900 mb-1">{title}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">{desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );

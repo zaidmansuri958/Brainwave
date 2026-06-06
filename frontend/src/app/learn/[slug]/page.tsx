@@ -50,11 +50,11 @@ function LearnLessonList({
   onPickLesson?: () => void;
 }) {
   return (
-    <div className="flex-1 overflow-y-auto min-h-0">
+    <div className="flex-1 overflow-y-auto min-h-0 bg-white">
       {chapters.map((chapter: Chapter) => (
           <div key={chapter.id}>
-            <div className="sticky top-0 z-10 border-b border-slate-200 bg-[#fcf7f1] px-4 py-2.5">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{chapter.title}</p>
+            <div className="sticky top-0 z-10 border-b-4 border-black bg-yellow-300 px-5 py-3">
+              <p className="text-xs font-semibold text-black">{chapter.title}</p>
             </div>
             {(chapter.lessons || []).map((lesson: any) => {
               const lessonProgress = progressMap[lesson.id];
@@ -66,7 +66,7 @@ function LearnLessonList({
               const needQuiz = meta && !meta.unlocked && meta.required_quiz_id;
 
               return (
-                <div key={lesson.id} className="w-full">
+                <div key={lesson.id} className="w-full border-b-2 border-black/10 last:border-b-0">
                   <button
                     type="button"
                     onClick={() => {
@@ -76,41 +76,43 @@ function LearnLessonList({
                       onPickLesson?.();
                     }}
                     disabled={!unlocked}
-                    className={`w-full border-l-2 px-4 py-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-                      isActive ? "border-l-indigo-500 bg-indigo-50" : "border-l-transparent hover:bg-[#fcf7f1]"
+                    className={`w-full border-l-8 px-5 py-4 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                      isActive ? "border-l-black bg-blue-100" : "border-l-transparent hover:bg-slate-100"
                     }`}
                   >
-                    <div className="flex-shrink-0 mt-0.5">
-                      {!unlocked ? (
-                        <Lock className="h-4 w-4 text-amber-500/80" />
-                      ) : isDone ? (
-                        <CheckCircle className="h-4 w-4 text-emerald-500" />
-                      ) : isActive ? (
-                        <Play className="h-4 w-4 fill-indigo-500 text-indigo-500" />
-                      ) : (
-                        <div className="h-4 w-4 rounded-full border border-slate-700" />
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <p
-                        className={`text-xs font-medium leading-snug ${
-                          isActive ? "text-indigo-700" : isDone ? "text-slate-400" : "text-slate-600"
-                        }`}
-                      >
-                        {lesson.title}
-                      </p>
-                      {lesson.duration_seconds && (
-                        <p className="mt-0.5 text-[10px] text-slate-400">{Math.floor(lesson.duration_seconds / 60)}m</p>
-                      )}
+                    <div className="flex items-start gap-4">
+                      <div className="flex-shrink-0 mt-0.5">
+                        {!unlocked ? (
+                          <Lock className="h-5 w-5 text-gray-400" strokeWidth={3} />
+                        ) : isDone ? (
+                          <CheckCircle className="h-5 w-5 text-black fill-[#7dde92]" strokeWidth={2} />
+                        ) : isActive ? (
+                          <Play className="h-5 w-5 fill-black text-black" strokeWidth={2} />
+                        ) : (
+                          <div className="h-5 w-5 rounded-full border border-gray-200" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p
+                          className={`text-sm font-bold uppercase tracking-wide leading-snug ${
+                            isActive ? "text-black" : isDone ? "text-gray-500" : "text-gray-800"
+                          }`}
+                        >
+                          {lesson.title}
+                        </p>
+                        {lesson.duration_seconds && (
+                          <p className="mt-1 text-[10px] font-semibold text-gray-500">{Math.floor(lesson.duration_seconds / 60)}m</p>
+                        )}
+                      </div>
                     </div>
                   </button>
                   {needQuiz && (
-                    <div className="px-4 pb-2 -mt-1">
+                    <div className="px-5 pb-3 bg-white">
                       <Link
                         href={`/courses/${courseSlug}/quiz/${meta.required_quiz_id}`}
-                        className="text-[10px] font-semibold text-amber-700 underline underline-offset-2 hover:text-amber-800"
+                        className="inline-block text-[10px] font-semibold text-white bg-red-500 border border-gray-200 px-3 py-1 rounded-full  hover:-translate-y-0.5 transition-transform"
                       >
-                        Pass previous chapter quiz to unlock →
+                        Pass quiz to unlock →
                       </Link>
                     </div>
                   )}
@@ -220,10 +222,11 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col bg-white">
         <Navbar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 border-t-transparent" />
+        <div className="flex-1 flex items-center justify-center relative">
+          <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.05] pointer-events-none mix-blend-overlay"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-8 border-black border-t-[#ffe500] shadow-sm" />
         </div>
       </div>
     );
@@ -235,22 +238,25 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
       (error as Error)?.message ||
       "Something went wrong loading this course.";
     return (
-      <div className="min-h-screen flex flex-col bg-[#FAFAF9]">
+      <div className="min-h-screen flex flex-col bg-white">
         <Navbar />
-        <div className="flex-1 flex flex-col items-center justify-center px-4 py-16 text-center max-w-md mx-auto">
-          <p className="text-gray-900 font-semibold text-lg">We couldn&apos;t load this course</p>
-          <p className="text-gray-600 text-sm mt-2">{typeof msg === "string" ? msg : "Try again in a moment."}</p>
-          <div className="flex gap-3 mt-8">
-            <button
-              type="button"
-              onClick={() => refetch()}
-              className="rounded-xl bg-indigo-600 text-white px-5 py-2.5 text-sm font-semibold shadow-button-indigo"
-            >
-              Retry
-            </button>
-            <Link href="/dashboard" className="rounded-xl border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-800">
-              Back to dashboard
-            </Link>
+        <div className="flex-1 flex flex-col items-center justify-center px-4 py-16 text-center max-w-lg mx-auto relative">
+          <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.05] pointer-events-none mix-blend-overlay"></div>
+          <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-10 relative z-10 w-full">
+            <p className="text-black   text-3xl uppercase tracking-tighter">We couldn't load this course</p>
+            <p className="text-gray-600 font-bold text-sm  mt-4">{typeof msg === "string" ? msg : "Try again in a moment."}</p>
+            <div className="flex flex-col sm:flex-row gap-4 mt-8">
+              <button
+                type="button"
+                onClick={() => refetch()}
+                className="flex-1 rounded-full bg-yellow-300 border border-gray-200 px-6 py-4 text-sm font-semibold text-black shadow-sm hover:-translate-y-1 hover:shadow-md transition-transform"
+              >
+                Retry
+              </button>
+              <Link href="/dashboard" className="flex-1 rounded-full border border-gray-200 bg-white px-6 py-4 text-sm font-semibold text-black shadow-sm hover:-translate-y-1 hover:shadow-md transition-transform block text-center">
+                Back
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -259,100 +265,112 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
 
   if (!course) {
     return (
-      <div className="min-h-screen flex flex-col bg-[#FAFAF9]">
+      <div className="min-h-screen flex flex-col bg-white">
         <Navbar />
-        <div className="flex-1 flex flex-col items-center justify-center px-4 py-16 text-center">
-          <p className="text-gray-900 font-semibold text-lg">Course not found</p>
-          <p className="text-gray-600 text-sm mt-2">This course may have been removed or the link is incorrect.</p>
-          <Link href="/courses" className="mt-8 rounded-xl bg-indigo-600 text-white px-5 py-2.5 text-sm font-semibold">
-            Browse courses
-          </Link>
+        <div className="flex-1 flex flex-col items-center justify-center px-4 py-16 text-center relative">
+          <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.05] pointer-events-none mix-blend-overlay"></div>
+          <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-10 relative z-10 w-full max-w-md">
+            <p className="text-black   text-3xl uppercase tracking-tighter">Course not found</p>
+            <p className="text-gray-600 font-bold text-sm  mt-4">This course may have been removed or the link is incorrect.</p>
+            <Link href="/courses" className="mt-8 block w-full rounded-full bg-yellow-300 border border-gray-200 px-6 py-4 text-sm font-semibold text-black shadow-sm hover:-translate-y-1 hover:shadow-md transition-transform">
+              Browse courses
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
 
   const sidebarProgressHeader = (
-    <div className="border-b border-slate-200 p-4">
-      <div className="mb-2 flex justify-between text-xs text-slate-500">
-        <span>Your Progress</span>
-        <span className="font-semibold text-slate-950">{overallProgress}%</span>
+    <div className="border-b-4 border-black p-5 bg-blue-100">
+      <div className="mb-3 flex justify-between items-center text-sm font-semibold text-black">
+        <span>Progress</span>
+        <span className="bg-white border border-gray-200 px-3 py-1 rounded-full">{overallProgress}%</span>
       </div>
-      <div className="h-1.5 rounded-full bg-slate-100">
+      <div className="h-4 rounded-full bg-white border border-gray-200 overflow-hidden relative">
         <div
-          className="h-1.5 rounded-full bg-gradient-to-r from-indigo-500 to-sky-500 transition-all"
+          className="absolute top-0 left-0 bottom-0 bg-yellow-300 border-r-2 border-black transition-all"
           style={{ width: `${overallProgress}%` }}
         />
       </div>
-      <p className="mt-1.5 text-[11px] text-slate-400">
+      <p className="mt-3 text-[10px] font-semibold text-black bg-white/50 px-2 py-1 rounded-md inline-block">
         {completedCount} of {totalLessons} lessons completed
       </p>
     </div>
   );
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="bw-shell">
-        <div className="bw-band mb-4 flex items-center gap-3 px-4 py-3">
-        <Link href="/dashboard" className="shrink-0 rounded-full bg-white p-2 text-slate-500 transition-colors hover:text-slate-950">
-          <ChevronLeft className="h-5 w-5" />
-        </Link>
-        <h1 className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-950">{course.title}</h1>
-        <div className="hidden shrink-0 items-center gap-1.5 text-xs text-slate-500 md:flex">
-          <span className="font-semibold text-slate-950">{overallProgress}%</span> complete
+    <div className="min-h-screen flex flex-col bg-white relative">
+      <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.05] pointer-events-none mix-blend-overlay"></div>
+      
+      <div className="bw-shell py-4 lg:py-6 relative z-10">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-gray-200 rounded-xl bg-white p-4 shadow-md">
+          <div className="flex items-center gap-4">
+            <Link href="/dashboard" className="shrink-0 rounded-full border border-gray-200 bg-yellow-300 p-2 sm:p-3 text-black transition-transform hover:-translate-y-1 ">
+              <ChevronLeft className="h-5 w-5" strokeWidth={3} />
+            </Link>
+            <div>
+              <h1 className="text-xl sm:text-2xl  uppercase tracking-tight text-black line-clamp-1">{course.title}</h1>
+              <div className="hidden shrink-0 items-center gap-2 text-xs font-semibold text-gray-500 md:flex mt-1">
+                <span className="text-black bg-green-100 px-2 py-0.5 rounded border border-black">{overallProgress}%</span> complete
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
+            <button
+              type="button"
+              className="flex-1 sm:flex-none justify-center rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-black md:hidden  flex items-center gap-2"
+              onClick={() => setLessonDrawerOpen(true)}
+              aria-expanded={lessonDrawerOpen}
+              aria-controls="learn-lesson-drawer"
+            >
+              <ListVideo className="h-4 w-4" strokeWidth={3} />
+              Lessons
+            </button>
+            <Link
+              href={`/learn/${params.slug}/chat`}
+              className="flex-1 sm:flex-none justify-center flex items-center gap-2 rounded-full border border-gray-200 bg-black px-4 py-2 text-xs font-semibold text-yellow-400 hover:-translate-y-1 transition-transform "
+            >
+              <Sparkles className="h-4 w-4" strokeWidth={3} /> <span className="hidden sm:inline">AI Tutor</span>
+            </Link>
+            <Link
+              href={`/learn/${params.slug}/community`}
+              className="hidden sm:flex rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-black hover:-translate-y-1 transition-transform  items-center gap-2"
+            >
+              <Users className="h-4 w-4" strokeWidth={3} /> Community
+            </Link>
+          </div>
         </div>
-        <button
-          type="button"
-          className="shrink-0 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 md:hidden"
-          onClick={() => setLessonDrawerOpen(true)}
-          aria-expanded={lessonDrawerOpen}
-          aria-controls="learn-lesson-drawer"
-        >
-          <ListVideo className="h-4 w-4" />
-          Lessons
-        </button>
-        <div className="flex items-center gap-2 shrink-0">
-          <Link
-            href={`/learn/${params.slug}/chat`}
-            className="flex items-center gap-1.5 rounded-full bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white"
-          >
-            <Sparkles className="h-3.5 w-3.5" /> <span className="hidden sm:inline">AI Tutor</span>
-          </Link>
-          <Link
-            href={`/learn/${params.slug}/community`}
-            className="hidden rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 sm:flex"
-          >
-            <Users className="h-3.5 w-3.5" /> Community
-          </Link>
-        </div>
-      </div>
       </div>
 
       {user?.role === "student" && accessData?.access && (
-        <div className="bw-shell">
-        <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[1.25rem] border border-violet-200 bg-violet-50 px-4 py-2.5 text-[11px] text-violet-800">
-          <span>
-            {accessData.access.type === "lifetime" || !accessData.access.expires_at
-              ? "Enrollment: lifetime access"
-              : `Enrollment: access ends ${new Date(accessData.access.expires_at).toLocaleString()}`}
-          </span>
-          {accessData.module_lock_enabled && (
-            <span className="text-violet-700/80">
-              Modules unlock when you complete the previous chapter and pass its quiz.
+        <div className="bw-shell mb-4 relative z-10">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-gray-200 bg-pink-100 px-5 py-3 text-xs font-semibold text-black shadow-sm">
+            <span className="bg-white border border-gray-200 px-3 py-1 rounded-full">
+              {accessData.access.type === "lifetime" || !accessData.access.expires_at
+                ? "Access: Lifetime"
+                : `Ends: ${new Date(accessData.access.expires_at).toLocaleDateString()}`}
             </span>
-          )}
-        </div>
+            {accessData.module_lock_enabled && (
+              <span className="opacity-80">
+                Modules unlock upon quiz completion
+              </span>
+            )}
+          </div>
         </div>
       )}
 
-      <div className="bw-shell flex min-h-0 flex-1 gap-4 pb-6">
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white/86">
-          <div className="flex aspect-video shrink-0 items-center justify-center bg-black">
+      <div className="bw-shell flex min-h-0 flex-1 gap-6 pb-12 relative z-10">
+        
+        {/* Main Video Area */}
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+          <div className="flex aspect-video shrink-0 items-center justify-center bg-black border-b-4 border-black relative">
             {videoData?.master_url || lessonData?.video_url ? (
               <video
                 key={videoData?.master_url || lessonData?.video_url}
                 controls
-                className="w-full h-full"
+                className="w-full h-full object-cover"
                 src={videoData?.master_url || lessonData?.video_url}
                 onTimeUpdate={(e) => {
                   const video = e.currentTarget;
@@ -366,28 +384,44 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
                       .catch(handleProgressSaveFailure);
                   }
                 }}
-              />
+              >
+                {activeLessonId && (
+                  <track
+                    kind="captions"
+                    src={lessonApi.captionsUrl(activeLessonId)}
+                    srcLang={course?.transcript_language || "en"}
+                    label="Auto-generated captions"
+                    default={true}
+                  />
+                )}
+              </video>
             ) : (
-              <div className="text-center text-gray-400">
-                <Play className="h-16 w-16 mx-auto mb-4 opacity-30" />
-                <p>{lessonData ? "No video for this lesson" : "Select a lesson to start"}</p>
+              <div className="text-center text-white">
+                <div className="h-24 w-24 rounded-full border-4 border-white flex items-center justify-center mx-auto mb-6">
+                  <Play className="h-10 w-10 opacity-50 ml-2" strokeWidth={3} />
+                </div>
+                <p className="font-semibold">{lessonData ? "No video" : "Select a lesson"}</p>
               </div>
             )}
           </div>
 
           {lessonData && (
-            <div className="border-t border-slate-200 bg-white p-5">
-              <h2 className="text-base font-bold text-slate-950">{lessonData.title}</h2>
+            <div className="bg-white p-6 sm:p-8">
+              <div className="flex items-start justify-between gap-4 border-b-4 border-black pb-6 mb-6">
+                <h2 className="text-2xl sm:text-3xl  uppercase tracking-tight text-gray-900">{lessonData.title}</h2>
+              </div>
+              
               {lessonData.ai_summary && (
-                <div className="mt-3 rounded-xl border border-sky-200 bg-sky-50 p-3.5">
-                  <div className="mb-1.5 flex items-center gap-1.5">
-                    <Sparkles className="h-3.5 w-3.5 text-sky-600" />
-                    <p className="text-xs font-semibold text-sky-700">AI Summary</p>
+                <div className="rounded-lg border border-gray-200 bg-blue-100 p-5 sm:p-6 mb-8 shadow-sm">
+                  <div className="mb-4 flex items-center gap-2 border-b-2 border-black/20 pb-2 w-fit">
+                    <Sparkles className="h-5 w-5 text-black" strokeWidth={3} />
+                    <p className="text-sm font-semibold text-black">AI Summary</p>
                   </div>
-                  <p className="text-sm leading-relaxed text-slate-700">{lessonData.ai_summary}</p>
+                  <p className="text-base font-bold text-gray-900 leading-relaxed">{lessonData.ai_summary}</p>
                 </div>
               )}
-              <div className="mt-4 flex gap-3">
+              
+              <div className="flex flex-col sm:flex-row gap-4">
                 {prevLesson && (
                   <button
                     type="button"
@@ -395,9 +429,9 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
                       setCurrentLesson(prevLesson);
                       setActiveLessonId(prevLesson.id);
                     }}
-                    className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-600 transition-all hover:bg-[#f8f2eb] hover:text-slate-950"
+                    className="flex flex-1 sm:flex-none items-center justify-center gap-3 rounded-full border border-gray-200 bg-white px-6 py-4 text-xs font-semibold text-black transition-transform hover:-translate-y-1 shadow-sm"
                   >
-                    <ChevronLeft className="h-4 w-4" /> Previous
+                    <ChevronLeft className="h-5 w-5" strokeWidth={3} /> Prev
                   </button>
                 )}
                 {nextLesson && (
@@ -407,9 +441,9 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
                       setCurrentLesson(nextLesson);
                       setActiveLessonId(nextLesson.id);
                     }}
-                    className="ml-auto flex items-center gap-2 rounded-full bg-slate-950 px-4 py-2 text-sm text-white transition hover:bg-indigo-600"
+                    className="flex flex-1 sm:flex-none items-center justify-center sm:ml-auto gap-3 rounded-full border border-gray-200 bg-yellow-300 px-8 py-4 text-xs font-semibold text-black transition-transform hover:-translate-y-1 shadow-sm"
                   >
-                    Next Lesson <ChevronRight className="h-4 w-4" />
+                    Next <ChevronRight className="h-5 w-5" strokeWidth={3} />
                   </button>
                 )}
               </div>
@@ -417,7 +451,8 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
           )}
         </div>
 
-        <div className="hidden min-h-0 w-72 flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white md:flex lg:w-80">
+        {/* Sidebar Lessons */}
+        <div className="hidden min-h-0 w-72 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white md:flex lg:w-80 shadow-sm">
           {sidebarProgressHeader}
           <LearnLessonList
             chapters={chapters}
@@ -433,44 +468,48 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
           />
         </div>
 
-        <div className="hidden min-h-0 w-[360px] flex-col overflow-hidden rounded-[2rem] border border-[#e2e5ec] bg-white lg:flex">
-          <div className="border-b border-[#e2e5ec] p-4">
+        {/* Right Sidebar AI Tutor (Desktop Only) */}
+        <div className="hidden min-h-0 w-[360px] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white lg:flex shadow-sm">
+          <div className="border-b-4 border-black p-5 bg-green-100">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-ink-heading">AI Tutor</p>
-              <AIBadge label="Powered by course material" />
+              <p className="text-xl  uppercase tracking-tight text-black">AI Tutor</p>
+              <div className="bg-white border border-gray-200 rounded-full px-2 py-1 "><Sparkles className="h-4 w-4 text-black" strokeWidth={3} /></div>
             </div>
-            <div className="mt-4 flex items-center gap-3 rounded-lg bg-[#f7f8fa] p-3">
-              <ProgressRing value={overallProgress} size={56} strokeWidth={6} />
+            <div className="mt-4 flex items-center gap-4 rounded-lg border border-gray-200 bg-white p-3 ">
+              <ProgressRing value={overallProgress} size={48} strokeWidth={6} />
               <div>
-                <p className="text-xs text-ink-muted">Lesson progress</p>
-                <p className="text-sm font-semibold text-ink-heading">{completedCount} of {totalLessons} completed</p>
+                <p className="text-[10px] font-semibold text-gray-500">Progress</p>
+                <p className="text-sm  uppercase text-black">{completedCount} / {totalLessons} done</p>
               </div>
             </div>
           </div>
-          <div className="flex-1 space-y-3 overflow-y-auto p-4">
-            <div className="max-w-[85%] rounded-lg border border-[#e2e5ec] bg-white p-3 text-sm text-ink-body">
+          
+          <div className="flex-1 space-y-4 overflow-y-auto p-5 bg-slate-50">
+            <div className="max-w-[85%] rounded-lg rounded-tl-sm border border-gray-200 bg-white p-4 text-sm font-bold text-gray-800 ">
               Great work finishing this module. Want a quick recap or quiz?
             </div>
-            <div className="ml-auto max-w-[85%] rounded-lg bg-[#1a1aff] p-3 text-sm text-white">
+            <div className="ml-auto max-w-[85%] rounded-lg rounded-tr-sm border border-gray-200 bg-yellow-300 p-4 text-sm font-bold text-black ">
               Quiz me on the key definitions from this lesson.
             </div>
-            <div className="max-w-[85%] rounded-lg border border-[#e2e5ec] bg-white p-3 text-sm text-ink-body">
+            <div className="max-w-[85%] rounded-lg rounded-tl-sm border border-gray-200 bg-white p-4 text-sm font-bold text-gray-800 ">
               Sure. First question: what is gradient descent optimizing in neural training?
             </div>
           </div>
-          <div className="border-t border-[#e2e5ec] p-4">
-            <div className="mb-2 flex flex-wrap gap-2">
-              <button className="rounded-full border border-[#e2e5ec] bg-[#f7f8fa] px-3 py-1 text-xs font-medium text-ink-body">Summarize this lesson</button>
-              <button className="rounded-full border border-[#e2e5ec] bg-[#f7f8fa] px-3 py-1 text-xs font-medium text-ink-body">Quiz me</button>
+          
+          <div className="border-t-4 border-black p-5 bg-white">
+            <div className="mb-4 flex flex-wrap gap-2">
+              <button className="rounded-full border border-gray-200 bg-white hover:bg-blue-100 px-3 py-1.5 text-[10px] font-semibold text-black  transition-transform hover:-translate-y-0.5">Recap</button>
+              <button className="rounded-full border border-gray-200 bg-white hover:bg-pink-100 px-3 py-1.5 text-[10px] font-semibold text-black  transition-transform hover:-translate-y-0.5">Quiz</button>
             </div>
-            <div className="flex items-center gap-2 rounded-md border border-[#e2e5ec] px-3 py-2">
-              <input className="flex-1 bg-transparent text-sm outline-none" placeholder="Ask anything about this lesson" />
-              <button className="rounded-md bg-brand-primary p-2 text-white"><SendHorizontal className="h-4 w-4" /></button>
+            <div className="flex items-center gap-2 rounded-full border border-gray-200 p-1 pl-4 bg-slate-50 ">
+              <input className="flex-1 bg-transparent text-sm font-bold outline-none placeholder:text-gray-400" placeholder="Ask anything..." />
+              <button className="rounded-full bg-black p-3 text-white hover:bg-orange-500 transition-colors"><SendHorizontal className="h-4 w-4" strokeWidth={3} /></button>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Mobile Drawer */}
       {lessonDrawerOpen && (
         <div className="fixed inset-0 z-[100] md:hidden" role="dialog" aria-modal="true" aria-labelledby="learn-drawer-title">
           <button
@@ -481,23 +520,23 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
           />
           <div
             id="learn-lesson-drawer"
-            className="absolute bottom-0 left-0 right-0 flex max-h-[78vh] flex-col rounded-t-2xl border-t border-slate-200 bg-white shadow-2xl"
+            className="absolute bottom-0 left-0 right-0 flex max-h-[85vh] flex-col rounded-t-[32px] border-t-8 border-black bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.5)]"
           >
-            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-              <h2 id="learn-drawer-title" className="text-sm font-semibold text-slate-950">
+            <div className="flex items-center justify-between border-b-4 border-black px-6 py-4 bg-yellow-300 rounded-t-[24px]">
+              <h2 id="learn-drawer-title" className="text-xl  uppercase tracking-tight text-black">
                 Lessons
               </h2>
               <button
                 type="button"
                 onClick={() => setLessonDrawerOpen(false)}
-                className="rounded-lg p-2 text-slate-400 hover:bg-[#f8f2eb] hover:text-slate-950"
+                className="rounded-full border border-gray-200 bg-white p-2 text-black hover:bg-slate-100 "
                 aria-label="Close"
               >
-                <X className="h-5 w-5" />
+                <X className="h-5 w-5" strokeWidth={3} />
               </button>
             </div>
             {sidebarProgressHeader}
-            <div className="flex-1 overflow-y-auto min-h-0">
+            <div className="flex-1 overflow-y-auto min-h-0 bg-white">
               <LearnLessonList
                 chapters={chapters}
                 progressMap={progressMap}

@@ -95,18 +95,28 @@ export default function MockTestTakePage({ params }: { params: { paperId: string
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
           className="mx-auto max-w-xl px-4 py-16 text-center"
         >
-          <div className="mx-auto mb-6">
-            <ProgressRing value={result.score_percent} size={140} strokeWidth={10} />
+          <div className="mx-auto mb-6 flex justify-center">
+            <div className="relative rounded-full border-8 border-black bg-white p-4 shadow-sm">
+              <ProgressRing value={result.score_percent} size={140} strokeWidth={10} />
+            </div>
           </div>
-          <h1 className="font-display text-3xl text-ink-heading">Results</h1>
-          <p className="mt-3 text-sm text-ink-muted">
+          <h1 className=" text-4xl  uppercase tracking-tight text-gray-900">Results</h1>
+          <p className="mt-3 text-lg font-bold text-gray-600 uppercase tracking-widest">
             Score {result.total_score.toFixed(1)} / {result.max_score.toFixed(1)}
           </p>
-          <div className="mt-6 grid grid-cols-2 gap-3 text-left">
-            <div className="rounded-lg border border-[#e2e5ec] p-3"><p className="text-xs text-ink-muted">Correct</p><p className="text-lg font-semibold text-green-700">{Math.round(result.max_score * (result.score_percent / 100))}</p></div>
-            <div className="rounded-lg border border-[#e2e5ec] p-3"><p className="text-xs text-ink-muted">Accuracy</p><p className="text-lg font-semibold text-ink-heading">{result.score_percent.toFixed(1)}%</p></div>
+          <div className="mt-8 grid grid-cols-2 gap-4 text-left">
+            <div className="rounded-[20px] border border-gray-200 bg-green-100 p-4 shadow-sm">
+              <p className="text-xs  uppercase tracking-widest text-gray-800">Correct</p>
+              <p className="mt-2 text-2xl  text-black tabular-nums">{Math.round(result.max_score * (result.score_percent / 100))}</p>
+            </div>
+            <div className="rounded-[20px] border border-gray-200 bg-yellow-300 p-4 shadow-sm">
+              <p className="text-xs  uppercase tracking-widest text-gray-800">Accuracy</p>
+              <p className="mt-2 text-2xl  text-black tabular-nums">{result.score_percent.toFixed(1)}%</p>
+            </div>
           </div>
-          <Link href="/dashboard" className="bw-action-primary mt-10 inline-flex px-8">Back to dashboard</Link>
+          <Link href="/dashboard" className="mt-10 inline-flex w-full items-center justify-center gap-3 rounded-full border border-gray-200 bg-black px-8 py-4 text-lg  uppercase tracking-widest text-white shadow-[6px_6px_0_#ffe500] transition-all hover:-translate-y-1 hover:bg-blue-100 hover:text-black hover:shadow-sm">
+            Back to dashboard
+          </Link>
         </motion.div>
       </div>
     );
@@ -119,62 +129,67 @@ export default function MockTestTakePage({ params }: { params: { paperId: string
 
   const flatQuestions = (paper.sections || []).flatMap((s: any) => s.questions || []);
   return (
-    <div className="min-h-screen bg-white">
-      <div className="sticky top-0 z-20 border-b border-[#e2e5ec] bg-white">
-        <div className="bw-shell flex items-center justify-between py-3">
+    <div className="min-h-screen bg-white font-body">
+      <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.02] mix-blend-overlay pointer-events-none" />
+      <div className="sticky top-0 z-20 border-b-4 border-black bg-yellow-300 shadow-[0_4px_0_#111111]">
+        <div className="mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
-            <p className="text-xs text-ink-muted">Exam mode</p>
-            <h1 className="font-semibold text-ink-heading">{paper.title}</h1>
+            <p className="text-xs  uppercase tracking-widest text-gray-800 mb-1">Exam mode</p>
+            <h1 className=" text-2xl  uppercase text-gray-900">{paper.title}</h1>
           </div>
           <motion.div
             layout
-            className={`inline-flex items-center gap-2 self-start rounded-md border px-4 py-2.5 text-sm font-bold tabular-nums transition-colors ${
+            className={`inline-flex items-center gap-3 self-start rounded-full border border-gray-200 px-5 py-2 text-sm  uppercase tracking-widest shadow-sm transition-colors ${
               urgent
-                ? "border-rose-200 bg-rose-50 text-rose-800"
-                : "border-amber-200/80 bg-amber-50 text-amber-900"
+                ? "bg-orange-500 text-white"
+                : "bg-white text-black"
             }`}
           >
-            <Clock className={`h-4 w-4 shrink-0 ${urgent ? "animate-pulse" : ""}`} />
-            <span>{left !== null ? fmt(left) : "—"}</span>
-            <div className="ml-1 h-1.5 w-16 overflow-hidden rounded-full bg-white/60">
+            <Clock className={`h-5 w-5 shrink-0 ${urgent ? "animate-pulse" : ""}`} strokeWidth={3} />
+            <span className="tabular-nums text-lg">{left !== null ? fmt(left) : "—"}</span>
+            <div className="ml-2 h-2 w-20 overflow-hidden rounded-full border border-gray-200 bg-white">
               <motion.div
-                className={urgent ? "h-full rounded-full bg-rose-500" : "h-full rounded-full bg-amber-400"}
+                className={urgent ? "h-full rounded-full bg-white" : "h-full rounded-full bg-blue-100"}
                 initial={false}
                 animate={{ width: `${pct}%` }}
                 transition={{ duration: 0.35 }}
               />
             </div>
           </motion.div>
-          <p className="text-sm text-ink-muted">Question {Object.keys(answers).length} of {flatQuestions.length}</p>
         </div>
       </div>
-      <div className="bw-shell grid gap-6 py-6 lg:grid-cols-[1fr_240px]">
-        <div className="space-y-8">
+      
+      <div className="mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8 py-10 grid gap-8 lg:grid-cols-[1fr_300px] relative z-10">
+        <div className="space-y-10">
           {(paper.sections || []).map((sec: any, si: number) => (
             <motion.section
               key={sec.id}
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: si * 0.06, duration: 0.4 }}
-              className="rounded-xl border border-[#e2e5ec] bg-white p-5 sm:p-6 shadow-card"
+              className="rounded-xl border border-gray-200 bg-white p-6 sm:p-10 shadow-sm"
             >
-              <h2 className="font-display font-semibold text-gray-900 mb-4">{sec.title}</h2>
-              <div className="space-y-5">
+              <h2 className=" text-2xl  uppercase tracking-tight text-gray-900 mb-8 inline-block border-b-4 border-black pb-2">{sec.title}</h2>
+              <div className="space-y-8">
                 {(sec.questions || []).map((q: any, qi: number) => (
-                  <div key={q.id} className="border-t border-gray-100 first:border-0 first:pt-0 pt-5 first:mt-0 mt-5">
-                    <p className="text-sm text-gray-800 font-medium">
-                      {qi + 1}. {q.question_text}
+                  <div key={q.id} className="border-t-4 border-black/10 first:border-0 first:pt-0 pt-8 first:mt-0 mt-8">
+                    <p className="text-lg text-gray-900 font-bold leading-relaxed mb-4">
+                      <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-yellow-300 text-sm  mr-2 ">{qi + 1}</span> 
+                      {q.question_text}
                     </p>
-                    <div className="mt-2 space-y-2">
+                    <div className="mt-4 space-y-3">
                       {(Array.isArray(q.options) ? q.options : []).map((opt: string, oi: number) => (
                         <label
                           key={oi}
-                          className="flex cursor-pointer items-center gap-3 rounded-xl border border-transparent px-2 py-1.5 text-sm text-gray-700 transition-colors hover:border-gray-200 hover:bg-gray-50/80"
+                          className="flex cursor-pointer items-center gap-4 rounded-lg border border-gray-200 bg-white px-4 py-3 text-base font-bold text-gray-800 transition-all hover:-translate-y-1 hover:shadow-sm"
                         >
+                          <div className={`flex h-6 w-6 items-center justify-center rounded-full border border-gray-200 transition-colors ${answers[q.id] === opt ? "bg-orange-500" : "bg-white"}`}>
+                             {answers[q.id] === opt && <div className="h-2.5 w-2.5 rounded-full bg-white" />}
+                          </div>
                           <input
                             type="radio"
                             name={`q-${q.id}`}
-                            className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                            className="hidden"
                             checked={answers[q.id] === opt}
                             onChange={() => setAnswers((a) => ({ ...a, [q.id]: opt }))}
                           />
@@ -183,8 +198,8 @@ export default function MockTestTakePage({ params }: { params: { paperId: string
                       ))}
                       {(!q.options || !q.options.length) && (
                         <input
-                          className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/80 px-3 py-2.5 text-sm transition-shadow focus:border-indigo-300 focus:ring-2 focus:ring-indigo-500/20"
-                          placeholder="Your answer"
+                          className="mt-2 w-full rounded-lg border border-gray-200 bg-white px-5 py-4 text-base font-bold text-gray-900 shadow-sm outline-none transition-shadow focus:shadow-[6px_6px_0_#ff6b00]"
+                          placeholder="Type your answer here..."
                           value={answers[q.id] || ""}
                           onChange={(e) => setAnswers((a) => ({ ...a, [q.id]: e.target.value }))}
                         />
@@ -196,22 +211,29 @@ export default function MockTestTakePage({ params }: { params: { paperId: string
             </motion.section>
           ))}
         </div>
-        <aside className="h-fit rounded-xl border border-[#e2e5ec] bg-[#f7f8fa] p-4">
-          <p className="mb-3 text-sm font-semibold text-ink-heading">Question Navigator</p>
-          <div className="grid grid-cols-4 gap-2">
+        <aside className="h-fit rounded-xl border border-gray-200 bg-amber-50 p-6 sm:p-8 shadow-sm lg:sticky lg:top-32">
+          <p className="mb-6 text-sm  uppercase tracking-widest text-gray-800">Question Navigator</p>
+          <div className="flex items-center gap-2 mb-6">
+             <span className="text-xs font-bold uppercase text-gray-600"><span className="inline-block h-3 w-3 rounded-full border border-gray-200 bg-white mr-1" />Unanswered</span>
+             <span className="text-xs font-bold uppercase text-gray-600"><span className="inline-block h-3 w-3 rounded-full border border-gray-200 bg-orange-500 mr-1" />Answered</span>
+          </div>
+          <div className="grid grid-cols-4 gap-3">
             {flatQuestions.map((q: any, idx: number) => {
               const attempted = Boolean(answers[q.id]);
               return (
-                <div key={q.id} className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold ${attempted ? "bg-brand-primary text-white" : "border border-[#e2e5ec] bg-white text-ink-muted"}`}>
+                <div key={q.id} className={`flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-sm  transition-colors ${attempted ? "bg-orange-500 text-white " : "bg-white text-gray-500 hover:bg-slate-50"}`}>
                   {idx + 1}
                 </div>
               );
             })}
           </div>
-          <button type="button" disabled={submit.isPending} onClick={() => submit.mutate()} className="bw-action-primary mt-6 w-full">
-            {submit.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
-            Submit Test
-          </button>
+          <div className="mt-8 border-t-4 border-black pt-6">
+            <p className="mb-4 text-xs  uppercase tracking-widest text-gray-800">Completed: {Object.keys(answers).length} / {flatQuestions.length}</p>
+            <button type="button" disabled={submit.isPending} onClick={() => submit.mutate()} className="inline-flex w-full items-center justify-center gap-3 rounded-full border border-gray-200 bg-blue-100 px-6 py-4 text-base  uppercase tracking-widest text-black shadow-sm transition-all hover:-translate-y-1 hover:shadow-md">
+              {submit.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" strokeWidth={3} />}
+              Submit Test
+            </button>
+          </div>
         </aside>
       </div>
     </div>

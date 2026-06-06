@@ -139,6 +139,10 @@ services:
       - QDRANT_PORT=6333
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - WHISPER_MODEL=large-v3
+      - MINIO_ENDPOINT_URL=http://minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - STORAGE_PUBLIC_URL=${STORAGE_PUBLIC_URL:-http://localhost:9000}
     depends_on:
       - ollama
       - qdrant
@@ -273,6 +277,7 @@ services:
         mc mb myminio/thumbnails --ignore-existing;
         mc mb myminio/certificates --ignore-existing;
         mc mb myminio/avatars --ignore-existing;
+        mc mb myminio/kyc-documents --ignore-existing;
         mc anonymous set download myminio/thumbnails;
         mc anonymous set download myminio/course-videos;
         mc anonymous set download myminio/course-materials;

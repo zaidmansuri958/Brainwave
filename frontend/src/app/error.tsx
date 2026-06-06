@@ -15,27 +15,19 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="bw-page flex min-h-[70vh] flex-col items-center justify-center px-6 py-16">
-      <div className="neo-panel max-w-xl p-8 text-center">
-      <h1 className="font-display text-xl font-bold uppercase text-gray-900 text-center">Something went wrong</h1>
-      <p className="mt-2 max-w-md text-center text-sm text-gray-600">
-        {error.message || "An unexpected error occurred. You can try again or return home."}
-      </p>
-      <div className="mt-8 flex flex-wrap justify-center gap-3">
-        <button
-          type="button"
-          onClick={reset}
-          className="neo-primary-btn px-5 py-2.5 text-sm"
-        >
-          Try again
-        </button>
-        <Link
-          href="/"
-          className="neo-secondary-btn px-5 py-2.5 text-sm"
-        >
-          Home
-        </Link>
-      </div>
+    <div className="flex min-h-[70vh] flex-col items-center justify-center px-6 py-16 bg-gray-50">
+      <div className="card max-w-md w-full p-8 text-center">
+        <div className="h-12 w-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+          <span className="text-2xl">⚠️</span>
+        </div>
+        <h1 className="text-lg font-bold text-gray-900">Something went wrong</h1>
+        <p className="mt-2 text-sm text-gray-500">
+          {error.message || "An unexpected error occurred. Try again or return home."}
+        </p>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <button type="button" onClick={reset} className="btn btn-md btn-primary">Try again</button>
+          <Link href="/" className="btn btn-md btn-secondary">Go home</Link>
+        </div>
       </div>
     </div>
   );

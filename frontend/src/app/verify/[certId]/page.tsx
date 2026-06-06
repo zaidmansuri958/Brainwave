@@ -1,7 +1,8 @@
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { CheckCircle, XCircle, Award } from "lucide-react";
+import { CheckCircle, XCircle, Award, Download } from "lucide-react";
 import { Metadata } from "next";
+import Link from "next/link";
 
 async function getCertificate(certId: string) {
   try {
@@ -17,10 +18,10 @@ async function getCertificate(certId: string) {
 
 export async function generateMetadata({ params }: { params: { certId: string } }): Promise<Metadata> {
   const cert = await getCertificate(params.certId);
-  if (!cert.valid) return { title: "Invalid Certificate | Brainwave.ai" };
+  if (!cert.valid) return { title: "Invalid Certificate | Brainwave" };
   return {
-    title: `Certificate: ${cert.course_name} | Brainwave.ai`,
-    description: `${cert.student_name} completed ${cert.course_name} on Brainwave.ai`,
+    title: `Certificate: ${cert.course_name} | Brainwave`,
+    description: `${cert.student_name} completed ${cert.course_name} on Brainwave`,
   };
 }
 
@@ -28,79 +29,69 @@ export default async function CertificateVerifyPage({ params }: { params: { cert
   const cert = await getCertificate(params.certId);
 
   return (
-    <div className="bw-page flex min-h-screen flex-col">
+    <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
       <main className="flex-1 flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-xl">
+        <div className="w-full max-w-md">
           {cert.valid ? (
-            <div className="overflow-hidden rounded-[28px] border-2 border-black bg-white shadow-[6px_6px_0_#111111]">
-              <div className="border-b-2 border-black bg-[#dff8df] p-6 text-center text-[#111111]">
-                <CheckCircle className="h-16 w-16 mx-auto mb-3" />
-                <h1 className="font-display text-2xl font-bold uppercase">Certificate Verified</h1>
-                <p className="mt-1 font-medium">This certificate is authentic and issued by Brainwave.ai</p>
+            <div className="card overflow-hidden">
+              <div className="bg-green-50 border-b border-green-100 p-6 text-center">
+                <div className="h-14 w-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <CheckCircle className="h-7 w-7 text-green-600" />
+                </div>
+                <h1 className="text-lg font-bold text-green-800">Certificate Verified</h1>
+                <p className="text-sm text-green-600 mt-1">This certificate is authentic and issued by Brainwave</p>
               </div>
 
-              <div className="p-6 space-y-4">
-                <div className="border-b-2 border-black pb-4 text-center">
-                  <Award className="h-10 w-10 text-amber-500 mx-auto mb-2" />
-                  <h2 className="font-display text-xl font-bold uppercase text-gray-900">
-                    Certificate of Completion
-                  </h2>
+              <div className="p-6">
+                <div className="text-center mb-5 pb-5 border-b border-gray-100">
+                  <div className="h-10 w-10 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <Award className="h-5 w-5 text-yellow-600" />
+                  </div>
+                  <h2 className="text-base font-bold text-gray-900">Certificate of Completion</h2>
                 </div>
 
                 <div className="space-y-3">
-                  <InfoRow label="Student Name" value={cert.student_name} />
-                  <InfoRow label="Course" value={cert.course_name} />
-                  <InfoRow label="Instructor" value={cert.teacher_name} />
-                  <InfoRow
-                    label="Issue Date"
-                    value={new Date(cert.issued_at).toLocaleDateString("en-IN", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  />
-                  <InfoRow label="Certificate ID" value={params.certId.slice(0, 16) + "..."} mono />
+                  {[
+                    { label: "Student", value: cert.student_name },
+                    { label: "Course", value: cert.course_name },
+                    { label: "Instructor", value: cert.teacher_name },
+                    { label: "Issued", value: new Date(cert.issued_at).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) },
+                    { label: "Certificate ID", value: params.certId.slice(0, 16) + "...", mono: true },
+                  ].map(({ label, value, mono }) => (
+                    <div key={label} className="flex items-start justify-between gap-4 py-2.5 border-b border-gray-50 last:border-0">
+                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider shrink-0">{label}</span>
+                      <span className={`text-sm font-medium text-gray-800 text-right ${mono ? "font-mono" : ""}`}>{value}</span>
+                    </div>
+                  ))}
                 </div>
 
                 {cert.pdf_url && (
-                  <a
-                    href={cert.pdf_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="neo-primary-btn mt-4 flex w-full py-3"
-                  >
-                    Download Certificate PDF
+                  <a href={cert.pdf_url} target="_blank" rel="noopener noreferrer"
+                    className="btn btn-md btn-primary w-full justify-center mt-5">
+                    <Download className="h-4 w-4" /> Download PDF
                   </a>
                 )}
               </div>
             </div>
           ) : (
-            <div className="overflow-hidden rounded-[28px] border-2 border-black bg-white shadow-[6px_6px_0_#111111]">
-              <div className="border-b-2 border-black bg-[#ffd6d6] p-6 text-center text-[#111111]">
-                <XCircle className="h-16 w-16 mx-auto mb-3" />
-                <h1 className="font-display text-2xl font-bold uppercase">Invalid Certificate</h1>
-                <p className="mt-1 font-medium">This certificate could not be verified</p>
+            <div className="card overflow-hidden">
+              <div className="bg-red-50 border-b border-red-100 p-6 text-center">
+                <div className="h-14 w-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <XCircle className="h-7 w-7 text-red-500" />
+                </div>
+                <h1 className="text-lg font-bold text-red-800">Invalid Certificate</h1>
+                <p className="text-sm text-red-500 mt-1">This certificate could not be verified</p>
               </div>
-              <div className="p-6 text-center text-gray-500">
-                <p>This certificate may be expired, revoked, or the ID is incorrect.</p>
+              <div className="p-6 text-center">
+                <p className="text-sm text-gray-500">This certificate may be expired, revoked, or the ID is incorrect.</p>
+                <Link href="/" className="btn btn-md btn-secondary mt-4 inline-flex">Go home</Link>
               </div>
             </div>
           )}
         </div>
       </main>
       <Footer />
-    </div>
-  );
-}
-
-function InfoRow({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
-  return (
-    <div className="flex items-start justify-between gap-4 rounded-[16px] border-2 border-black bg-[#fff4d6] px-4 py-3 shadow-[3px_3px_0_#111111]">
-      <span className="text-sm font-extrabold uppercase text-gray-500">{label}</span>
-      <span className={`text-sm font-semibold text-gray-900 max-w-xs text-right ${mono ? "font-mono" : ""}`}>
-        {value}
-      </span>
     </div>
   );
 }

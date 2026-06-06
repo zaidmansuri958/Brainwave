@@ -87,6 +87,7 @@ export const lessonApi = {
     api.post(`/courses/${courseId}/lessons/${lessonId}/progress`, null, { params: data }),
   myProgress: (courseId: string) => api.get(`/courses/${courseId}/my-progress`),
   videoUrl: (lessonId: string) => api.get(`/lessons/${lessonId}/video-url`),
+  captionsUrl: (lessonId: string) => `${API_URL}/lessons/${lessonId}/captions`,
 };
 
 // Quizzes
@@ -116,6 +117,8 @@ export const communityApi = {
 export const certApi = {
   myCertificates: () => api.get("/certificates/my"),
   verify: (certId: string) => api.get(`/certificates/verify/${certId}`),
+  generate: (courseId: string) => api.post(`/certificates/generate/${courseId}`),
+  get: (certId: string) => api.get(`/certificates/${certId}`),
 };
 
 // Notifications
@@ -123,6 +126,9 @@ export const notifApi = {
   get: () => api.get("/notifications"),
   markRead: (id: string) => api.patch(`/notifications/${id}/read`),
   markAllRead: () => api.patch("/notifications/read-all"),
+  unreadCount: () => api.get("/notifications/unread-count"),
+  delete: (id: string) => api.delete(`/notifications/${id}`),
+  clearAll: () => api.delete("/notifications"),
 };
 
 // Teacher
@@ -133,10 +139,13 @@ export const teacherApi = {
   updateCourse: (courseId: string, data: any) => api.patch(`/courses/${courseId}`, data),
   archiveCourse: (courseId: string) => api.post(`/courses/${courseId}/archive`),
   students: (courseId: string) => api.get(`/teacher/courses/${courseId}/students`),
+  allStudents: (search?: string) => api.get("/teacher/students", { params: search ? { search } : {} }),
   nudge: (courseId: string, studentId: string) =>
     api.post(`/teacher/courses/${courseId}/students/${studentId}/nudge`),
   earnings: () => api.get("/teacher/earnings"),
+  getProfile: () => api.get("/teacher/profile"),
   updateProfile: (data: any) => api.patch("/teacher/profile", data),
+  requestPayout: (amount?: number) => api.post("/teacher/payouts/request", amount ? { amount } : {}),
   onboardingStatus: () => api.get("/teacher/onboarding/status"),
   saveOnboarding: (data: any) => api.patch("/teacher/onboarding", data),
   submitOnboarding: (data?: {
@@ -160,6 +169,9 @@ export const teacherApi = {
 
 export const learnApi = {
   courseAccess: (slug: string) => api.get(`/learn/courses/${slug}/access`),
+  getProgress: (slug: string) => api.get(`/learn/courses/${slug}/progress`),
+  writeProgress: (slug: string, data: { lesson_id: string; completed?: boolean; watch_position_seconds?: number }) =>
+    api.post(`/learn/courses/${slug}/progress`, data),
 };
 
 export const promotionsApi = {
@@ -172,15 +184,21 @@ export const promotionsApi = {
   }) => api.post("/teacher/promotions", data),
   listByCourse: (courseId: string) => api.get(`/teacher/promotions/courses/${courseId}`),
   toggle: (promotionId: string) => api.patch(`/teacher/promotions/${promotionId}/toggle`),
+  update: (promotionId: string, data: any) => api.patch(`/teacher/promotions/${promotionId}`, data),
+  delete: (promotionId: string) => api.delete(`/teacher/promotions/${promotionId}`),
 };
 
 export const materialsApi = {
   teacherList: () => api.get("/study-materials/teacher/my"),
   create: (data: { title: string; description?: string; price: number }) => api.post("/study-materials", data),
+  update: (productId: string, data: any) => api.patch(`/study-materials/${productId}`, data),
+  delete: (productId: string) => api.delete(`/study-materials/${productId}`),
   uploadFiles: (productId: string, files: FormData) =>
     api.post(`/study-materials/${productId}/files`, files, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
+  deleteFile: (productId: string, fileId: string) =>
+    api.delete(`/study-materials/${productId}/files/${fileId}`),
   publish: (productId: string) => api.post(`/study-materials/${productId}/publish`),
   catalog: () => api.get("/study-materials/catalog"),
   bySlug: (slug: string) => api.get(`/study-materials/slug/${slug}`),
@@ -200,10 +218,16 @@ export const mockTestsApi = {
   teacherList: () => api.get("/mock-tests/teacher/my-packages"),
   createPackage: (data: { title: string; description?: string; price: number }) =>
     api.post("/mock-tests/packages", data),
+  updatePackage: (packageId: string, data: any) => api.patch(`/mock-tests/packages/${packageId}`, data),
+  deletePackage: (packageId: string) => api.delete(`/mock-tests/packages/${packageId}`),
   addPaper: (packageId: string, data: any) => api.post(`/mock-tests/packages/${packageId}/papers`, data),
+  updatePaper: (paperId: string, data: any) => api.patch(`/mock-tests/papers/${paperId}`, data),
+  deletePaper: (paperId: string) => api.delete(`/mock-tests/papers/${paperId}`),
   addSection: (paperId: string, data: { title: string; order_index?: number }) =>
     api.post(`/mock-tests/papers/${paperId}/sections`, data),
   addQuestion: (sectionId: string, data: any) => api.post(`/mock-tests/sections/${sectionId}/questions`, data),
+  updateQuestion: (questionId: string, data: any) => api.patch(`/mock-tests/questions/${questionId}`, data),
+  deleteQuestion: (questionId: string) => api.delete(`/mock-tests/questions/${questionId}`),
   publishPackage: (packageId: string) => api.post(`/mock-tests/packages/${packageId}/publish`),
   builderDetail: (packageId: string) => api.get(`/mock-tests/packages/${packageId}/builder`),
   catalog: () => api.get("/mock-tests/catalog"),
@@ -220,6 +244,9 @@ export const mockTestsApi = {
   paperTake: (paperId: string) => api.get(`/mock-tests/papers/${paperId}/take`),
   submitAttempt: (paperId: string, answers: Record<string, string>) =>
     api.post(`/mock-tests/papers/${paperId}/attempt`, { answers }),
+  listAttempts: (paperId: string) => api.get(`/mock-tests/papers/${paperId}/attempts`),
+  getAttempt: (paperId: string, attemptId: string) =>
+    api.get(`/mock-tests/papers/${paperId}/attempts/${attemptId}`),
 };
 
 export const availabilityApi = {
@@ -238,13 +265,26 @@ export const availabilityApi = {
 };
 
 export const curriculumApi = {
-  listQuizzes: (courseId: string) => api.get(`/teacher/curriculum/courses/${courseId}/quizzes`),
-  updateQuiz: (courseId: string, quizId: string, data: any) =>
-    api.patch(`/teacher/curriculum/courses/${courseId}/quizzes/${quizId}`, data),
+  getTree: (courseId: string) => api.get(`/teacher/curriculum/courses/${courseId}`),
+  createChapter: (courseId: string, data: any) =>
+    api.post(`/teacher/curriculum/courses/${courseId}/chapters`, data),
+  deleteChapter: (courseId: string, chapterId: string) =>
+    api.delete(`/teacher/curriculum/courses/${courseId}/chapters/${chapterId}`),
   updateChapter: (courseId: string, chapterId: string, data: any) =>
     api.patch(`/teacher/curriculum/courses/${courseId}/chapters/${chapterId}`, data),
+  createLesson: (courseId: string, data: any) =>
+    api.post(`/teacher/curriculum/courses/${courseId}/lessons`, data),
+  deleteLesson: (courseId: string, lessonId: string) =>
+    api.delete(`/teacher/curriculum/courses/${courseId}/lessons/${lessonId}`),
   updateLesson: (courseId: string, lessonId: string, data: any) =>
     api.patch(`/teacher/curriculum/courses/${courseId}/lessons/${lessonId}`, data),
+  listQuizzes: (courseId: string) => api.get(`/teacher/curriculum/courses/${courseId}/quizzes`),
+  createQuiz: (courseId: string, data: any) =>
+    api.post(`/teacher/curriculum/courses/${courseId}/quizzes`, data),
+  deleteQuiz: (courseId: string, quizId: string) =>
+    api.delete(`/teacher/curriculum/courses/${courseId}/quizzes/${quizId}`),
+  updateQuiz: (courseId: string, quizId: string, data: any) =>
+    api.patch(`/teacher/curriculum/courses/${courseId}/quizzes/${quizId}`, data),
 };
 
 // Admin
@@ -292,18 +332,48 @@ export const adminApi = {
 // Live Sessions
 export const liveApi = {
   list: () => api.get("/live-sessions"),
+  get: (sessionId: string) => api.get(`/live-sessions/${sessionId}`),
   getSessions: (courseId: string) => api.get(`/courses/${courseId}/live-sessions`),
   create: (data: any) => api.post("/live-sessions", data),
+  update: (sessionId: string, data: any) => api.patch(`/live-sessions/${sessionId}`, data),
+  delete: (sessionId: string) => api.delete(`/live-sessions/${sessionId}`),
+  end: (sessionId: string, data?: { recording_url?: string }) =>
+    api.post(`/live-sessions/${sessionId}/end`, data || {}),
   join: (sessionId: string) => api.get(`/live-sessions/${sessionId}/join`),
 };
 
 // Doubt Sessions
 export const doubtApi = {
   mySessions: () => api.get("/doubt-sessions/my"),
+  myBookings: () => api.get("/doubt-sessions/my-bookings"),
   getSessions: (courseId: string) => api.get(`/courses/${courseId}/doubt-sessions`),
   create: (data: any) => api.post("/doubt-sessions", data),
+  update: (sessionId: string, data: any) => api.patch(`/doubt-sessions/${sessionId}`, data),
+  delete: (sessionId: string) => api.delete(`/doubt-sessions/${sessionId}`),
+  end: (sessionId: string) => api.post(`/doubt-sessions/${sessionId}/end`),
   join: (sessionId: string) => api.get(`/doubt-sessions/${sessionId}/join`),
   initiate: (sessionId: string) => api.post(`/doubt-sessions/${sessionId}/initiate-booking`),
   book: (sessionId: string, data: any) =>
     api.post(`/doubt-sessions/${sessionId}/book`, data),
+};
+
+// Enrollments
+export const enrollmentCancelApi = {
+  cancel: (enrollmentId: string) => api.delete(`/enrollments/${enrollmentId}`),
+};
+
+// Courses - additional
+export const courseExtApi = {
+  categories: () => api.get("/courses/categories"),
+  submitReview: (courseId: string, data: FormData) =>
+    api.post(`/courses/${courseId}/reviews`, data, { headers: { "Content-Type": "multipart/form-data" } }),
+  updateReview: (courseId: string, reviewId: string, data: FormData) =>
+    api.patch(`/courses/${courseId}/reviews/${reviewId}`, data, { headers: { "Content-Type": "multipart/form-data" } }),
+  deleteReview: (courseId: string, reviewId: string) =>
+    api.delete(`/courses/${courseId}/reviews/${reviewId}`),
+};
+
+// Platform
+export const platformApi = {
+  stats: () => api.get("/platform/stats"),
 };

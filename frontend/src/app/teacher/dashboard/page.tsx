@@ -2,172 +2,280 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, BookOpen, Plus, Star, Users } from "lucide-react";
+import { BookOpen, Users, DollarSign, TrendingUp, Plus, ChevronRight, ArrowRight, Star, AlertTriangle, BarChart2, Video, HelpCircle } from "lucide-react";
 import { teacherApi } from "@/lib/api";
 import { formatPrice, getRiskEmoji } from "@/lib/utils";
-import { Footer } from "@/components/layout/Footer";
-import { Navbar } from "@/components/layout/Navbar";
-import { AppShell, DenseDataTable, StatusBadge } from "@/components/ui/app-shell";
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis } from "recharts";
+import { DashboardLayout, MetricCard, SectionCard, Badge } from "@/components/layout/DashboardLayout";
 
 export default function TeacherDashboard() {
   const { data, isLoading } = useQuery({
     queryKey: ["teacher-dashboard"],
-    queryFn: () => teacherApi.dashboard().then((response) => response.data),
+    queryFn: () => teacherApi.dashboard().then((r) => r.data),
   });
 
   const { data: onboarding } = useQuery({
     queryKey: ["onboarding-status"],
-    queryFn: () => teacherApi.onboardingStatus().then((response) => response.data),
+    queryFn: () => teacherApi.onboardingStatus().then((r) => r.data),
   });
 
   const { data: analytics } = useQuery({
     queryKey: ["teacher-analytics"],
-    queryFn: () => teacherApi.analytics().then((response) => response.data),
+    queryFn: () => teacherApi.analytics().then((r) => r.data),
   });
 
-  const totalStudents = data?.total_students || 0;
-  const revenueData = [
-    { month: "Nov", revenue: 82000 },
-    { month: "Dec", revenue: 97000 },
-    { month: "Jan", revenue: 113000 },
-    { month: "Feb", revenue: 104000 },
-    { month: "Mar", revenue: 126000 },
-    { month: "Apr", revenue: 141000 },
-  ];
+  const isApproved = onboarding?.onboarding_status === "approved";
+  const courses = analytics?.courses || [];
 
   return (
-    <AppShell className="flex flex-col">
-      <Navbar />
-      <main className="bw-shell flex-1 space-y-6 pb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="bw-kicker">Teacher Studio</p>
-            <h1 className="mt-2 font-display text-4xl text-ink-heading">Performance Dashboard</h1>
-          </div>
-          <Link href="/teacher/courses/new" className="bw-action-primary">
-            <Plus className="h-4 w-4" />
-            Create New Course
+    <DashboardLayout
+      title="Teacher Dashboard"
+      subtitle="Your studio performance at a glance."
+      breadcrumbs={[{ label: "Teacher Studio" }, { label: "Dashboard" }]}
+      actions={
+        isApproved ? (
+          <Link href="/teacher/courses/new" className="dash-btn-primary">
+            <Plus className="h-4 w-4" /> New Course
           </Link>
+        ) : (
+          <Link href="/teacher/onboarding" className="dash-btn-secondary">
+            <AlertTriangle className="h-4 w-4 text-orange-500" /> Complete Verification
+          </Link>
+        )
+      }
+    >
+      {/* Onboarding banner */}
+      {onboarding && onboarding.onboarding_status !== "approved" && (
+        <div className={`mb-5 flex items-center gap-4 rounded-xl px-5 py-4 border ${
+          onboarding.onboarding_status === "submitted"
+            ? "bg-blue-50 border-blue-200"
+            : onboarding.onboarding_status === "rejected"
+            ? "bg-red-50 border-red-200"
+            : "bg-orange-50 border-orange-200"
+        }`}>
+          <AlertTriangle className={`h-5 w-5 shrink-0 ${
+            onboarding.onboarding_status === "submitted" ? "text-blue-500" :
+            onboarding.onboarding_status === "rejected" ? "text-red-500" : "text-orange-500"
+          }`} />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-800">
+              {onboarding.onboarding_status === "submitted" ? "Application under review" :
+               onboarding.onboarding_status === "rejected" ? "Application needs attention" :
+               "Complete your teacher verification"}
+            </p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {onboarding.onboarding_status === "submitted"
+                ? "Our team is reviewing your documents. You'll be notified once approved."
+                : onboarding.onboarding_status === "rejected"
+                ? `Reason: ${onboarding.rejection_reason || "Please review and resubmit."}`
+                : "You need to complete onboarding before publishing courses."}
+            </p>
+          </div>
+          {onboarding.onboarding_status !== "submitted" && (
+            <Link href="/teacher/onboarding" className="shrink-0 text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1">
+              {onboarding.onboarding_status === "rejected" ? "Resubmit" : "Start"} <ChevronRight className="h-4 w-4" />
+            </Link>
+          )}
         </div>
+      )}
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="bw-card p-6">
-            <p className="text-sm text-ink-muted">Total Revenue</p>
-            <p className="mt-2 font-display text-4xl text-ink-heading">{formatPrice(data?.my_earnings || 0)}</p>
-            <p className="mt-2 text-sm text-green-700">+12% this month</p>
-          </div>
-          <div className="bw-card p-6">
-            <p className="text-sm text-ink-muted">Total Students</p>
-            <p className="mt-2 font-display text-4xl text-ink-heading">{totalStudents.toLocaleString()}</p>
-            <p className="mt-2 text-sm text-green-700">+6% this month</p>
-          </div>
-          <div className="bw-card p-6">
-            <p className="text-sm text-ink-muted">Active Courses</p>
-            <p className="mt-2 font-display text-4xl text-ink-heading">{analytics?.courses?.length || 0}</p>
-            <p className="mt-2 text-sm text-ink-muted">Published + in review</p>
-          </div>
-          <div className="bw-card p-6">
-            <p className="text-sm text-ink-muted">Avg. Rating</p>
-            <p className="mt-2 flex items-center gap-2 font-display text-4xl text-ink-heading"><Star className="h-7 w-7 fill-amber-400 text-amber-400" />4.8</p>
-            <p className="mt-2 text-sm text-ink-muted">Across all enrollments</p>
-          </div>
-        </div>
+      {/* Metrics */}
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+        <MetricCard
+          label="Total Earnings"
+          value={isLoading ? "—" : formatPrice(data?.my_earnings || 0)}
+          icon={DollarSign}
+          color="green"
+          trend={12}
+          trendLabel="vs last month"
+        />
+        <MetricCard
+          label="Total Students"
+          value={isLoading ? "—" : (data?.total_students || 0)}
+          icon={Users}
+          color="blue"
+        />
+        <MetricCard
+          label="Active Courses"
+          value={isLoading ? "—" : (data?.active_courses || 0)}
+          icon={BookOpen}
+          color="purple"
+        />
+        <MetricCard
+          label="Pending Payout"
+          value={isLoading ? "—" : formatPrice(data?.pending_payout || 0)}
+          icon={TrendingUp}
+          color="orange"
+        />
+      </div>
 
-        <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-          <div className="space-y-6">
-            <div className="bw-card p-6">
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="font-display text-2xl text-ink-heading">Earnings Trend</h2>
-                <span className="text-sm text-ink-muted">Last 6 months</span>
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        {/* Course Analytics */}
+        <div className="xl:col-span-2 space-y-4">
+
+          <SectionCard
+            title="Course Performance"
+            subtitle="Revenue and enrollment by course"
+            action={
+              <Link href="/teacher/courses" className="text-sm text-blue-600 font-medium flex items-center gap-1">
+                All courses <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            }
+          >
+            {courses.length === 0 ? (
+              <div className="text-center py-10">
+                <BookOpen className="h-10 w-10 text-gray-200 mx-auto mb-3" />
+                <p className="text-sm text-gray-500 font-medium">No courses yet</p>
+                {isApproved && (
+                  <Link href="/teacher/courses/new" className="mt-3 inline-flex items-center gap-1.5 text-sm text-blue-600 font-semibold">
+                    <Plus className="h-4 w-4" /> Create your first course
+                  </Link>
+                )}
               </div>
-              <div className="h-72 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={revenueData}>
-                    <defs>
-                      <linearGradient id="revenueFill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#1a1aff" stopOpacity={0.28} />
-                        <stop offset="95%" stopColor="#1a1aff" stopOpacity={0.03} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid stroke="#eef0f4" vertical={false} />
-                    <XAxis dataKey="month" stroke="#8a8f9e" />
-                    <Tooltip />
-                    <Area type="monotone" dataKey="revenue" stroke="#1a1aff" fill="url(#revenueFill)" strokeWidth={2} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            <div className="bw-card p-6">
-              <h2 className="font-display text-2xl text-ink-heading">Course Performance</h2>
-              {isLoading ? (
-                <div className="mt-6 grid gap-4 md:grid-cols-2">
-                  {[1, 2].map((item) => (
-                    <div key={item} className="bw-card h-28 animate-pulse bg-white/70" />
+            ) : (
+              <table className="dash-table">
+                <thead>
+                  <tr>
+                    <th>Course</th>
+                    <th>Students</th>
+                    <th>Revenue</th>
+                    <th>Avg Score</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {courses.slice(0, 6).map((c: any) => (
+                    <tr key={c.course_id}>
+                      <td>
+                        <p className="font-semibold text-gray-800 text-[13px] max-w-[200px] truncate">{c.title}</p>
+                      </td>
+                      <td>
+                        <div className="flex items-center gap-1.5">
+                          <Users className="h-3.5 w-3.5 text-gray-400" />
+                          <span className="font-medium text-gray-700">{c.enrollments}</span>
+                        </div>
+                      </td>
+                      <td className="font-semibold text-gray-800">{formatPrice(c.revenue || 0)}</td>
+                      <td>
+                        {c.avg_quiz_score != null ? (
+                          <div className="flex items-center gap-1.5">
+                            <Star className="h-3.5 w-3.5 text-yellow-400 fill-yellow-400" />
+                            <span className="font-medium text-gray-700">{c.avg_quiz_score.toFixed(1)}%</span>
+                          </div>
+                        ) : <span className="text-gray-400">—</span>}
+                      </td>
+                      <td>
+                        <Link href={`/teacher/courses/${c.course_id}/edit`}
+                          className="text-xs text-blue-600 font-medium hover:text-blue-700">
+                          Manage
+                        </Link>
+                      </td>
+                    </tr>
                   ))}
-                </div>
-              ) : analytics?.courses?.length > 0 ? (
-                <div className="mt-6">
-                  <DenseDataTable
-                    columns={["Course", "Students", "Revenue", "Rating", "Status"]}
-                    rows={analytics.courses.map((course: any) => [
-                      <div key={`${course.course_id}-title`}>
-                        <p className="font-semibold text-ink-heading">{course.title}</p>
-                      </div>,
-                      <span key={`${course.course_id}-enrollments`} className="font-semibold">{course.enrollments}</span>,
-                      <span key={`${course.course_id}-revenue`} className="font-semibold">{formatPrice(course.revenue)}</span>,
-                      <span key={`${course.course_id}-quiz`} className="font-semibold">{course.avg_quiz_score != null ? `${course.avg_quiz_score.toFixed(1)}%` : "4.8"}</span>,
-                      <StatusBadge key={`${course.course_id}-status`} tone="success">Published</StatusBadge>,
-                    ])}
-                  />
-                </div>
-              ) : (
-                <div className="mt-6 rounded-[1.5rem] border border-dashed border-slate-200 bg-white/70 px-6 py-10 text-center text-sm text-slate-500">
-                  Course analytics will appear here once enrollments and quiz activity start flowing in.
-                </div>
-              )}
-            </div>
-          </div>
+                </tbody>
+              </table>
+            )}
+          </SectionCard>
 
-          <div className="space-y-4">
-            <div className="bw-card border-l-4 border-l-[#1d4ed8] p-5">
-              <p className="text-sm font-semibold text-ink-heading">Upcoming Live Sessions</p>
-              <p className="mt-2 text-sm text-ink-muted">2 scheduled for this week.</p>
-              <Link href="/teacher/live-sessions" className="mt-3 inline-flex text-sm font-semibold text-brand-primary">Open schedule <ArrowRight className="h-4 w-4" /></Link>
-            </div>
-            <div className="bw-card border-l-4 border-l-[#b45309] p-5">
-              <p className="text-sm font-semibold text-ink-heading">Pending Doubt Sessions</p>
-              <p className="mt-2 text-sm text-ink-muted">{data?.at_risk_students?.length || 0} student requests need response.</p>
-              <Link href="/teacher/doubt-sessions" className="mt-3 inline-flex text-sm font-semibold text-brand-primary">Resolve now <ArrowRight className="h-4 w-4" /></Link>
-            </div>
-            <div className="bw-card border-l-4 border-l-[#15803d] p-5">
-              <p className="text-sm font-semibold text-ink-heading">Pending Payouts</p>
-              <p className="mt-2 text-sm text-ink-muted">{formatPrice(data?.pending_payout || 0)} in next cycle.</p>
-              <Link href="/teacher/earnings" className="mt-3 inline-flex text-sm font-semibold text-brand-primary">View earnings <ArrowRight className="h-4 w-4" /></Link>
-            </div>
-            {onboarding?.onboarding_status && onboarding.onboarding_status !== "approved" ? (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-700">
-                Verification status: {onboarding.onboarding_status}
-              </div>
-            ) : null}
-
-            <div className="bw-card p-5">
-              <p className="text-sm font-semibold text-ink-heading">At-risk students</p>
-              <div className="mt-3 space-y-2">
-                {data?.at_risk_students?.slice(0, 3).map((student: any) => (
-                  <div key={student.student_id} className="rounded-md border border-[#e2e5ec] p-3">
-                    <p className="text-sm font-semibold text-ink-heading">{student.student_name}</p>
-                    <p className="text-xs text-ink-muted">{student.course_title}</p>
-                    <p className="mt-1 text-xs text-amber-700">{getRiskEmoji(student.risk_level)} Risk flagged</p>
+          {/* At Risk Students */}
+          {(data?.at_risk_students || []).length > 0 && (
+            <SectionCard
+              title="Students Needing Attention"
+              subtitle="High risk of dropout"
+            >
+              <div className="space-y-2">
+                {(data?.at_risk_students || []).slice(0, 5).map((s: any) => (
+                  <div key={`${s.student_id}-${s.course_id}`}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-red-50/50 border border-red-100">
+                    <div className="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center text-sm font-bold text-red-600 shrink-0">
+                      {(s.student_name || "?")[0]?.toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-800">{s.student_name}</p>
+                      <p className="text-xs text-gray-500 truncate">{s.course_title}</p>
+                    </div>
+                    <Badge variant="danger">{getRiskEmoji?.(s.risk_level) || "⚠️"} {s.risk_level}</Badge>
                   </div>
                 ))}
               </div>
-            </div>
-          </div>
+            </SectionCard>
+          )}
+
+          {/* Recent Enrollments */}
+          <SectionCard title="Recent Enrollments">
+            {(data?.recent_enrollments || []).length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-6">No recent enrollments</p>
+            ) : (
+              <div className="space-y-1">
+                {(data?.recent_enrollments || []).slice(0, 5).map((e: any, i: number) => (
+                  <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-50">
+                    <div className="h-7 w-7 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600 shrink-0">
+                      {(e.student_name || "?")[0]?.toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-800">{e.student_name}</p>
+                      <p className="text-xs text-gray-400 truncate">{e.course_title}</p>
+                    </div>
+                    <span className="text-xs text-gray-400 shrink-0">
+                      {new Date(e.enrolled_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </SectionCard>
         </div>
-      </main>
-      <Footer />
-    </AppShell>
+
+        {/* Right column */}
+        <div className="space-y-4">
+
+          {/* Quick Actions */}
+          <SectionCard title="Quick Actions">
+            <div className="space-y-1.5">
+              {[
+                { label: "Schedule Live Session", href: "/teacher/live-sessions", icon: Video, color: "text-blue-600 bg-blue-50" },
+                { label: "Create Doubt Session", href: "/teacher/doubt-sessions", icon: HelpCircle, color: "text-purple-600 bg-purple-50" },
+                { label: "View Analytics", href: "/teacher/analytics", icon: BarChart2, color: "text-green-600 bg-green-50" },
+                { label: "Manage Students", href: "/teacher/students", icon: Users, color: "text-orange-600 bg-orange-50" },
+              ].map(({ label, href, icon: Icon, color }) => (
+                <Link key={href} href={href}
+                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors group border border-transparent hover:border-gray-100">
+                  <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${color}`}>
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <span className="text-sm font-medium text-gray-700">{label}</span>
+                  <ChevronRight className="h-4 w-4 text-gray-300 ml-auto group-hover:text-gray-400" />
+                </Link>
+              ))}
+            </div>
+          </SectionCard>
+
+          {/* Earnings Summary */}
+          <SectionCard title="Earnings Summary">
+            <div className="space-y-3">
+              {[
+                { label: "Total Revenue", value: data?.total_revenue, icon: "💰", color: "text-green-600" },
+                { label: "Platform Cut", value: data?.platform_cut, icon: "🏢", color: "text-red-500" },
+                { label: "Net Earnings", value: data?.my_earnings, icon: "✅", color: "text-blue-600" },
+                { label: "Pending Payout", value: data?.pending_payout, icon: "⏳", color: "text-orange-500" },
+              ].map(({ label, value, icon, color }) => (
+                <div key={label} className="flex items-center justify-between py-1.5">
+                  <span className="text-sm text-gray-500 flex items-center gap-2">
+                    <span>{icon}</span> {label}
+                  </span>
+                  <span className={`text-sm font-semibold ${color}`}>
+                    {value != null ? formatPrice(value) : "—"}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 pt-3 border-t border-gray-100">
+              <Link href="/teacher/earnings" className="flex items-center justify-center gap-1.5 text-sm text-blue-600 font-medium hover:text-blue-700">
+                Full earnings report <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          </SectionCard>
+        </div>
+      </div>
+    </DashboardLayout>
   );
 }

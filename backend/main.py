@@ -196,6 +196,34 @@ async def request_refund(
         db.close()
 
 
+@app.get("/api/v1/platform/stats")
+async def platform_stats():
+    from app.database import get_db
+    from app.models.user import User
+    from app.models.course import Course
+    from app.models.enrollment import Enrollment
+    from app.models.review import Review
+    from sqlalchemy import func as sqlfunc
+
+    db_gen = get_db()
+    db = next(db_gen)
+    try:
+        student_count = db.query(sqlfunc.count(User.id)).filter(User.role == "student").scalar() or 0
+        teacher_count = db.query(sqlfunc.count(User.id)).filter(User.role == "teacher").scalar() or 0
+        course_count = db.query(sqlfunc.count(Course.id)).filter(Course.status == "published").scalar() or 0
+        avg_rating = db.query(sqlfunc.avg(Course.avg_rating)).filter(
+            Course.status == "published", Course.avg_rating > 0
+        ).scalar() or 0
+        return {
+            "students": int(student_count),
+            "teachers": int(teacher_count),
+            "courses": int(course_count),
+            "avg_rating": round(float(avg_rating), 1),
+        }
+    finally:
+        db.close()
+
+
 @app.get("/health")
 async def health():
     return {

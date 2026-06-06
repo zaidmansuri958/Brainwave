@@ -84,3 +84,47 @@ async def toggle_promotion(
     p.is_active = not p.is_active
     db.commit()
     return {"is_active": p.is_active}
+
+
+class PromotionUpdate(BaseModel):
+    discount_percent: Optional[float] = None
+    price_override: Optional[float] = None
+    starts_at: Optional[datetime] = None
+    ends_at: Optional[datetime] = None
+    is_active: Optional[bool] = None
+
+
+@router.patch("/{promotion_id}")
+async def update_promotion(
+    promotion_id: str,
+    data: PromotionUpdate,
+    current_user: User = Depends(get_current_teacher),
+    db: Session = Depends(get_db),
+):
+    p = db.query(CoursePromotion).filter(CoursePromotion.id == promotion_id).first()
+    if not p:
+        raise HTTPException(status_code=404, detail="Not found")
+    c = db.query(Course).filter(Course.id == p.course_id, Course.teacher_id == current_user.id).first()
+    if not c:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    for k, v in data.dict(exclude_none=True).items():
+        setattr(p, k, v)
+    db.commit()
+    return {"message": "updated"}
+
+
+@router.delete("/{promotion_id}")
+async def delete_promotion(
+    promotion_id: str,
+    current_user: User = Depends(get_current_teacher),
+    db: Session = Depends(get_db),
+):
+    p = db.query(CoursePromotion).filter(CoursePromotion.id == promotion_id).first()
+    if not p:
+        raise HTTPException(status_code=404, detail="Not found")
+    c = db.query(Course).filter(Course.id == p.course_id, Course.teacher_id == current_user.id).first()
+    if not c:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    db.delete(p)
+    db.commit()
+    return {"message": "deleted"}

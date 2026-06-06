@@ -2,29 +2,16 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, Search, SlidersHorizontal, X } from "lucide-react";
+import { Search, SlidersHorizontal, X, BookOpen, Loader2 } from "lucide-react";
 import { courseApi } from "@/lib/api";
 import { CourseCard } from "@/components/course/CourseCard";
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
-import { AppShell, EmptyStatePanel, FilterToolbar, SectionHeader, StatusBadge } from "@/components/ui/app-shell";
 
 const CATEGORIES = [
-  "Mathematics",
-  "Physics",
-  "Chemistry",
-  "Biology",
-  "Programming",
-  "History",
-  "English",
-  "Commerce",
-  "Arts",
-  "Data Science",
-  "Machine Learning",
-  "Web Development",
-  "Backend Development",
-  "System Design",
+  "Mathematics", "Physics", "Chemistry", "Biology", "Programming",
+  "History", "English", "Commerce", "Data Science", "Machine Learning",
+  "Web Development", "Design",
 ];
 
 const LEVELS = ["beginner", "intermediate", "advanced"];
@@ -33,8 +20,8 @@ const SORT_OPTIONS = [
   { value: "popular", label: "Most Popular" },
   { value: "newest", label: "Newest" },
   { value: "rating", label: "Top Rated" },
-  { value: "price_asc", label: "Price: Low to High" },
-  { value: "price_desc", label: "Price: High to Low" },
+  { value: "price_asc", label: "Price: Low → High" },
+  { value: "price_desc", label: "Price: High → Low" },
 ];
 
 export default function CoursesPage() {
@@ -47,7 +34,7 @@ export default function CoursesPage() {
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["courses", search, category, level, sort, page],
-    queryFn: () => courseApi.list({ search, category, level, sort, page, limit: 12 }).then((response) => response.data),
+    queryFn: () => courseApi.list({ search, category, level, sort, page, limit: 12 }).then((r) => r.data),
     staleTime: 30000,
   });
 
@@ -56,214 +43,159 @@ export default function CoursesPage() {
   const pages = data?.pages || 1;
   const hasFilters = Boolean(search || category || level);
 
-  const clearFilters = () => {
-    setSearch("");
-    setCategory("");
-    setLevel("");
-    setSort("popular");
-    setPage(1);
-  };
+  const clearFilters = () => { setSearch(""); setCategory(""); setLevel(""); setSort("popular"); setPage(1); };
 
   return (
-    <AppShell>
+    <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
-      <main className="bw-shell space-y-6 pb-6">
-        <FilterToolbar className="bw-band bw-band-muted p-5 sm:p-7">
-          <SectionHeader
-            eyebrow="Marketplace"
-            title="Browse premium learning experiences with stronger context."
-            description="The marketplace now uses denser filters, category shortcuts, richer course cards, and clearer result framing so users can scan faster without feeling overwhelmed."
-          />
 
-          <div className="mt-7 flex flex-wrap gap-2">
-            {["Programming", "Data Science", "Mathematics", "Commerce", "Machine Learning"].map((chip) => (
-              <button
-                key={chip}
-                type="button"
-                onClick={() => {
-                  setCategory(chip);
-                  setPage(1);
-                }}
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                  category === chip ? "bg-slate-950 text-white" : "bg-white text-slate-600 hover:text-slate-950"
-                }`}
-              >
+      {/* Hero */}
+      <div className="bg-gray-50 border-b border-gray-100 py-10">
+        <div className="page-container">
+          <h1 className="text-3xl font-bold text-gray-900 mb-1">Browse Courses</h1>
+          <p className="text-gray-500">Explore {total > 0 ? `${total}+` : "our"} courses across all subjects and levels</p>
+
+          {/* Search + sort bar */}
+          <div className="mt-6 flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                placeholder="Search courses, teachers, topics..."
+                className="input pl-10"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => setFiltersOpen((p) => !p)}
+              className={`btn btn-md flex items-center gap-2 shrink-0 ${filtersOpen || hasFilters ? "btn-primary" : "btn-secondary"}`}
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              Filters {hasFilters ? `(${[category, level].filter(Boolean).length})` : ""}
+            </button>
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              className="input shrink-0 sm:w-48 cursor-pointer"
+            >
+              {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
+
+          {/* Filters panel */}
+          {filtersOpen && (
+            <div className="mt-4 card p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Category</label>
+                <select value={category} onChange={(e) => { setCategory(e.target.value); setPage(1); }} className="input">
+                  <option value="">All Categories</option>
+                  {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Level</label>
+                <select value={level} onChange={(e) => { setLevel(e.target.value); setPage(1); }} className="input">
+                  <option value="">All Levels</option>
+                  {LEVELS.map((l) => <option key={l} value={l}>{l.charAt(0).toUpperCase() + l.slice(1)}</option>)}
+                </select>
+              </div>
+              <div className="flex items-end">
+                {hasFilters && (
+                  <button type="button" onClick={clearFilters} className="btn btn-md btn-secondary flex items-center gap-2 w-full justify-center">
+                    <X className="h-4 w-4" /> Clear filters
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Quick category chips */}
+          <div className="mt-4 flex flex-wrap gap-2">
+            {["Programming", "Data Science", "Mathematics", "Design", "Commerce"].map((chip) => (
+              <button key={chip} type="button"
+                onClick={() => { setCategory(category === chip ? "" : chip); setPage(1); }}
+                className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
+                  category === chip
+                    ? "bg-blue-600 text-white border-blue-600"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600"
+                }`}>
                 {chip}
               </button>
             ))}
           </div>
+        </div>
+      </div>
 
-          <div className="mt-6 flex flex-col gap-3 lg:flex-row">
-            <div className="relative flex-1">
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                value={search}
-                onChange={(event) => {
-                  setSearch(event.target.value);
-                  setPage(1);
-                }}
-                placeholder="Search courses, topics, teachers..."
-                className="w-full rounded-[1.25rem] border border-slate-200 bg-white px-11 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
-              />
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setFiltersOpen((prev) => !prev)}
-              className={`inline-flex items-center justify-center gap-2 rounded-[1.25rem] border px-4 py-3 text-sm font-semibold transition ${
-                filtersOpen || hasFilters
-                  ? "border-indigo-200 bg-indigo-50 text-indigo-700"
-                  : "border-slate-200 bg-white text-slate-600 hover:text-slate-950"
-              }`}
-            >
-              <SlidersHorizontal className="h-4 w-4" />
-              Filters
-            </button>
-
-            <div className="relative min-w-[200px]">
-              <select
-                value={sort}
-                onChange={(event) => setSort(event.target.value)}
-                className="w-full appearance-none rounded-[1.25rem] border border-slate-200 bg-white px-4 py-3 pr-10 text-sm text-slate-900 outline-none transition focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
-              >
-                {SORT_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            </div>
+      {/* Results */}
+      <main className="flex-1 page-container py-8">
+        <div className="flex items-center justify-between mb-6">
+          <p className="text-sm text-gray-500">
+            {isLoading ? "Loading..." : isError ? "Error loading courses" : `${total.toLocaleString()} courses found`}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {category && <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full font-medium">{category}</span>}
+            {level && <span className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded-full font-medium capitalize">{level}</span>}
+            {search && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full font-medium">"{search}"</span>}
           </div>
+        </div>
 
-          <AnimatePresence initial={false}>
-            {filtersOpen ? (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="overflow-hidden"
-              >
-                <div className="mt-4 grid gap-4 rounded-[1.5rem] border border-slate-200 bg-white p-4 md:grid-cols-3">
-                  <div>
-                    <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Category</label>
-                    <div className="relative">
-                      <select
-                        value={category}
-                        onChange={(event) => {
-                          setCategory(event.target.value);
-                          setPage(1);
-                        }}
-                        className="w-full appearance-none rounded-[1rem] border border-slate-200 bg-[#fcf8f3] px-4 py-3 pr-10 text-sm text-slate-900 outline-none"
-                      >
-                        <option value="">All Categories</option>
-                        {CATEGORIES.map((item) => (
-                          <option key={item} value={item}>
-                            {item}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Level</label>
-                    <div className="relative">
-                      <select
-                        value={level}
-                        onChange={(event) => {
-                          setLevel(event.target.value);
-                          setPage(1);
-                        }}
-                        className="w-full appearance-none rounded-[1rem] border border-slate-200 bg-[#fcf8f3] px-4 py-3 pr-10 text-sm text-slate-900 outline-none"
-                      >
-                        <option value="">All Levels</option>
-                        {LEVELS.map((item) => (
-                          <option key={item} value={item}>
-                            {item.charAt(0).toUpperCase() + item.slice(1)}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    </div>
-                  </div>
-                  <div className="flex items-end">
-                    {hasFilters ? (
-                      <button type="button" onClick={clearFilters} className="inline-flex items-center gap-2 rounded-[1rem] bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
-                        <X className="h-4 w-4" />
-                        Clear filters
-                      </button>
-                    ) : (
-                      <div className="rounded-[1rem] bg-[#fcf8f3] px-4 py-3 text-sm text-slate-500">Use filters to tighten discovery.</div>
-                    )}
-                  </div>
+        {isLoading ? (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="card animate-pulse">
+                <div className="aspect-video bg-gray-100 rounded-t-xl" />
+                <div className="p-5 space-y-3">
+                  <div className="h-4 bg-gray-100 rounded w-3/4" />
+                  <div className="h-3 bg-gray-100 rounded w-1/2" />
+                  <div className="h-3 bg-gray-100 rounded w-1/3" />
                 </div>
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
-        </FilterToolbar>
-
-        <section>
-          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="font-display text-2xl font-extrabold text-slate-950">{isError ? "Results unavailable" : `${total.toLocaleString()} courses`}</p>
-              <p className="text-sm text-slate-500">Cards carry more context now, so decisions can happen faster above the fold.</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {category ? <StatusBadge tone="info">{category}</StatusBadge> : null}
-              {level ? <StatusBadge tone="warning">{level}</StatusBadge> : null}
-              {search ? <StatusBadge tone="neutral">Search: {search}</StatusBadge> : null}
-            </div>
+              </div>
+            ))}
           </div>
-
-          {isLoading ? (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, index) => (
-                <div key={index} className="bw-card h-[360px] animate-pulse bg-white/70" />
+        ) : isError ? (
+          <div className="card p-16 text-center">
+            <p className="text-gray-600 font-medium mb-3">Couldn&apos;t load courses</p>
+            <button type="button" onClick={() => refetch()} className="btn btn-md btn-primary">Retry</button>
+          </div>
+        ) : courses.length === 0 ? (
+          <div className="card p-16 text-center">
+            <BookOpen className="h-12 w-12 text-gray-200 mx-auto mb-4" />
+            <p className="text-gray-600 font-medium">No courses found</p>
+            <p className="text-sm text-gray-400 mt-1">Try adjusting your filters</p>
+            {hasFilters && <button type="button" onClick={clearFilters} className="btn btn-md btn-secondary mt-4">Clear filters</button>}
+          </div>
+        ) : (
+          <>
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {courses.map((course: any) => (
+                <CourseCard key={course.id} course={course} />
               ))}
             </div>
-          ) : isError ? (
-            <EmptyStatePanel
-              title="We couldn&apos;t load courses"
-              description="The redesigned marketplace is ready, but the course list could not be fetched right now."
-              action={
-                <button type="button" onClick={() => refetch()} className="bw-action-primary">
-                  Retry
-                </button>
-              }
-            />
-          ) : courses.length === 0 ? (
-            <EmptyStatePanel title="No courses found" description="Try adjusting your search, category, or level filters to widen the result set." />
-          ) : (
-            <>
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {courses.map((course: any) => (
-                  <CourseCard key={course.id} course={course} />
-                ))}
-              </div>
 
-              {pages > 1 ? (
-                <div className="mt-8 flex flex-wrap justify-center gap-2">
-                  {Array.from({ length: Math.min(pages, 10) }, (_, index) => index + 1).map((value) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => setPage(value)}
-                      className={`h-11 w-11 rounded-full text-sm font-semibold transition ${
-                        page === value ? "bg-slate-950 text-white" : "bg-white text-slate-600 hover:bg-[#f8f2eb] hover:text-slate-950"
-                      }`}
-                    >
-                      {value}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-            </>
-          )}
-        </section>
+            {/* Pagination */}
+            {pages > 1 && (
+              <div className="mt-10 flex justify-center gap-2">
+                {page > 1 && (
+                  <button type="button" onClick={() => setPage(p => p - 1)} className="btn btn-md btn-secondary">← Prev</button>
+                )}
+                {Array.from({ length: Math.min(pages, 7) }, (_, i) => i + 1).map((p) => (
+                  <button key={p} type="button" onClick={() => setPage(p)}
+                    className={`btn btn-md ${page === p ? "btn-primary" : "btn-secondary"} w-10 justify-center`}>
+                    {p}
+                  </button>
+                ))}
+                {page < pages && (
+                  <button type="button" onClick={() => setPage(p => p + 1)} className="btn btn-md btn-secondary">Next →</button>
+                )}
+              </div>
+            )}
+          </>
+        )}
       </main>
+
       <Footer />
-    </AppShell>
+    </div>
   );
 }

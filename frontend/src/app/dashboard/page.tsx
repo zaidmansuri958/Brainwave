@@ -2,231 +2,312 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Award, BookOpen, ClipboardList, Play, Sparkles } from "lucide-react";
+import { BookOpen, Play, Award, Package, TrendingUp, Clock, ChevronRight, ArrowRight, CheckCircle } from "lucide-react";
 import { certApi, enrollmentApi, materialsApi, mockTestsApi } from "@/lib/api";
 import { useAuthStore } from "@/stores/authStore";
-import { Footer } from "@/components/layout/Footer";
-import { Navbar } from "@/components/layout/Navbar";
-import { AppShell, ContentBand, EmptyStatePanel, MetricCard, SectionHeader, StatusBadge } from "@/components/ui/app-shell";
+import { DashboardLayout, MetricCard, SectionCard, Badge } from "@/components/layout/DashboardLayout";
+import { formatPrice } from "@/lib/utils";
 
 export default function StudentDashboard() {
   const { user } = useAuthStore();
 
-  const { data: enrolledData, isLoading: enrollmentsLoading, isError: enrollmentsError, refetch: refetchEnrollments } = useQuery({
+  const { data: enrolledData, isLoading: enrollmentsLoading } = useQuery({
     queryKey: ["my-courses"],
-    queryFn: () => enrollmentApi.myCourses().then((response) => response.data),
+    queryFn: () => enrollmentApi.myCourses().then((r) => r.data),
   });
 
   const { data: certData } = useQuery({
     queryKey: ["my-certificates"],
-    queryFn: () => certApi.myCertificates().then((response) => response.data),
+    queryFn: () => certApi.myCertificates().then((r) => r.data),
   });
 
   const { data: materialPurchases } = useQuery({
     queryKey: ["my-material-purchases"],
-    queryFn: () => materialsApi.myPurchases().then((response) => response.data),
+    queryFn: () => materialsApi.myPurchases().then((r) => r.data),
   });
 
   const { data: mockPackages } = useQuery({
     queryKey: ["my-mock-packages"],
-    queryFn: () => mockTestsApi.myPackages().then((response) => response.data),
+    queryFn: () => mockTestsApi.myPackages().then((r) => r.data),
   });
 
-  const courses = enrollmentsError ? [] : enrolledData?.courses || [];
+  const courses = enrolledData?.courses || [];
   const certificates = certData?.certificates || [];
   const materials = materialPurchases?.purchases || [];
   const mocks = mockPackages?.packages || [];
 
-  const inProgress = courses.filter((course: any) => (course.progress || 0) > 0 && (course.progress || 0) < 100);
-  const completed = courses.filter((course: any) => (course.progress || 0) >= 100);
-  const continueCourse = [...inProgress].sort((a: any, b: any) => (b.progress || 0) - (a.progress || 0))[0];
+  const inProgress = courses.filter((c: any) => (c.progress || 0) > 0 && (c.progress || 0) < 100);
+  const completed = courses.filter((c: any) => (c.progress || 0) >= 100);
+  const continueCourse = inProgress.sort((a: any, b: any) => (b.progress || 0) - (a.progress || 0))[0];
 
   return (
-    <AppShell className="flex flex-col">
-      <Navbar />
-      <main className="bw-shell flex-1 space-y-6 pb-6">
-        <ContentBand muted>
-          <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-            <div>
-              <span className="eyebrow mb-4">Learning Hub</span>
-              <h1 className="font-display text-4xl font-extrabold text-slate-950">
-                Welcome back, {user?.full_name?.split(" ")[0] || "Learner"}.
-              </h1>
-              <p className="bw-muted mt-4 max-w-2xl text-sm leading-7 sm:text-base">
-                Your learner home is now denser and more guided, with a clearer next action, stronger progress visibility,
-                and faster access to practice, certificates, and AI support.
-              </p>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Link href={continueCourse ? `/learn/${(continueCourse.course || continueCourse).slug}` : "/courses"} className="bw-action-primary">
-                  <Play className="h-4 w-4" />
-                  {continueCourse ? "Resume learning" : "Browse courses"}
-                </Link>
-                <Link href="/courses" className="bw-action-secondary">
-                  <BookOpen className="h-4 w-4" />
-                  Explore more
-                </Link>
-              </div>
-            </div>
+    <DashboardLayout
+      title={`Welcome back, ${user?.full_name?.split(" ")[0] || "Learner"} 👋`}
+      subtitle="Here's your learning activity at a glance."
+      breadcrumbs={[{ label: "Dashboard" }]}
+    >
+      {/* Metric Cards */}
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+        <MetricCard
+          label="Enrolled Courses"
+          value={courses.length}
+          icon={BookOpen}
+          color="blue"
+          trend={courses.length > 0 ? 12 : undefined}
+          trendLabel="vs last month"
+        />
+        <MetricCard
+          label="In Progress"
+          value={inProgress.length}
+          icon={Play}
+          color="orange"
+        />
+        <MetricCard
+          label="Completed"
+          value={completed.length}
+          icon={CheckCircle}
+          color="green"
+        />
+        <MetricCard
+          label="Certificates"
+          value={certificates.length}
+          icon={Award}
+          color="purple"
+        />
+      </div>
 
-            <div className="grid gap-4">
-              <div className="bw-card bw-card-tint p-5">
-                <div className="flex items-center justify-between">
-                  <p className="bw-kicker">AI Tutor</p>
-                  <StatusBadge tone="info">Always on</StatusBadge>
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        {/* Continue Learning */}
+        <div className="xl:col-span-2 space-y-4">
+
+          {/* Resume card */}
+          {continueCourse && (
+            <div className="dash-card p-5 bg-gradient-to-r from-blue-600 to-blue-700 border-0 text-white">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-semibold text-blue-200 uppercase tracking-wider">Continue Learning</span>
+                  <h3 className="text-lg font-bold mt-1 leading-snug truncate">
+                    {(continueCourse.course || continueCourse).title}
+                  </h3>
+                  <div className="flex items-center gap-3 mt-3">
+                    <div className="flex-1 bg-blue-500/40 rounded-full h-1.5">
+                      <div
+                        className="bg-white rounded-full h-1.5 transition-all"
+                        style={{ width: `${continueCourse.progress || 0}%` }}
+                      />
+                    </div>
+                    <span className="text-sm font-semibold text-blue-100 shrink-0">{continueCourse.progress || 0}%</span>
+                  </div>
                 </div>
-                <p className="mt-4 font-display text-2xl font-extrabold text-slate-950">Ask about any enrolled course.</p>
-                <p className="bw-muted mt-2 text-sm leading-7">
-                  Summaries, concept explanations, revision help, and course-aware chat now surface more naturally across the learner experience.
-                </p>
-                <Link href="/courses" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-indigo-700">
-                  Open learning catalog
-                  <ArrowRight className="h-4 w-4" />
+                <Link
+                  href={`/learn/${(continueCourse.course || continueCourse).slug}`}
+                  className="shrink-0 flex items-center gap-2 bg-white text-blue-700 font-semibold text-sm px-4 py-2.5 rounded-lg hover:bg-blue-50 transition-colors"
+                >
+                  <Play className="h-4 w-4" /> Resume
                 </Link>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-3">
-                <MetricCard label="Enrolled" value={courses.length} detail="active learning paths" icon={BookOpen} accentClass="bg-indigo-50 text-indigo-600" />
-                <MetricCard label="In progress" value={inProgress.length} detail="currently moving" icon={Play} accentClass="bg-sky-50 text-sky-600" />
-                <MetricCard label="Certificates" value={certificates.length} detail="verified completions" icon={Award} accentClass="bg-amber-50 text-amber-600" />
               </div>
             </div>
-          </div>
-        </ContentBand>
+          )}
 
-        <div className="grid gap-6 lg:grid-cols-[1.12fr_0.88fr]">
-          <ContentBand className="h-full">
-            <SectionHeader
-              eyebrow="Continue Learning"
-              title="Pick up exactly where you left off."
-              action={
-                <Link href="/courses" className="bw-action-secondary">
-                  Browse more
-                </Link>
-              }
-            />
-
+          {/* My Courses */}
+          <SectionCard
+            title="My Courses"
+            action={
+              <Link href="/courses" className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+                Browse more <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            }
+          >
             {enrollmentsLoading ? (
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
-                {[1, 2].map((item) => (
-                  <div key={item} className="bw-card h-[250px] animate-pulse bg-white/70" />
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="animate-pulse flex gap-3 p-3">
+                    <div className="h-14 w-20 bg-gray-100 rounded-lg shrink-0" />
+                    <div className="flex-1 space-y-2 py-1">
+                      <div className="h-3.5 bg-gray-100 rounded w-3/4" />
+                      <div className="h-2 bg-gray-100 rounded w-1/2" />
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : courses.length === 0 ? (
-              <div className="mt-6">
-                <EmptyStatePanel title="No courses yet" description="Start learning with expert-led courses, AI tutoring, and progress-aware guidance." icon={BookOpen} action={<Link href="/courses" className="bw-action-primary">Explore courses</Link>} />
+              <div className="text-center py-10">
+                <BookOpen className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+                <p className="text-sm font-medium text-gray-500">No courses yet</p>
+                <Link href="/courses" className="mt-3 inline-flex items-center gap-1.5 text-sm text-blue-600 font-medium hover:text-blue-700">
+                  Browse courses <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
               </div>
             ) : (
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
-                {courses.slice(0, 4).map((item: any) => {
+              <div className="space-y-1">
+                {courses.slice(0, 5).map((item: any) => {
                   const course = item.course || item;
                   const progress = item.progress || 0;
                   return (
-                    <div key={item.enrollment_id || course.id} className="bw-card overflow-hidden">
-                      <div className="h-36 bg-gradient-to-br from-indigo-100 via-sky-50 to-amber-50">
-                        {course.thumbnail_url ? <img src={course.thumbnail_url} alt={course.title} className="h-full w-full object-cover" /> : null}
+                    <Link
+                      key={course.id || item.enrollment_id}
+                      href={`/learn/${course.slug}`}
+                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors group"
+                    >
+                      <div className="h-12 w-16 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg shrink-0 flex items-center justify-center overflow-hidden">
+                        {course.thumbnail_url
+                          ? <img src={course.thumbnail_url} alt="" className="h-full w-full object-cover" />
+                          : <BookOpen className="h-5 w-5 text-white/80" />
+                        }
                       </div>
-                      <div className="p-5">
-                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">{course.category || "Course"}</p>
-                        <h3 className="mt-2 line-clamp-2 font-display text-lg font-bold text-slate-950">{course.title}</h3>
-                        <p className="mt-1 text-sm text-slate-500">By {course.teacher?.full_name || course.teacher_name || "Expert instructor"}</p>
-                        <div className="mt-4">
-                          <div className="mb-2 flex items-center justify-between text-xs font-medium text-slate-500">
-                            <span>{progress}% complete</span>
-                            {progress >= 100 ? <StatusBadge tone="success">Completed</StatusBadge> : null}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-800 truncate">{course.title}</p>
+                        <div className="flex items-center gap-2 mt-1.5">
+                          <div className="flex-1 bg-gray-100 rounded-full h-1">
+                            <div className="bg-blue-500 rounded-full h-1" style={{ width: `${progress}%` }} />
                           </div>
-                          <div className="h-2 rounded-full bg-slate-100">
-                            <div className="h-2 rounded-full bg-gradient-to-r from-indigo-500 to-sky-500" style={{ width: `${Math.max(progress, 6)}%` }} />
-                          </div>
+                          <span className="text-xs text-gray-400 shrink-0">{progress}%</span>
                         </div>
-                        <Link href={`/learn/${course.slug}`} className="mt-5 inline-flex items-center gap-2 rounded-full bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-600">
-                          <Play className="h-4 w-4 fill-white" />
-                          {progress > 0 ? "Continue" : "Start learning"}
-                        </Link>
                       </div>
-                    </div>
+                      <Badge variant={progress >= 100 ? "success" : progress > 0 ? "info" : "neutral"}>
+                        {progress >= 100 ? "Done" : progress > 0 ? "Active" : "Start"}
+                      </Badge>
+                      <ChevronRight className="h-4 w-4 text-gray-300 group-hover:text-gray-400" />
+                    </Link>
                   );
                 })}
+                {courses.length > 5 && (
+                  <Link href="/enrollments" className="flex items-center justify-center gap-1.5 py-2 text-sm text-blue-600 font-medium hover:text-blue-700">
+                    View all {courses.length} courses <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                )}
               </div>
             )}
+          </SectionCard>
 
-            {enrollmentsError ? (
-              <button type="button" onClick={() => refetchEnrollments()} className="mt-4 bw-action-secondary">
-                Retry course load
-              </button>
-            ) : null}
-          </ContentBand>
-
-          <div className="grid gap-6">
-            <ContentBand muted className="h-full">
-              <SectionHeader eyebrow="Practice & Assets" title="Keep momentum with quick-access tools." />
-              <div className="mt-6 grid gap-3">
-                <div className="bw-card p-5">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
-                      <Sparkles className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="font-display text-lg font-bold text-slate-950">AI support</p>
-                      <p className="text-sm text-slate-500">Course-aware explanations and revision help.</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="bw-card p-5">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-50 text-sky-600">
-                      <BookOpen className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="font-display text-lg font-bold text-slate-950">{materials.length} study materials</p>
-                      <p className="text-sm text-slate-500">Purchased resources and downloadable packs.</p>
-                    </div>
-                  </div>
-                  <Link href="/catalog/materials" className="mt-4 inline-flex text-sm font-semibold text-indigo-700">
-                    Open materials
-                  </Link>
-                </div>
-                <div className="bw-card p-5">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
-                      <ClipboardList className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="font-display text-lg font-bold text-slate-950">{mocks.length} mock test packages</p>
-                      <p className="text-sm text-slate-500">Revision and assessment shortcuts without extra hunting.</p>
-                    </div>
-                  </div>
-                  <Link href="/catalog/mock-tests" className="mt-4 inline-flex text-sm font-semibold text-indigo-700">
-                    Open practice
-                  </Link>
-                </div>
-              </div>
-            </ContentBand>
-
-            {certificates.length > 0 ? (
-              <ContentBand className="h-full">
-                <SectionHeader eyebrow="Certificates" title="Your verified achievements" />
-                <div className="mt-6 space-y-3">
-                  {certificates.slice(0, 3).map((certificate: any) => (
-                    <div key={certificate.id} className="bw-card p-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <p className="font-display text-base font-bold text-slate-950">{certificate.course_name}</p>
-                          <p className="text-sm text-slate-500">By {certificate.teacher_name}</p>
-                        </div>
-                        <StatusBadge tone="success">Verified</StatusBadge>
+          {/* Mock Test Packages */}
+          {mocks.length > 0 && (
+            <SectionCard
+              title="My Mock Tests"
+              action={
+                <Link href="/catalog/mock-tests" className="text-sm text-blue-600 hover:text-blue-700 font-medium">View catalog</Link>
+              }
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {mocks.slice(0, 4).map((pkg: any) => (
+                  <div key={pkg.package_id} className="border border-gray-100 rounded-xl p-3 hover:border-blue-200 hover:bg-blue-50/30 transition-colors">
+                    <div className="flex items-center gap-2.5 mb-2">
+                      <div className="h-8 w-8 bg-orange-50 rounded-lg flex items-center justify-center">
+                        <Package className="h-4 w-4 text-orange-500" />
                       </div>
-                      <Link href={`/verify/${certificate.id}`} className="mt-3 inline-flex text-sm font-semibold text-indigo-700">
-                        View certificate
-                      </Link>
+                      <p className="text-sm font-semibold text-gray-800 truncate">{pkg.title}</p>
                     </div>
-                  ))}
-                </div>
-              </ContentBand>
-            ) : null}
-          </div>
+                    <p className="text-xs text-gray-500">{(pkg.papers || []).length} papers available</p>
+                    {(pkg.papers || []).length > 0 && (
+                      <Link
+                        href={`/mock-tests/take/${pkg.papers[0].id}`}
+                        className="mt-2 flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700"
+                      >
+                        Take test <ChevronRight className="h-3 w-3" />
+                      </Link>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </SectionCard>
+          )}
         </div>
-      </main>
-      <Footer />
-    </AppShell>
+
+        {/* Right column */}
+        <div className="space-y-4">
+
+          {/* Quick Actions */}
+          <SectionCard title="Quick Actions">
+            <div className="space-y-2">
+              {[
+                { label: "Browse Courses", href: "/courses", icon: BookOpen, color: "text-blue-600 bg-blue-50" },
+                { label: "Mock Tests", href: "/catalog/mock-tests", icon: Package, color: "text-orange-600 bg-orange-50" },
+                { label: "Study Materials", href: "/catalog/materials", icon: TrendingUp, color: "text-green-600 bg-green-50" },
+                { label: "My Certificates", href: "/certificates", icon: Award, color: "text-purple-600 bg-purple-50" },
+              ].map(({ label, href, icon: Icon, color }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className="flex items-center gap-3 p-3 rounded-xl border border-transparent hover:border-gray-200 hover:bg-gray-50 transition-colors group"
+                >
+                  <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${color}`}>
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <span className="text-sm font-medium text-gray-700">{label}</span>
+                  <ChevronRight className="h-4 w-4 text-gray-300 ml-auto group-hover:text-gray-400" />
+                </Link>
+              ))}
+            </div>
+          </SectionCard>
+
+          {/* Certificates */}
+          <SectionCard
+            title="Certificates"
+            action={
+              certificates.length > 0
+                ? <Link href="/certificates" className="text-xs text-blue-600 font-medium">View all</Link>
+                : undefined
+            }
+          >
+            {certificates.length === 0 ? (
+              <div className="text-center py-6">
+                <Award className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                <p className="text-xs text-gray-500">Complete courses to earn certificates</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {certificates.slice(0, 3).map((cert: any) => (
+                  <div key={cert.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50">
+                    <div className="h-8 w-8 bg-purple-50 rounded-lg flex items-center justify-center shrink-0">
+                      <Award className="h-4 w-4 text-purple-500" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold text-gray-800 truncate">{cert.course_name}</p>
+                      <p className="text-[11px] text-gray-400">{new Date(cert.issued_at).toLocaleDateString()}</p>
+                    </div>
+                    {cert.pdf_url && (
+                      <a href={cert.pdf_url} target="_blank" rel="noopener noreferrer"
+                        className="text-[11px] text-blue-600 font-medium shrink-0">
+                        PDF
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </SectionCard>
+
+          {/* Study Materials */}
+          <SectionCard
+            title="Study Materials"
+            action={
+              <Link href="/catalog/materials" className="text-xs text-blue-600 font-medium">Browse</Link>
+            }
+          >
+            {materials.length === 0 ? (
+              <div className="text-center py-6">
+                <TrendingUp className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                <p className="text-xs text-gray-500">No purchases yet</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {materials.slice(0, 3).map((m: any) => (
+                  <Link
+                    key={m.product_id}
+                    href={`/catalog/materials/${m.slug}`}
+                    className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-50 group"
+                  >
+                    <div className="h-7 w-7 bg-green-50 rounded-lg flex items-center justify-center shrink-0">
+                      <TrendingUp className="h-3.5 w-3.5 text-green-500" />
+                    </div>
+                    <p className="text-xs font-medium text-gray-700 truncate">{m.title}</p>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </SectionCard>
+        </div>
+      </div>
+    </DashboardLayout>
   );
 }

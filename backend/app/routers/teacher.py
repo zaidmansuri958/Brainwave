@@ -41,6 +41,22 @@ class OnboardingBody(BaseModel):
     highest_degree: Optional[str] = None
 
 
+def _presign_kyc(raw_url: str | None) -> str | None:
+    """Convert a stored KYC object URL to a 1-hour presigned URL."""
+    if not raw_url:
+        return None
+    try:
+        from app.services.storage_service import get_presigned_url as _presign
+        # Extract the object key from the stored URL
+        # URL format: http://host:port/kyc-documents/<key>
+        parts = raw_url.split("/kyc-documents/", 1)
+        if len(parts) == 2:
+            return _presign("kyc-documents", parts[1], expiry=3600)
+    except Exception:
+        pass
+    return raw_url
+
+
 @router.get("/onboarding/status")
 async def onboarding_status(
     current_user: User = Depends(get_current_teacher),
@@ -48,16 +64,20 @@ async def onboarding_status(
 ):
     profile = db.query(TeacherProfile).filter(TeacherProfile.user_id == current_user.id).first()
     if not profile:
-        raise HTTPException(status_code=404, detail="Profile not found")
+        # Auto-create missing profile (edge case: DB error during registration)
+        profile = TeacherProfile(user_id=current_user.id, onboarding_status="draft")
+        db.add(profile)
+        db.commit()
+        db.refresh(profile)
     return {
         "onboarding_status": profile.onboarding_status,
         "legal_name": profile.legal_name,
         "years_teaching": profile.years_teaching,
         "past_employers": profile.past_employers or [],
         "highest_degree": profile.highest_degree,
-        "degree_proof_url": profile.degree_proof_url,
-        "aadhaar_doc_url": profile.aadhaar_doc_url,
-        "pan_doc_url": profile.pan_doc_url,
+        "degree_proof_url": _presign_kyc(profile.degree_proof_url),
+        "aadhaar_doc_url": _presign_kyc(profile.aadhaar_doc_url),
+        "pan_doc_url": _presign_kyc(profile.pan_doc_url),
         "rejection_reason": profile.rejection_reason,
         "submitted_at": profile.onboarding_submitted_at.isoformat() if profile.onboarding_submitted_at else None,
     }
@@ -103,8 +123,8 @@ async def onboarding_upload_document(
     if profile.onboarding_status in ("submitted", "approved"):
         raise HTTPException(status_code=400, detail="Cannot upload after submit")
     content = await file.read()
-    key = f"teacher-kyc/{current_user.id}/{doc_type}/{uuid.uuid4().hex}_{file.filename}"
-    url = upload_file(content, "course-materials", key, file.content_type or "application/octet-stream")
+    key = f"{current_user.id}/{doc_type}/{uuid.uuid4().hex}_{file.filename}"
+    url = upload_file(content, "kyc-documents", key, file.content_type or "application/octet-stream")
     if doc_type == "degree_proof":
         profile.degree_proof_url = url
     elif doc_type == "aadhaar":
@@ -112,7 +132,10 @@ async def onboarding_upload_document(
     else:
         profile.pan_doc_url = url
     db.commit()
-    return {"url": url, "doc_type": doc_type}
+    # Return a short-lived presigned URL for immediate display (1 hour)
+    from app.services.storage_service import get_presigned_url as _presign
+    presigned = _presign("kyc-documents", key, expiry=3600)
+    return {"url": presigned, "doc_type": doc_type}
 
 
 @router.post("/onboarding/submit")
@@ -432,6 +455,96 @@ async def get_teacher_course(
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
     return CourseResponse.from_orm(course)
+
+
+@router.get("/profile")
+async def get_teacher_profile(
+    current_user: User = Depends(get_current_teacher),
+    db: Session = Depends(get_db)
+):
+    profile = db.query(TeacherProfile).filter(TeacherProfile.user_id == current_user.id).first()
+    return {
+        "full_name": current_user.full_name,
+        "email": current_user.email,
+        "avatar_url": current_user.avatar_url,
+        "bio": profile.bio if profile else None,
+        "expertise_areas": profile.expertise_areas if profile else [],
+        "bank_account_name": profile.bank_account_name if profile else None,
+        "bank_account_number": profile.bank_account_number if profile else None,
+        "bank_ifsc": profile.bank_ifsc if profile else None,
+        "onboarding_status": profile.onboarding_status if profile else "draft",
+    }
+
+
+@router.get("/students")
+async def get_all_teacher_students(
+    search: str = None,
+    current_user: User = Depends(get_current_teacher),
+    db: Session = Depends(get_db)
+):
+    courses = db.query(Course).filter(Course.teacher_id == current_user.id).all()
+    course_ids = [c.id for c in courses]
+    if not course_ids:
+        return {"students": []}
+
+    query = (
+        db.query(Enrollment, User, Course)
+        .join(User, User.id == Enrollment.student_id)
+        .join(Course, Course.id == Enrollment.course_id)
+        .filter(
+            Enrollment.course_id.in_(course_ids),
+            Enrollment.is_active == True
+        )
+    )
+    if search:
+        query = query.filter(
+            User.full_name.ilike(f"%{search}%") | User.email.ilike(f"%{search}%")
+        )
+
+    rows = query.order_by(Enrollment.enrolled_at.desc()).all()
+    students = []
+    for enroll, student, course in rows:
+        students.append({
+            "student_id": str(student.id),
+            "name": student.full_name,
+            "email": student.email,
+            "avatar_url": student.avatar_url,
+            "course_id": str(course.id),
+            "course_title": course.title,
+            "enrolled_at": enroll.enrolled_at.isoformat(),
+        })
+    return {"students": students}
+
+
+class PayoutRequest(BaseModel):
+    amount: Optional[float] = None
+
+
+@router.post("/payouts/request")
+async def request_payout(
+    data: PayoutRequest = PayoutRequest(),
+    current_user: User = Depends(get_current_teacher),
+    db: Session = Depends(get_db)
+):
+    profile = db.query(TeacherProfile).filter(TeacherProfile.user_id == current_user.id).first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    pending = float(profile.pending_payout or 0)
+    if pending <= 0:
+        raise HTTPException(status_code=400, detail="No pending payout balance")
+    amount = min(data.amount, pending) if data.amount else pending
+    if not profile.bank_account_number or not profile.bank_ifsc:
+        raise HTTPException(status_code=400, detail="Bank details required before requesting payout")
+    payout = Payout(
+        teacher_id=current_user.id,
+        amount=amount,
+        status="pending",
+    )
+    db.add(payout)
+    profile.pending_payout = pending - amount
+    db.commit()
+    db.refresh(payout)
+    return {"payout_id": str(payout.id), "amount": amount, "status": "pending"}
 
 
 @router.patch("/profile")

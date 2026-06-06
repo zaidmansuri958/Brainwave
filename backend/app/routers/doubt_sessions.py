@@ -259,3 +259,96 @@ async def join_doubt_session(
         "is_moderator": current_user.role == "teacher",
         "jitsi_url": f"https://{settings.jitsi_domain}/{session.jitsi_room_name}"
     }
+
+
+@router.get("/doubt-sessions/my-bookings")
+async def get_my_bookings(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    bookings = db.query(DoubtSessionBooking).filter(
+        DoubtSessionBooking.student_id == current_user.id
+    ).all()
+    result = []
+    for b in bookings:
+        s = b.doubt_session
+        result.append({
+            "booking_id": str(b.id),
+            "session_id": str(s.id),
+            "topic": s.topic,
+            "scheduled_at": s.scheduled_at.isoformat(),
+            "duration_minutes": s.duration_minutes,
+            "status": s.status,
+            "jitsi_url": f"https://{settings.jitsi_domain}/{s.jitsi_room_name}",
+            "teacher_name": s.teacher.full_name if s.teacher else "Unknown",
+        })
+    return {"bookings": result}
+
+
+class DoubtSessionUpdate(BaseModel):
+    title: Optional[str] = None
+    scheduled_at: Optional[str] = None
+    duration_minutes: Optional[int] = None
+    price: Optional[float] = None
+    description: Optional[str] = None
+
+
+@router.patch("/doubt-sessions/{session_id}")
+async def update_doubt_session(
+    session_id: str,
+    data: DoubtSessionUpdate,
+    current_user: User = Depends(get_current_teacher),
+    db: Session = Depends(get_db)
+):
+    session = db.query(DoubtSession).filter(
+        DoubtSession.id == session_id,
+        DoubtSession.teacher_id == current_user.id
+    ).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    if data.title is not None:
+        session.topic = data.title
+    if data.scheduled_at is not None:
+        session.scheduled_at = datetime.fromisoformat(data.scheduled_at)
+    if data.duration_minutes is not None:
+        session.duration_minutes = data.duration_minutes
+    if data.price is not None:
+        session.price = data.price
+    db.commit()
+    return {"message": "updated"}
+
+
+@router.delete("/doubt-sessions/{session_id}")
+async def delete_doubt_session(
+    session_id: str,
+    current_user: User = Depends(get_current_teacher),
+    db: Session = Depends(get_db)
+):
+    session = db.query(DoubtSession).filter(
+        DoubtSession.id == session_id,
+        DoubtSession.teacher_id == current_user.id
+    ).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    if session.bookings:
+        raise HTTPException(status_code=400, detail="Cannot delete a session with existing bookings")
+    db.delete(session)
+    db.commit()
+    return {"message": "Session deleted"}
+
+
+@router.post("/doubt-sessions/{session_id}/end")
+async def end_doubt_session(
+    session_id: str,
+    current_user: User = Depends(get_current_teacher),
+    db: Session = Depends(get_db)
+):
+    session = db.query(DoubtSession).filter(
+        DoubtSession.id == session_id,
+        DoubtSession.teacher_id == current_user.id
+    ).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    session.status = "completed"
+    db.commit()
+    return {"message": "Session marked as completed"}

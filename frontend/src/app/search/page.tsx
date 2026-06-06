@@ -3,12 +3,11 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Search, SlidersHorizontal, X } from "lucide-react";
+import { Loader2, Search, SlidersHorizontal, X, BookOpen } from "lucide-react";
 import api from "@/lib/api";
 import { CourseCard } from "@/components/course/CourseCard";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { AppShell, EmptyStatePanel, FilterToolbar, SectionHeader, StatusBadge } from "@/components/ui/app-shell";
 
 const LEVELS = ["beginner", "intermediate", "advanced"];
 const SORT_OPTIONS = [
@@ -16,8 +15,8 @@ const SORT_OPTIONS = [
   { label: "Newest", value: "newest" },
   { label: "Highest Rated", value: "rating" },
   { label: "Most Enrolled", value: "popular" },
-  { label: "Price: Low to High", value: "price_asc" },
-  { label: "Price: High to Low", value: "price_desc" },
+  { label: "Price: Low → High", value: "price_asc" },
+  { label: "Price: High → Low", value: "price_desc" },
 ];
 
 function SearchPageContent() {
@@ -29,22 +28,15 @@ function SearchPageContent() {
   const [category, setCategory] = useState(searchParams.get("category") || "");
   const [sortBy, setSortBy] = useState(searchParams.get("sort") || "relevance");
   const [maxPrice, setMaxPrice] = useState(searchParams.get("max_price") || "");
+  const hasFilters = Boolean(query || level || category);
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ["search", query, level, category, sortBy, maxPrice],
     queryFn: () =>
-      api
-        .get("/courses/search", {
-          params: {
-            q: query || undefined,
-            level: level || undefined,
-            category: category || undefined,
-            sort_by: sortBy,
-            max_price: maxPrice || undefined,
-          },
-        })
-        .then((response) => response.data),
-    enabled: Boolean(query || level || category),
+      api.get("/courses/search", {
+        params: { q: query || undefined, level: level || undefined, category: category || undefined, sort_by: sortBy, max_price: maxPrice || undefined },
+      }).then((r) => r.data),
+    enabled: hasFilters,
   });
 
   useEffect(() => {
@@ -57,7 +49,6 @@ function SearchPageContent() {
       if (maxPrice) params.set("max_price", maxPrice);
       router.push(`/search?${params.toString()}`, { scroll: false });
     }, 400);
-
     return () => clearTimeout(timer);
   }, [category, level, maxPrice, query, router, sortBy]);
 
@@ -65,128 +56,102 @@ function SearchPageContent() {
   const total = data?.total || courses.length;
 
   return (
-    <AppShell>
+    <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
-      <main className="bw-shell space-y-6 pb-6">
-        <FilterToolbar className="bw-band bw-band-muted p-5 sm:p-7">
-          <SectionHeader
-            eyebrow="Search"
-            title="Search now works like a guided discovery surface."
-            description="Instead of a lonely input on a wide page, search combines structured filters, active state chips, and denser result framing."
-          />
-          <div className="mt-6 flex flex-col gap-3 lg:flex-row">
+
+      <div className="bg-gray-50 border-b border-gray-100 py-8">
+        <div className="page-container">
+          <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search courses, topics, skills..."
-                className="w-full rounded-[1.25rem] border border-slate-200 bg-white px-11 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
-              />
-              {query ? (
-                <button type="button" onClick={() => setQuery("")} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input value={query} onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search courses, topics, teachers..."
+                className="input pl-10 pr-8" autoFocus />
+              {query && (
+                <button type="button" onClick={() => setQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                   <X className="h-4 w-4" />
                 </button>
-              ) : null}
+              )}
             </div>
-
-            <button
-              type="button"
-              onClick={() => setShowFilters((prev) => !prev)}
-              className={`inline-flex items-center justify-center gap-2 rounded-[1.25rem] border px-4 py-3 text-sm font-semibold transition ${
-                showFilters ? "border-indigo-200 bg-indigo-50 text-indigo-700" : "border-slate-200 bg-white text-slate-600 hover:text-slate-950"
-              }`}
-            >
-              <SlidersHorizontal className="h-4 w-4" />
-              Filters
+            <button type="button" onClick={() => setShowFilters(p => !p)}
+              className={`btn btn-md flex items-center gap-2 shrink-0 ${showFilters ? "btn-primary" : "btn-secondary"}`}>
+              <SlidersHorizontal className="h-4 w-4" /> Filters
             </button>
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="input shrink-0 sm:w-44 cursor-pointer">
+              {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
           </div>
 
-          {showFilters ? (
-            <div className="mt-4 grid gap-4 rounded-[1.5rem] border border-slate-200 bg-white p-4 md:grid-cols-4">
+          {showFilters && (
+            <div className="mt-4 card p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Level</label>
-                <select value={level} onChange={(event) => setLevel(event.target.value)} className="w-full rounded-[1rem] border border-slate-200 bg-[#fcf8f3] px-4 py-3 text-sm text-slate-900 outline-none">
+                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Level</label>
+                <select value={level} onChange={(e) => setLevel(e.target.value)} className="input">
                   <option value="">All Levels</option>
-                  {LEVELS.map((item) => (
-                    <option key={item} value={item}>
-                      {item.charAt(0).toUpperCase() + item.slice(1)}
-                    </option>
-                  ))}
+                  {LEVELS.map((l) => <option key={l} value={l}>{l.charAt(0).toUpperCase() + l.slice(1)}</option>)}
                 </select>
               </div>
               <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Category</label>
-                <input value={category} onChange={(event) => setCategory(event.target.value)} className="w-full rounded-[1rem] border border-slate-200 bg-[#fcf8f3] px-4 py-3 text-sm text-slate-900 outline-none" placeholder="e.g. Programming" />
+                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Category</label>
+                <input value={category} onChange={(e) => setCategory(e.target.value)} className="input" placeholder="e.g. Programming" />
               </div>
               <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Max Price</label>
-                <input type="number" value={maxPrice} onChange={(event) => setMaxPrice(event.target.value)} className="w-full rounded-[1rem] border border-slate-200 bg-[#fcf8f3] px-4 py-3 text-sm text-slate-900 outline-none" placeholder="No limit" />
+                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Max Price (₹)</label>
+                <input type="number" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} className="input" placeholder="No limit" />
               </div>
-              <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Sort By</label>
-                <select value={sortBy} onChange={(event) => setSortBy(event.target.value)} className="w-full rounded-[1rem] border border-slate-200 bg-[#fcf8f3] px-4 py-3 text-sm text-slate-900 outline-none">
-                  {SORT_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          ) : null}
-        </FilterToolbar>
-
-        <section>
-          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="font-display text-2xl font-extrabold text-slate-950">
-                {isFetching ? "Searching..." : query || level || category ? `${total} results` : "Start a search"}
-              </p>
-              <p className="text-sm text-slate-500">
-                {query || level || category
-                  ? "Results are shown in denser cards with stronger context and clearer pricing."
-                  : "Use search to find courses, topics, teachers, and skill paths."}
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {query ? <StatusBadge tone="neutral">Query: {query}</StatusBadge> : null}
-              {level ? <StatusBadge tone="warning">{level}</StatusBadge> : null}
-              {category ? <StatusBadge tone="info">{category}</StatusBadge> : null}
-            </div>
-          </div>
-
-          {isLoading ? (
-            <div className="flex items-center justify-center py-24">
-              <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
-            </div>
-          ) : !(query || level || category) ? (
-            <EmptyStatePanel title="Start searching" description="Type a keyword or open the filters to find topics, teachers, or learning paths." icon={Search} />
-          ) : courses.length === 0 ? (
-            <EmptyStatePanel title="No courses found" description="Try broader keywords, remove filters, or increase the max price range." icon={Search} />
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {courses.map((course: any) => (
-                <CourseCard key={course.id} course={course} />
-              ))}
             </div>
           )}
-        </section>
+        </div>
+      </div>
+
+      <main className="flex-1 page-container py-8">
+        <div className="flex items-center justify-between mb-5">
+          <p className="text-sm text-gray-500">
+            {isFetching ? "Searching..." : hasFilters ? `${total} results` : "Enter a keyword to search"}
+          </p>
+          <div className="flex gap-2 flex-wrap">
+            {query && <span className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-medium">"{query}"</span>}
+            {level && <span className="text-xs bg-green-50 text-green-700 px-2.5 py-1 rounded-full font-medium capitalize">{level}</span>}
+            {category && <span className="text-xs bg-purple-50 text-purple-700 px-2.5 py-1 rounded-full font-medium">{category}</span>}
+          </div>
+        </div>
+
+        {isLoading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+          </div>
+        ) : !hasFilters ? (
+          <div className="card p-16 text-center max-w-md mx-auto">
+            <div className="h-14 w-14 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Search className="h-7 w-7 text-blue-400" />
+            </div>
+            <p className="font-semibold text-gray-700">Search courses, teachers, topics</p>
+            <p className="text-sm text-gray-400 mt-1">Type a keyword above to find what you&apos;re looking for.</p>
+          </div>
+        ) : courses.length === 0 ? (
+          <div className="card p-16 text-center max-w-md mx-auto">
+            <BookOpen className="h-10 w-10 text-gray-200 mx-auto mb-3" />
+            <p className="font-semibold text-gray-700">No courses found</p>
+            <p className="text-sm text-gray-400 mt-1">Try broader keywords or adjust filters.</p>
+          </div>
+        ) : (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {courses.map((course: any) => (
+              <CourseCard key={course.id} course={course} />
+            ))}
+          </div>
+        )}
       </main>
+
       <Footer />
-    </AppShell>
+    </div>
   );
 }
 
 export default function SearchPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
-        </div>
-      }
-    >
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>}>
       <SearchPageContent />
     </Suspense>
   );

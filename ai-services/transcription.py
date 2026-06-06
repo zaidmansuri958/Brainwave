@@ -69,7 +69,13 @@ def transcribe_from_url(file_url: str, material_id: str, language: str = None) -
     """Download file from URL and transcribe."""
     import httpx
 
-    with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as tmp:
+    # Infer extension from URL so ffmpeg gets the right codec hint
+    url_path = file_url.split("?")[0]
+    ext = os.path.splitext(url_path)[1].lower() or ".mp4"
+    if ext not in (".mp4", ".mp3", ".webm", ".mkv", ".mov", ".avi", ".wav", ".ogg", ".m4a"):
+        ext = ".mp4"
+
+    with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as tmp:
         tmp_path = tmp.name
 
     try:

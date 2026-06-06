@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.course import Lesson, Course
@@ -12,6 +13,44 @@ from datetime import datetime, timezone
 from typing import Optional
 
 router = APIRouter(tags=["Lessons"])
+
+
+@router.get("/lessons/{lesson_id}/captions", response_class=PlainTextResponse)
+async def get_lesson_captions(
+    lesson_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Return VTT captions for a lesson. Checks Redis first, then lesson.raw_transcript."""
+    lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+
+    if current_user.role == "student":
+        enrollment = get_valid_enrollment(db, current_user.id, str(lesson.course_id))
+        if not enrollment:
+            raise HTTPException(status_code=403, detail="Not enrolled")
+
+    # Try Redis cache first (stored by pipeline for each material)
+    import redis as redis_lib
+    import os
+    try:
+        rc = redis_lib.from_url(os.getenv("REDIS_URL", "redis://localhost:6379/0"), decode_responses=True)
+        # Search for any caption key for this course
+        keys = rc.keys(f"captions:{lesson.course_id}:*")
+        if keys:
+            vtt = rc.get(keys[0])
+            if vtt:
+                return PlainTextResponse(vtt, media_type="text/vtt")
+    except Exception:
+        pass
+
+    # Fallback: generate minimal VTT from raw_transcript
+    if lesson.raw_transcript:
+        vtt = f"WEBVTT\n\n1\n00:00:00.000 --> 00:00:10.000\n{lesson.raw_transcript[:200]}\n"
+        return PlainTextResponse(vtt, media_type="text/vtt")
+
+    raise HTTPException(status_code=404, detail="No captions available for this lesson")
 
 
 @router.get("/lessons/{lesson_id}/video-url")

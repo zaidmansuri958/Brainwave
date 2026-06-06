@@ -12,6 +12,29 @@ def update_status(course_id: str, **kwargs):
         redis_client.hset(f"ai_status:{course_id}", k, str(v))
 
 
+def _segments_to_vtt(segments: list) -> str:
+    """Convert Whisper segments [{start, end, text}] to WebVTT format."""
+    lines = ["WEBVTT", ""]
+    for i, seg in enumerate(segments):
+        start = _fmt_vtt_time(seg.get("start", 0))
+        end = _fmt_vtt_time(seg.get("end", 0))
+        text = (seg.get("text") or "").strip()
+        if text:
+            lines.append(f"{i + 1}")
+            lines.append(f"{start} --> {end}")
+            lines.append(text)
+            lines.append("")
+    return "\n".join(lines)
+
+
+def _fmt_vtt_time(seconds: float) -> str:
+    h = int(seconds // 3600)
+    m = int((seconds % 3600) // 60)
+    s = int(seconds % 60)
+    ms = int((seconds % 1) * 1000)
+    return f"{h:02d}:{m:02d}:{s:02d}.{ms:03d}"
+
+
 def _whisper_lang(course_language: str) -> str:
     """Map UI course language label to Whisper ISO 639-1 code."""
     if not course_language:
@@ -103,6 +126,16 @@ def process_course_material(self, course_id: str, material_ids: list):
                         tl = data.get("language")
                         if tl:
                             redis_client.hset(f"ai_status:{course_id}", "detected_language", tl)
+                        # Save VTT caption file from segments
+                        segments = data.get("segments", [])
+                        if segments:
+                            vtt_content = _segments_to_vtt(segments)
+                            material.extracted_text = vtt_content  # reuse field for VTT
+                            redis_client.setex(
+                                f"captions:{course_id}:{material_id}",
+                                86400 * 30,
+                                vtt_content,
+                            )
                 except Exception as e:
                     material.processing_error = str(e)
                     print(f"Transcription failed: {e}")
@@ -242,9 +275,12 @@ def process_course_material(self, course_id: str, material_ids: list):
 
         # Course banner thumbnail
         update_status(course_id, ai_progress="90", current_step="thumbnail")
+        # Define face_url here so per-lesson block can always reference it safely
         try:
-            teacher = course.teacher
-            face_url = getattr(teacher, "avatar_url", None) if teacher else None
+            face_url = getattr(course.teacher, "avatar_url", None) if course.teacher else None
+        except Exception:
+            face_url = None
+        try:
             resp = httpx.post(
                 f"{AI_SERVICE_URL}/generate-thumbnail",
                 json={
@@ -349,13 +385,20 @@ def save_course_structure(db, course, structure: dict, lesson_transcript_lang: s
         db.flush()
 
         for lesson_data in ch_data.get("lessons", []):
+            key_concepts = lesson_data.get("key_concepts", [])
+            summary = lesson_data.get("summary") or ""
+            # Embed key concepts into raw_transcript so they're searchable
+            raw = summary
+            if key_concepts:
+                raw += "\n\nKey concepts: " + ", ".join(key_concepts)
             lesson = Lesson(
                 chapter_id=chapter.id,
                 course_id=course.id,
                 title=lesson_data.get("title", "Lesson"),
                 lesson_type="video",
                 order_index=lesson_data.get("order", 1),
-                ai_summary=lesson_data.get("summary"),
+                ai_summary=summary or None,
+                raw_transcript=raw or None,
                 is_published=True,
                 transcript_language=lesson_transcript_lang,
             )

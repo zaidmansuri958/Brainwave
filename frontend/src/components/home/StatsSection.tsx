@@ -1,36 +1,35 @@
-"use client";
-
-import { motion } from "framer-motion";
-import { Users, BookOpen, Star, GraduationCap, Sparkles } from "lucide-react";
-
-const stats = [
-  { label: "Students", value: "12,000+", icon: Users },
-  { label: "Courses", value: "800+", icon: BookOpen },
-  { label: "Rating", value: "4.9★", icon: Star },
-  { label: "Teachers", value: "200+", icon: GraduationCap },
-  { label: "AI-Powered", value: "Yes", icon: Sparkles },
-];
-
+﻿"use client";
+import { Users, GraduationCap, BookOpen, Heart } from "lucide-react";
 export function StatsSection() {
+  const logos = ["Google", "Microsoft", "AWS", "NVIDIA", "Airbnb", "Deloitte"];
+  const stats = [
+    { icon: Users, value: "50K+", label: "Active Learners" },
+    { icon: GraduationCap, value: "2K+", label: "Expert Teachers" },
+    { icon: BookOpen, value: "1K+", label: "Courses" },
+    { icon: Heart, value: "95%", label: "Satisfaction Rate" },
+  ];
   return (
-    <section className="border-y-4 border-black bg-[#fff4d6] py-5">
-      <div className="bw-shell grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        {stats.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <motion.div key={stat.label} initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * 0.04 }}>
-              <div className="flex items-center gap-3 rounded-[20px] border-2 border-black bg-white px-4 py-3 shadow-[4px_4px_0_#111111]">
-                <div className="rounded-[12px] border-2 border-black bg-[#ffe500] p-2 text-[#111111]">
-                  <Icon className="h-4 w-4" />
-                </div>
+    <section className="border-y border-gray-100 bg-gray-50/50 py-6">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-8">
+          <p className="text-sm font-medium text-gray-400 whitespace-nowrap shrink-0">Trusted by learners &amp; educators worldwide</p>
+          <div className="flex flex-1 items-center justify-center flex-wrap gap-8">
+            {logos.map((logo) => (
+              <span key={logo} className={`text-sm font-extrabold tracking-tight ${logo === "NVIDIA" ? "text-green-600" : logo === "AWS" ? "text-orange-500" : "text-gray-400"} hover:text-gray-600 transition-colors`}>{logo}</span>
+            ))}
+          </div>
+          <div className="flex items-center gap-8 shrink-0">
+            {stats.map(({ icon: Icon, value, label }) => (
+              <div key={label} className="flex items-center gap-2">
+                <Icon className="h-5 w-5 text-violet-500" />
                 <div>
-                  <p className="font-display text-sm font-extrabold uppercase text-ink-heading">{stat.value}</p>
-                  <p className="text-xs font-bold uppercase text-ink-muted">{stat.label}</p>
+                  <p className="text-sm font-bold text-gray-900 leading-tight">{value}</p>
+                  <p className="text-[11px] text-gray-400">{label}</p>
                 </div>
               </div>
-            </motion.div>
-          );
-        })}
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );

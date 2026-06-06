@@ -191,3 +191,98 @@ async def join_live_session(
         "is_moderator": current_user.role == "teacher",
         "jitsi_url": f"https://{settings.jitsi_domain}/{session.jitsi_room_name}"
     }
+
+
+@router.get("/live-sessions/{session_id}")
+async def get_live_session(
+    session_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    session = db.query(LiveSession).filter(LiveSession.id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return {
+        "id": str(session.id),
+        "title": session.title,
+        "description": session.description,
+        "course_id": str(session.course_id) if session.course_id else None,
+        "scheduled_at": session.scheduled_at.isoformat(),
+        "duration_minutes": session.duration_minutes,
+        "status": session.status,
+        "recording_url": session.recording_url,
+        "jitsi_url": f"https://{settings.jitsi_domain}/{session.jitsi_room_name}",
+    }
+
+
+class LiveSessionUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    scheduled_at: Optional[str] = None
+    duration_minutes: Optional[int] = None
+
+
+@router.patch("/live-sessions/{session_id}")
+async def update_live_session(
+    session_id: str,
+    data: LiveSessionUpdate,
+    current_user: User = Depends(get_current_teacher),
+    db: Session = Depends(get_db)
+):
+    session = db.query(LiveSession).filter(
+        LiveSession.id == session_id,
+        LiveSession.teacher_id == current_user.id
+    ).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    if data.title is not None:
+        session.title = data.title
+    if data.description is not None:
+        session.description = data.description
+    if data.scheduled_at is not None:
+        session.scheduled_at = datetime.fromisoformat(data.scheduled_at)
+    if data.duration_minutes is not None:
+        session.duration_minutes = data.duration_minutes
+    db.commit()
+    return {"message": "updated"}
+
+
+@router.delete("/live-sessions/{session_id}")
+async def delete_live_session(
+    session_id: str,
+    current_user: User = Depends(get_current_teacher),
+    db: Session = Depends(get_db)
+):
+    session = db.query(LiveSession).filter(
+        LiveSession.id == session_id,
+        LiveSession.teacher_id == current_user.id
+    ).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    session.status = "cancelled"
+    db.commit()
+    return {"message": "Session cancelled"}
+
+
+class EndSessionBody(BaseModel):
+    recording_url: Optional[str] = None
+
+
+@router.post("/live-sessions/{session_id}/end")
+async def end_live_session(
+    session_id: str,
+    data: EndSessionBody = EndSessionBody(),
+    current_user: User = Depends(get_current_teacher),
+    db: Session = Depends(get_db)
+):
+    session = db.query(LiveSession).filter(
+        LiveSession.id == session_id,
+        LiveSession.teacher_id == current_user.id
+    ).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    session.status = "completed"
+    if data.recording_url:
+        session.recording_url = data.recording_url
+    db.commit()
+    return {"message": "Session marked as completed"}

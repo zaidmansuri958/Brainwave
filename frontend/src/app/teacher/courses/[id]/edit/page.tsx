@@ -129,17 +129,17 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
 
   if (isLoading) {
     return (
-      <div className="bw-page min-h-screen">
+      <div className="min-h-screen bg-gray-50">
         <Navbar />
         <div className="flex items-center justify-center h-96">
-          <Loader2 className="h-8 w-8 animate-spin text-[#ff6b00]" />
+          <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bw-page min-h-screen">
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
 
       <div className="max-w-3xl mx-auto px-4 py-8">
@@ -149,7 +149,7 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div className="flex-1">
-            <h1 className="font-display text-2xl font-extrabold uppercase text-gray-900">Edit Course</h1>
+            <h1 className=" text-2xl font-extrabold uppercase text-gray-900">Edit Course</h1>
             <p className="text-gray-500 text-sm">
               Status: <span className={`font-semibold ${course?.status === "published" ? "text-emerald-600" : "text-amber-600"}`}>
                 {course?.status}
@@ -184,7 +184,7 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
         <form id="edit-form" onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Info */}
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-4">
-            <h2 className="font-display font-bold text-gray-900">Basic Information</h2>
+            <h2 className=" font-bold text-gray-900">Basic Information</h2>
             <div>
               <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Course Title *</label>
               <input
@@ -252,7 +252,7 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
           </div>
 
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-4">
-            <h2 className="font-display font-bold text-gray-900">Delivery & access</h2>
+            <h2 className=" font-bold text-gray-900">Delivery & access</h2>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Delivery mode</label>
@@ -304,7 +304,7 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
 
           {/* What You'll Learn */}
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-            <h2 className="font-display font-bold text-gray-900 mb-4">What Students Will Learn</h2>
+            <h2 className=" font-bold text-gray-900 mb-4">What Students Will Learn</h2>
             <div className="flex gap-2 mb-3">
               <input
                 value={newLearning}
@@ -333,7 +333,7 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
 
           {/* Prerequisites */}
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-            <h2 className="font-display font-bold text-gray-900 mb-4">Prerequisites</h2>
+            <h2 className=" font-bold text-gray-900 mb-4">Prerequisites</h2>
             <div className="flex gap-2 mb-3">
               <input
                 value={newPrereq}
@@ -362,7 +362,7 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
 
           {/* Tags */}
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-            <h2 className="font-display font-bold text-gray-900 mb-4">Tags</h2>
+            <h2 className=" font-bold text-gray-900 mb-4">Tags</h2>
             <div className="flex gap-2 mb-3">
               <input
                 value={newTag}

@@ -108,34 +108,34 @@ function ChapterRow({ chapter, index, isEnrolled }: { chapter: Chapter; index: n
   const totalSecs = chapter.lessons.reduce((s, l) => s + (l.duration_seconds || 0), 0);
 
   const typeIcon = (t: string) => {
-    if (t === "quiz") return <FileText className="h-3.5 w-3.5 text-violet-500" />;
-    if (t === "document") return <BookOpen className="h-3.5 w-3.5 text-amber-500" />;
-    return <Play className="h-3.5 w-3.5 text-indigo-500" />;
+    if (t === "quiz") return <FileText className="h-4 w-4 text-black" strokeWidth={3} />;
+    if (t === "document") return <BookOpen className="h-4 w-4 text-black" strokeWidth={3} />;
+    return <Play className="h-4 w-4 text-black" strokeWidth={3} fill="currentColor" />;
   };
 
   return (
-    <div className="border border-gray-100 rounded-xl overflow-hidden">
+    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white mb-4 shadow-sm transition-transform hover:-translate-y-0.5">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-gray-50 transition-colors"
+        className={`w-full flex items-center gap-4 px-6 py-5 text-left transition-colors ${open ? "bg-yellow-300" : "bg-white hover:bg-white"}`}
       >
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs text-gray-400 font-medium shrink-0">Ch {index + 1}</span>
-            <h4 className="text-gray-900 font-semibold text-sm">{chapter.title}</h4>
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-xs font-semibold text-gray-800 shrink-0 border border-gray-200 rounded-full px-2 py-0.5 bg-white">Ch {index + 1}</span>
+            <h4 className="text-gray-900  uppercase tracking-tight text-base sm:text-lg">{chapter.title}</h4>
             {chapter.is_free_preview && (
-              <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
+              <span className="shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-green-100 text-black border border-gray-200">
                 Preview
               </span>
             )}
           </div>
-          <p className="text-gray-400 text-xs mt-0.5">
+          <p className="text-gray-700 font-bold text-xs mt-2 ">
             {chapter.lessons.length} lessons{totalSecs ? ` · ${fmtSec(totalSecs)}` : ""}
           </p>
         </div>
         {open
-          ? <ChevronUp className="h-4 w-4 text-gray-400 shrink-0" />
-          : <ChevronDown className="h-4 w-4 text-gray-400 shrink-0" />}
+          ? <ChevronUp className="h-6 w-6 text-black shrink-0" strokeWidth={3} />
+          : <ChevronDown className="h-6 w-6 text-black shrink-0" strokeWidth={3} />}
       </button>
 
       <AnimatePresence initial={false}>
@@ -144,23 +144,23 @@ function ChapterRow({ chapter, index, isEnrolled }: { chapter: Chapter; index: n
             initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }}
             transition={{ duration: 0.22 }} className="overflow-hidden"
           >
-            <div className="border-t border-gray-100">
+            <div className="border-t-4 border-black bg-white">
               {chapter.lessons.map((lesson) => {
                 const canView = chapter.is_free_preview || isEnrolled;
                 return (
                   <div
                     key={lesson.id}
-                    className="flex items-center gap-3 px-5 py-3 border-b border-gray-50 last:border-b-0 hover:bg-gray-50/60 transition-colors"
+                    className="flex items-center gap-4 px-6 py-4 border-b-4 border-black/10 last:border-b-0 hover:bg-blue-100/20 transition-colors"
                   >
-                    <div className="shrink-0">{typeIcon(lesson.lesson_type || "video")}</div>
-                    <span className={`flex-1 text-sm ${canView ? "text-gray-700" : "text-gray-400"}`}>{lesson.title}</span>
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="shrink-0 flex items-center justify-center h-8 w-8 rounded-full border border-gray-200 bg-white">{typeIcon(lesson.lesson_type || "video")}</div>
+                    <span className={`flex-1 font-bold text-sm uppercase tracking-wide ${canView ? "text-gray-900" : "text-gray-400"}`}>{lesson.title}</span>
+                    <div className="flex items-center gap-3 shrink-0">
                       {lesson.duration_seconds ? (
-                        <span className="text-[11px] text-gray-400">{fmtSec(lesson.duration_seconds)}</span>
+                        <span className="text-[11px] font-bold text-gray-500 ">{fmtSec(lesson.duration_seconds)}</span>
                       ) : null}
                       {canView
-                        ? <Unlock className="h-3 w-3 text-emerald-500" />
-                        : <Lock className="h-3 w-3 text-gray-300" />}
+                        ? <Unlock className="h-5 w-5 text-green-400" strokeWidth={3} />
+                        : <Lock className="h-5 w-5 text-slate-300" strokeWidth={3} />}
                     </div>
                   </div>
                 );
@@ -242,7 +242,7 @@ export function CourseDetailClient({ course }: { course: Course }) {
         description: `Doubt Session: ${session.topic || session.title}`,
         order_id: order.razorpay_order_id,
         prefill: { name: user?.full_name || "", email: user?.email || "" },
-        theme: { color: "#4F46E5" },
+        theme: { color: "#ff6b00" },
         modal: { ondismiss: () => setBookingSessionId(null) },
         handler: async (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
           try {
@@ -271,10 +271,7 @@ export function CourseDetailClient({ course }: { course: Course }) {
     if (!refundReason) return;
     setRefundLoading(true);
     try {
-      // Find enrollment id — check from the enrollment check we did earlier
       const { data: enrollData } = await enrollmentApi.check(course.id);
-      // The check endpoint just returns enrolled:bool, so we need to get the enrollment id
-      // from my-courses endpoint; for now we pass course.id as a hint
       const { data: myCoursesData } = await enrollmentApi.myCourses();
       const enrolled = myCoursesData?.courses?.find((c: any) => c.course?.id === course.id || c.course?.slug === course.slug);
       if (!enrolled?.enrollment_id) return;
@@ -319,7 +316,7 @@ export function CourseDetailClient({ course }: { course: Course }) {
         description: data.course_title || course.title,
         order_id: data.razorpay_order_id,
         prefill: { name: user?.full_name || "", email: user?.email || "" },
-        theme: { color: "#4F46E5" },
+        theme: { color: "#ff6b00" },
         modal: { ondismiss: () => setEnrollLoading(false) },
         handler: async (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
           try {
@@ -354,90 +351,84 @@ export function CourseDetailClient({ course }: { course: Course }) {
 
   // ─── Buy card (light theme) ───────────────────────────────────────────────
   const BuyCard = () => (
-    <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-card">
+    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
       {/* Thumbnail */}
-      <div className="relative aspect-video bg-gray-100">
+      <div className="relative aspect-video border-b-4 border-black bg-slate-100">
         {course.thumbnail_url
           ? <img src={course.thumbnail_url} alt={course.title} className="w-full h-full object-cover" />
-          : <div className="w-full h-full flex items-center justify-center bg-indigo-50"><BookOpen className="h-14 w-14 text-indigo-300" /></div>
+          : <div className="w-full h-full flex items-center justify-center bg-yellow-300"><BookOpen className="h-16 w-16 text-black" strokeWidth={2} /></div>
         }
-        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-          <div className="h-14 w-14 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
-            <Play className="h-6 w-6 text-indigo-600 ml-0.5 fill-current" />
+        <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+          <div className="h-16 w-16 rounded-full bg-white flex items-center justify-center border border-gray-200 shadow-sm transition-transform hover:scale-110">
+            <Play className="h-6 w-6 text-black ml-1 fill-current" />
           </div>
         </div>
       </div>
 
-      <div className="p-5">
-        <div className="flex items-baseline gap-2 mb-1">
-          <span className={`font-extrabold text-3xl ${isFree ? "text-emerald-600" : "text-gray-900"}`}>{price}</span>
+      <div className="p-8">
+        <div className="flex items-baseline gap-2 mb-2">
+          <span className="  text-5xl uppercase tracking-tighter text-gray-900">{price}</span>
         </div>
-        <p className="text-gray-400 text-xs mb-5">
-          {isFree ? "Free forever. No credit card required." : "One-time payment · Lifetime access."}
+        <p className="text-gray-500 font-bold text-xs  mb-6">
+          {isFree ? "Free forever. No credit card required." : "One-time payment. Lifetime access."}
         </p>
 
         <AnimatePresence>
           {enrollSuccess && (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-              className="mb-4 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm text-center font-semibold"
+              className="mb-6 p-4 rounded-xl bg-green-100 border border-gray-200 text-black text-sm uppercase  tracking-widest text-center shadow-sm"
             >
-              <Check className="h-5 w-5 mx-auto mb-1" /> Enrolled! Redirecting…
+              <Check className="h-6 w-6 mx-auto mb-2" strokeWidth={3} /> Enrolled! Redirecting…
             </motion.div>
           )}
         </AnimatePresence>
 
         {enrolled ? (
           <Link href={`/learn/${course.slug}`}>
-            <button className="w-full py-3.5 rounded-xl bg-emerald-600 text-white font-bold text-sm hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 shadow-button-indigo">
-              <Play className="h-4 w-4 fill-current" /> Go to Course
+            <button className="w-full py-4 rounded-full border border-gray-200 bg-blue-100 text-black font-semibold shadow-sm transition-all hover:-translate-y-1 hover:-translate-x-1 hover:shadow-md flex items-center justify-center gap-3">
+              <Play className="h-5 w-5 fill-current" /> Go to Course
             </button>
           </Link>
         ) : (
           <button
             onClick={handleEnroll}
             disabled={enrollLoading || checkingEnroll}
-            className="w-full py-3.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed shadow-button-indigo"
+            className="w-full py-4 rounded-full border border-gray-200 bg-yellow-300 text-black font-semibold shadow-sm transition-all hover:-translate-y-1 hover:-translate-x-1 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
           >
             {enrollLoading ? (
-              <>
-                <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                Processing…
-              </>
+              <span className="animate-pulse">Processing…</span>
             ) : (
-              <>{isFree ? "Enrol for Free" : `Buy for ${price}`}<ArrowRight className="h-4 w-4" /></>
+              <>{isFree ? "Enrol for Free" : `Buy for ${price}`}<ArrowRight className="h-5 w-5" strokeWidth={3} /></>
             )}
           </button>
         )}
 
         {enrollError && (
-          <p className="mt-3 text-red-500 text-xs text-center leading-relaxed">{enrollError}</p>
+          <p className="mt-4 text-red-500 text-sm font-bold text-center leading-relaxed">{enrollError}</p>
         )}
         {!isAuthenticated() && (
-          <p className="mt-3 text-gray-400 text-xs text-center">
-            <Link href="/login" className="text-indigo-600 hover:text-indigo-700 font-semibold">Sign in</Link> to enrol
+          <p className="mt-4 text-gray-500 text-xs font-bold  text-center">
+            <Link href="/login" className="text-black hover:text-orange-500 underline underline-offset-4">Sign in</Link> to enrol
           </p>
         )}
 
-        <div className="flex gap-2 mt-3">
+        <div className="flex gap-4 mt-6">
           <button
             onClick={() => setWishlist(!wishlist)}
-            className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-500 hover:text-indigo-600 hover:border-indigo-200 flex items-center justify-center gap-2 text-sm transition-all"
+            className="flex-1 py-3 rounded-full border border-gray-200 bg-white text-black hover:bg-orange-500 hover:text-white flex items-center justify-center gap-2 text-xs font-semibold  transition-all"
           >
-            <Heart className={`h-4 w-4 ${wishlist ? "fill-red-500 text-red-500" : ""}`} />
-            {wishlist ? "Saved" : "Wishlist"}
+            <Heart className={`h-4 w-4 ${wishlist ? "fill-current text-white" : ""}`} strokeWidth={3} />
+            {wishlist ? "Saved" : "Save"}
           </button>
-          <button className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-300 flex items-center justify-center gap-2 text-sm transition-all">
-            <Share2 className="h-4 w-4" /> Share
+          <button className="flex-1 py-3 rounded-full border border-gray-200 bg-white text-black hover:bg-blue-100 flex items-center justify-center gap-2 text-xs font-semibold  transition-all">
+            <Share2 className="h-4 w-4" strokeWidth={3} /> Share
           </button>
         </div>
 
         {/* Includes */}
-        <div className="mt-5 pt-4 border-t border-gray-100 space-y-2.5">
-          <p className="text-gray-900 font-bold text-xs uppercase tracking-wide mb-3">This course includes</p>
+        <div className="mt-8 pt-6 border-t-4 border-black space-y-4">
+          <p className="text-gray-900  text-sm  mb-4">This course includes</p>
           {[
             { icon: Video,    text: `${fmtMin(course.total_duration_minutes)} on-demand video` },
             { icon: BookOpen, text: `${totalLessons} lessons · ${course.total_chapters} chapters` },
@@ -445,8 +436,8 @@ export function CourseDetailClient({ course }: { course: Course }) {
             { icon: Zap,      text: "Mobile & desktop access" },
             ...(course.certificate_enabled ? [{ icon: Award, text: "Certificate of completion" }] : []),
           ].map(({ icon: Icon, text }) => (
-            <div key={text} className="flex items-center gap-2.5 text-xs text-gray-500">
-              <Icon className="h-3.5 w-3.5 text-gray-400 shrink-0" />{text}
+            <div key={text} className="flex items-center gap-4 text-sm font-bold text-gray-700">
+              <Icon className="h-5 w-5 text-black shrink-0" strokeWidth={2.5} />{text}
             </div>
           ))}
         </div>
@@ -456,7 +447,7 @@ export function CourseDetailClient({ course }: { course: Course }) {
 
   // ─── Card / Section wrapper component ─────────────────────────────────────
   const Card = ({ children, className = "", id }: { children: React.ReactNode; className?: string; id?: string }) => (
-    <div id={id} className={`bg-white rounded-2xl border border-gray-100 shadow-card p-6 ${className}`}>
+    <div id={id} className={`bg-white rounded-xl border border-gray-200 shadow-sm p-8 sm:p-10 ${className}`}>
       {children}
     </div>
   );
@@ -465,91 +456,93 @@ export function CourseDetailClient({ course }: { course: Course }) {
     <div className="min-h-screen bg-white">
 
       {/* ── Hero strip ── */}
-      <div className="border-b border-[#e2e5ec] bg-white">
-        <div className="bw-shell py-12">
-          <div className="max-w-3xl">
+      <div className="relative border-b-4 border-black bg-blue-100 overflow-hidden">
+        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.05] mix-blend-overlay pointer-events-none" />
+        <div className="relative z-10 px-4 sm:px-6 lg:px-8 py-16 lg:py-24 max-w-[1400px] mx-auto">
+          <div className="max-w-4xl">
             {/* Breadcrumb */}
-            <div className="mb-5 flex flex-wrap items-center gap-2 text-xs text-ink-muted">
-              <Link href="/courses" className="transition-colors hover:text-ink-heading">Courses</Link>
-              {course.category && <><span>/</span><span>{course.category}</span></>}
-              <span>/</span>
-              <span className="max-w-[200px] truncate text-ink-body">{course.title}</span>
+            <div className="mb-8 flex flex-wrap items-center gap-3 text-sm font-bold  text-gray-800">
+              <Link href="/courses" className="transition-colors hover:text-black hover:underline underline-offset-4 border border-gray-200 rounded-full px-3 py-1 bg-white ">Courses</Link>
+              {course.category && <><span className="text-black ">&gt;</span><span className="border border-gray-200 rounded-full px-3 py-1 bg-white ">{course.category}</span></>}
+              <span className="text-black ">&gt;</span>
+              <span className="max-w-[200px] sm:max-w-md truncate border border-gray-200 rounded-full px-3 py-1 bg-black text-white ">{course.title}</span>
             </div>
 
             {course.category && (
-              <span className="mb-4 inline-block rounded-full border border-[#e2e5ec] bg-[#ebebff] px-3 py-1 text-xs font-bold text-brand-primary">
+              <span className="mb-6 inline-block rounded-full border border-gray-200 bg-yellow-300 px-4 py-1.5 text-xs font-semibold text-black shadow-sm">
                 {course.category}
               </span>
             )}
 
-            <h1 className="mb-4 font-display font-extrabold leading-tight tracking-[-0.02em] text-ink-heading"
-              style={{ fontSize: "clamp(1.75rem, 3.5vw, 2.75rem)" }}>
+            <h1 className="mb-6   uppercase tracking-tighter text-gray-900"
+              style={{ fontSize: "clamp(2.5rem, 5vw, 4.5rem)", lineHeight: 1.1 }}>
               {course.title}
             </h1>
 
             {course.short_description && (
-              <p className="mb-6 max-w-2xl text-base leading-relaxed text-ink-body">{course.short_description}</p>
+              <p className="mb-10 max-w-2xl text-lg font-bold leading-relaxed text-gray-800 border-l-4 border-black pl-4">
+                {course.short_description}
+              </p>
             )}
 
             {/* Stats */}
-            <div className="mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+            <div className="mb-8 flex flex-wrap items-center gap-4 sm:gap-6 text-sm font-semibold">
               {Number(course.avg_rating) > 0 && (
-                <div className="flex items-center gap-1.5">
-                  {[1,2,3,4,5].map(s => (
-                    <Star key={s} className={`h-4 w-4 ${s <= Math.round(Number(course.avg_rating)) ? "fill-amber-400 text-amber-400" : "text-gray-300"}`} />
-                  ))}
-                  <span className="ml-1 font-bold text-ink-heading">{Number(course.avg_rating).toFixed(1)}</span>
-                  <span className="text-ink-muted">({course.review_count?.toLocaleString()} reviews)</span>
+                <div className="flex items-center gap-2 border border-gray-200 rounded-full bg-white px-4 py-2 shadow-sm">
+                  <Star className="h-5 w-5 fill-[#ffe500] text-black stroke-[2px]" />
+                  <span className="text-black">{Number(course.avg_rating).toFixed(1)}</span>
+                  <span className="text-gray-500">({course.review_count?.toLocaleString()})</span>
                 </div>
               )}
-              <div className="flex items-center gap-1 text-ink-muted"><Users className="h-4 w-4" />{course.enrolled_count?.toLocaleString()} students</div>
-              {course.total_duration_minutes > 0 && <div className="flex items-center gap-1 text-ink-muted"><Clock className="h-4 w-4" />{fmtMin(course.total_duration_minutes)}</div>}
-              {course.difficulty_level && <div className="flex items-center gap-1 text-ink-muted"><BarChart3 className="h-4 w-4" />{course.difficulty_level}</div>}
-              {course.language && <div className="flex items-center gap-1 text-ink-muted"><Globe className="h-4 w-4" />{course.language}</div>}
+              <div className="flex items-center gap-2 border border-gray-200 rounded-full bg-white px-4 py-2 shadow-sm"><Users className="h-5 w-5 text-black" strokeWidth={3} />{course.enrolled_count?.toLocaleString()}</div>
+              {course.total_duration_minutes > 0 && <div className="flex items-center gap-2 border border-gray-200 rounded-full bg-white px-4 py-2 shadow-sm"><Clock className="h-5 w-5 text-black" strokeWidth={3} />{fmtMin(course.total_duration_minutes)}</div>}
             </div>
 
             {/* Teacher */}
             {course.teacher && (
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-4 mt-8 border border-gray-200 rounded-xl bg-white p-4 w-fit shadow-md">
                 {course.teacher.avatar_url
-                  ? <img src={course.teacher.avatar_url} alt={course.teacher.full_name} className="h-9 w-9 rounded-full object-cover ring-2 ring-indigo-500/30" />
-                  : <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-primary">
-                      <span className="text-white font-bold text-sm">{course.teacher.full_name.charAt(0)}</span>
+                  ? <img src={course.teacher.avatar_url} alt={course.teacher.full_name} className="h-16 w-16 rounded-lg object-cover border border-gray-200" />
+                  : <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-orange-500 border border-gray-200">
+                      <span className="text-white  text-2xl uppercase">{course.teacher.full_name.charAt(0)}</span>
                     </div>
                 }
-                <div>
-                  <p className="text-xs text-ink-muted">Created by</p>
-                  <p className="text-sm font-semibold text-brand-primary">{course.teacher.full_name}</p>
+                <div className="pr-4">
+                  <p className="text-[10px] font-semibold text-gray-500 mb-1">Created by</p>
+                  <p className="text-lg  uppercase tracking-tight text-gray-900">{course.teacher.full_name}</p>
                 </div>
               </div>
             )}
           </div>
         </div>
       </div>
-      <div className="sticky top-[84px] z-30 border-b border-[#e2e5ec] bg-white/95 backdrop-blur">
-        <div className="bw-shell flex items-center gap-6 py-3 text-sm font-medium text-ink-muted">
-          <a href="#overview" className="border-b-2 border-brand-primary pb-2 text-brand-primary">Overview</a>
-          <a href="#curriculum" className="pb-2 hover:text-ink-heading">Curriculum</a>
-          <a href="#reviews" className="pb-2 hover:text-ink-heading">Reviews</a>
-          <a href="#ai-features" className="pb-2 hover:text-ink-heading">AI Features</a>
+      
+      {/* Sticky nav */}
+      <div className="sticky top-[72px] z-30 border-b-4 border-black bg-white">
+        <div className="px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto flex items-center gap-8 py-4 overflow-x-auto no-scrollbar text-sm font-semibold text-gray-400">
+          <a href="#overview" className="border-b-4 border-black pb-2 text-black shrink-0 hover:text-orange-500">Overview</a>
+          <a href="#curriculum" className="pb-2 shrink-0 border-b-4 border-transparent hover:border-black hover:text-black">Curriculum</a>
+          <a href="#reviews" className="pb-2 shrink-0 border-b-4 border-transparent hover:border-black hover:text-black">Reviews</a>
+          <a href="#ai-features" className="pb-2 shrink-0 border-b-4 border-transparent hover:border-black hover:text-black">AI Features</a>
         </div>
       </div>
 
       {/* ── Body ── */}
-      <div className="bw-shell py-10">
-            <Card id="ai-features" className="border-l-4 border-l-brand-primary bg-[#eff6ff]">
-              <h2 className="font-display text-xl font-bold text-ink-heading">AI Features</h2>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <AIBadge label="AI Transcript Available" />
-                <AIBadge label="Auto-Generated Quiz" />
-                <AIBadge label="Course AI Chatbot" />
-              </div>
-            </Card>
-
-        <div className="flex flex-col lg:flex-row gap-8">
+      <div className="px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto py-12 lg:py-16">
+        
+        <div className="flex flex-col lg:flex-row gap-10">
 
           {/* Left */}
-          <div className="flex-1 min-w-0 space-y-5 pb-24 lg:pb-0">
+          <div className="flex-1 min-w-0 space-y-8 pb-24 lg:pb-0">
+
+            <Card id="ai-features" className="bg-green-100">
+              <h2 className=" text-4xl  uppercase tracking-tight text-gray-900 mb-6">AI Superpowers</h2>
+              <div className="flex flex-wrap gap-4">
+                <span className="inline-flex items-center gap-2 border border-gray-200 bg-white px-4 py-2 font-bold  text-black shadow-sm"><Zap className="h-5 w-5 fill-[#ffe500]" /> AI Transcript</span>
+                <span className="inline-flex items-center gap-2 border border-gray-200 bg-white px-4 py-2 font-bold  text-black shadow-sm"><Zap className="h-5 w-5 fill-[#ffe500]" /> Auto Quiz</span>
+                <span className="inline-flex items-center gap-2 border border-gray-200 bg-white px-4 py-2 font-bold  text-black shadow-sm"><Zap className="h-5 w-5 fill-[#ffe500]" /> AI Chatbot</span>
+              </div>
+            </Card>
 
             {/* What you'll learn */}
             <motion.div
@@ -557,14 +550,14 @@ export function CourseDetailClient({ course }: { course: Course }) {
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
             >
               <Card>
-                <h2 className="font-display font-bold text-xl text-gray-900 mb-5">What you&apos;ll learn</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+                <h2 className="  text-4xl uppercase tracking-tight text-gray-900 mb-8">What you'll learn</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
                   {whatYouLearn.map((item, i) => (
-                    <div key={i} className="flex items-start gap-2.5">
-                      <div className="h-5 w-5 rounded-full bg-indigo-50 flex items-center justify-center shrink-0 mt-0.5">
-                        <Check className="h-3 w-3 text-indigo-600" strokeWidth={2.5} />
+                    <div key={i} className="flex items-start gap-4">
+                      <div className="h-8 w-8 rounded-full border border-gray-200 bg-yellow-300 flex items-center justify-center shrink-0">
+                        <Check className="h-5 w-5 text-black" strokeWidth={4} />
                       </div>
-                      <span className="text-gray-600 text-sm leading-relaxed">{item}</span>
+                      <span className="text-gray-800 font-bold text-sm uppercase tracking-wide leading-relaxed">{item}</span>
                     </div>
                   ))}
                 </div>
@@ -573,14 +566,14 @@ export function CourseDetailClient({ course }: { course: Course }) {
 
             {/* Requirements */}
             <Card>
-              <h2 className="font-display font-bold text-xl text-gray-900 mb-4">Requirements</h2>
-              <ul className="space-y-2.5">
+              <h2 className="  text-4xl uppercase tracking-tight text-gray-900 mb-8">Requirements</h2>
+              <ul className="space-y-4">
                 {(course.difficulty_level === "Beginner"
                   ? ["No prior experience required — we start from zero", "A computer with internet access", "Enthusiasm and willingness to practice daily"]
                   : ["Basic programming knowledge is recommended", "Familiarity with the language used in this course", "A computer with internet access"]
                 ).map((req, i) => (
-                  <li key={i} className="flex items-start gap-2.5 text-sm text-gray-500">
-                    <span className="text-gray-300 mt-0.5 text-base leading-none">•</span>{req}
+                  <li key={i} className="flex items-start gap-4 text-sm font-bold uppercase tracking-wide text-gray-700">
+                    <span className="text-black  text-xl leading-none mt-0.5">•</span>{req}
                   </li>
                 ))}
               </ul>
@@ -589,12 +582,12 @@ export function CourseDetailClient({ course }: { course: Course }) {
             {/* Description */}
             {course.description && (
               <Card>
-                <h2 className="font-display font-bold text-xl text-gray-900 mb-4">About this course</h2>
-                <p className="text-gray-500 text-sm leading-relaxed whitespace-pre-line">{course.description}</p>
+                <h2 className="  text-4xl uppercase tracking-tight text-gray-900 mb-8">About this course</h2>
+                <p className="text-gray-700 font-medium text-base leading-loose whitespace-pre-line border-l-4 border-black pl-6">{course.description}</p>
                 {course.tags && course.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-5">
+                  <div className="flex flex-wrap gap-3 mt-8">
                     {course.tags.map((tag) => (
-                      <span key={tag} className="text-xs px-3 py-1 rounded-full bg-gray-50 border border-gray-200 text-gray-500">
+                      <span key={tag} className="text-xs font-semibold px-4 py-2 rounded-full bg-slate-100 border border-gray-200 text-gray-900">
                         #{tag}
                       </span>
                     ))}
@@ -606,13 +599,13 @@ export function CourseDetailClient({ course }: { course: Course }) {
             {/* Curriculum */}
             {course.chapters && course.chapters.length > 0 && (
               <Card id="curriculum">
-                <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
-                  <h2 className="font-display font-bold text-xl text-gray-900">Course curriculum</h2>
-                  <span className="text-gray-400 text-xs">
-                    {course.chapters.length} chapters · {totalLessons} lessons · {fmtMin(course.total_duration_minutes)}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4 border-b-4 border-black pb-6">
+                  <h2 className="  text-4xl uppercase tracking-tight text-gray-900">Curriculum</h2>
+                  <span className="text-gray-900  text-xs  bg-blue-100 border border-gray-200 px-4 py-2 rounded-full inline-block w-fit shadow-sm">
+                    {course.chapters.length} chapters · {totalLessons} lessons
                   </span>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-4">
                   {course.chapters.map((ch, i) => (
                     <ChapterRow key={ch.id} chapter={ch} index={i} isEnrolled={enrolled} />
                   ))}
@@ -623,31 +616,31 @@ export function CourseDetailClient({ course }: { course: Course }) {
             {/* Instructor */}
             {course.teacher && (
               <Card>
-                <h2 className="font-display font-bold text-xl text-gray-900 mb-5">Your instructor</h2>
-                <div className="flex items-start gap-5 flex-wrap">
+                <h2 className="  text-4xl uppercase tracking-tight text-gray-900 mb-8">Your instructor</h2>
+                <div className="flex items-start gap-6 flex-wrap">
                   {course.teacher.avatar_url
-                    ? <img src={course.teacher.avatar_url} alt={course.teacher.full_name} className="h-20 w-20 rounded-2xl object-cover shrink-0" />
-                    : <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0">
-                        <span className="text-white font-extrabold text-2xl">{course.teacher.full_name.charAt(0)}</span>
+                    ? <img src={course.teacher.avatar_url} alt={course.teacher.full_name} className="h-24 w-24 rounded-xl border border-gray-200 object-cover shrink-0 shadow-sm" />
+                    : <div className="h-24 w-24 rounded-xl border border-gray-200 bg-pink-100 flex items-center justify-center shrink-0 shadow-sm">
+                        <span className="text-black  text-4xl uppercase">{course.teacher.full_name.charAt(0)}</span>
                       </div>
                   }
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-display font-bold text-lg text-gray-900">{course.teacher.full_name}</h3>
+                    <h3 className="  text-3xl uppercase tracking-tight text-gray-900">{course.teacher.full_name}</h3>
                     {course.teacher.teacher_profile?.expertise_areas && (
-                      <p className="text-indigo-600 text-sm mb-3">{course.teacher.teacher_profile.expertise_areas.join(", ")}</p>
+                      <p className="text-orange-500  text-sm  mt-2 mb-4">{course.teacher.teacher_profile.expertise_areas.join(", ")}</p>
                     )}
-                    <div className="flex flex-wrap gap-4 text-xs text-gray-400 mb-4">
+                    <div className="flex flex-wrap gap-4 text-xs font-bold  text-gray-700 mb-6 border-y-4 border-black py-4">
                       {course.teacher.teacher_profile?.credibility_score && (
-                        <span className="flex items-center gap-1">
-                          <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
+                        <span className="flex items-center gap-2">
+                          <Star className="h-5 w-5 text-black fill-[#ffe500]" strokeWidth={2} />
                           {Number(course.teacher.teacher_profile.credibility_score).toFixed(1)} rating
                         </span>
                       )}
-                      <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{course.enrolled_count?.toLocaleString()} students</span>
-                      <span className="flex items-center gap-1"><BookOpen className="h-3.5 w-3.5" />Expert verified</span>
+                      <span className="flex items-center gap-2 border-l-4 border-black pl-4"><Users className="h-5 w-5 text-black" />{course.enrolled_count?.toLocaleString()} students</span>
+                      <span className="flex items-center gap-2 border-l-4 border-black pl-4"><BookOpen className="h-5 w-5 text-black" />Expert verified</span>
                     </div>
                     {course.teacher.teacher_profile?.bio && (
-                      <p className="text-gray-500 text-sm leading-relaxed">{course.teacher.teacher_profile.bio}</p>
+                      <p className="text-gray-700 font-medium text-sm leading-relaxed">{course.teacher.teacher_profile.bio}</p>
                     )}
                   </div>
                 </div>
@@ -655,89 +648,88 @@ export function CourseDetailClient({ course }: { course: Course }) {
             )}
 
             <Card id="reviews">
-              <h2 className="font-display text-xl font-bold text-ink-heading">Student Reviews</h2>
-              <p className="mt-2 text-sm text-ink-muted">
+              <h2 className=" text-4xl  uppercase tracking-tight text-gray-900 mb-6">Student Reviews</h2>
+              <p className="text-sm font-semibold text-gray-900 bg-yellow-300 border border-gray-200 px-6 py-4 rounded-lg inline-block shadow-sm">
                 {course.avg_rating ? `${Number(course.avg_rating).toFixed(1)} average rating` : "New course"} from{" "}
                 {course.review_count?.toLocaleString() || 0} learners.
               </p>
             </Card>
 
-            {/* Doubt Sessions — only shown to enrolled students */}
+            {/* Doubt Sessions */}
             {enrolled && (
               <Card>
-                <div className="flex items-center justify-between mb-5">
-                  <h2 className="font-display font-bold text-xl text-gray-900">Book a doubt session</h2>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4 border-b-4 border-black pb-6">
+                  <h2 className="  text-4xl uppercase tracking-tight text-gray-900">Book a session</h2>
                   {refundDone && (
-                    <span className="text-xs text-emerald-600 font-semibold bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full">
+                    <span className="text-xs font-semibold text-black bg-green-100 border border-gray-200 px-4 py-2 rounded-full ">
                       Refund requested
                     </span>
                   )}
                 </div>
 
                 {doubtLoading ? (
-                  <div className="flex justify-center py-6">
-                    <RefreshCw className="h-5 w-5 text-indigo-400 animate-spin" />
+                  <div className="flex justify-center py-12 border border-gray-200 rounded-xl bg-slate-50">
+                    <RefreshCw className="h-10 w-10 text-black animate-spin" strokeWidth={3} />
                   </div>
                 ) : doubtSessions.length === 0 ? (
-                  <div className="text-center py-8">
-                    <HelpCircle className="h-12 w-12 text-gray-200 mx-auto mb-3" />
-                    <p className="text-gray-400 text-sm">No doubt sessions available yet.</p>
-                    <p className="text-gray-300 text-xs mt-1">Check back later or use the community forum.</p>
+                  <div className="text-center py-12 border-4 border-dashed border-black/20 rounded-xl bg-slate-50">
+                    <HelpCircle className="h-16 w-16 text-slate-300 mx-auto mb-4" strokeWidth={2} />
+                    <p className="text-gray-500  text-lg ">No sessions available.</p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-6">
                     {doubtSessions.map((session: any) => {
                       const booked = bookedSessionIds.has(session.id);
                       const isBooking = bookingSessionId === session.id;
                       const scheduledDate = new Date(session.scheduled_at);
                       const isPast = scheduledDate < new Date();
                       return (
-                        <div key={session.id} className="flex items-center justify-between gap-4 p-4 rounded-xl border border-gray-100 bg-[#FAFAF9]">
+                        <div key={session.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 p-6 rounded-xl border border-gray-200 bg-white shadow-sm transition-transform hover:-translate-y-1 hover:shadow-md">
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${
+                            <div className="flex items-center gap-3 mb-3">
+                              <span className={`text-[10px] font-semibold px-3 py-1 rounded-full border border-gray-200 ${
                                 session.session_type === "one_on_one"
-                                  ? "bg-violet-50 text-violet-700 border-violet-100"
-                                  : "bg-blue-50 text-blue-700 border-blue-100"
+                                  ? "bg-pink-100 text-black"
+                                  : "bg-blue-100 text-black"
                               }`}>
                                 {session.session_type === "one_on_one" ? "1-on-1" : "Group"}
                               </span>
                               {session.spots_left <= 2 && !isPast && (
-                                <span className="text-[11px] text-red-500 font-semibold">
+                                <span className="text-[10px] text-white bg-red-500 px-3 py-1 rounded-full border border-gray-200 font-semibold animate-pulse">
                                   {session.spots_left} spot{session.spots_left !== 1 ? "s" : ""} left
                                 </span>
                               )}
                             </div>
-                            <p className="text-sm font-semibold text-gray-900 truncate">
+                            <p className="text-2xl  uppercase tracking-tight text-gray-900 truncate">
                               {session.topic || "Doubt Session"}
                             </p>
-                            <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
-                              <span className="flex items-center gap-1">
-                                <Calendar className="h-3.5 w-3.5" />
-                                {scheduledDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                            <div className="flex items-center gap-4 mt-4 text-xs font-semibold text-gray-900">
+                              <span className="flex items-center gap-2 bg-slate-100 border border-gray-200 px-4 py-2 rounded-full">
+                                <Calendar className="h-4 w-4 text-black" strokeWidth={3} />
+                                {scheduledDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                               </span>
-                              <span>{session.duration_minutes} mins</span>
+                              <span className="bg-slate-100 border border-gray-200 px-4 py-2 rounded-full">{session.duration_minutes} mins</span>
                             </div>
                           </div>
-                          <div className="flex items-center gap-3 shrink-0">
-                            <span className={`font-bold text-sm ${session.price === 0 ? "text-emerald-600" : "text-gray-900"}`}>
+                          <div className="flex flex-col sm:items-end gap-3 shrink-0">
+                            <span className={` text-3xl uppercase ${session.price === 0 ? "text-green-400" : "text-orange-500"}`}>
                               {session.price === 0 ? "Free" : `₹${Number(session.price).toLocaleString("en-IN")}`}
                             </span>
                             {booked ? (
-                              <span className="flex items-center gap-1 text-xs text-emerald-600 font-semibold bg-emerald-50 border border-emerald-100 px-3 py-1.5 rounded-lg">
-                                <Check className="h-3.5 w-3.5" /> Booked
+                              <span className="flex items-center justify-center gap-2 text-sm font-semibold text-black bg-green-100 border border-gray-200 px-8 py-3 rounded-full shadow-sm">
+                                <Check className="h-5 w-5" strokeWidth={4} /> Booked
                               </span>
                             ) : isPast || session.spots_left === 0 ? (
-                              <span className="text-xs text-gray-400 font-medium px-3 py-1.5 rounded-lg border border-gray-100">
+                              <span className="text-sm font-semibold text-gray-500 bg-slate-200 border border-gray-200 px-8 py-3 rounded-full text-center">
                                 {isPast ? "Ended" : "Full"}
                               </span>
                             ) : (
                               <button
                                 onClick={() => handleBookDoubtSession(session)}
                                 disabled={isBooking}
-                                className="text-xs font-semibold bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-60 transition-colors"
+                                className="text-sm font-semibold bg-yellow-300 border border-gray-200 text-black px-8 py-3 rounded-full shadow-sm hover:-translate-y-1 hover:shadow-md disabled:opacity-50 transition-all text-center"
                               >
-                                {isBooking ? "..." : session.price === 0 ? "Reserve" : "Book"}
+                                {isBooking ? "Wait..." : session.price === 0 ? "Reserve" : "Book"}
                               </button>
                             )}
                           </div>
@@ -749,11 +741,11 @@ export function CourseDetailClient({ course }: { course: Course }) {
 
                 {/* Refund request link */}
                 {!refundDone && (
-                  <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
-                    <p className="text-xs text-gray-400">Not satisfied? You may request a refund.</p>
+                  <div className="mt-8 pt-6 border-t-4 border-black flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <p className="text-sm font-bold  text-gray-500">Not satisfied? Request a refund.</p>
                     <button
                       onClick={() => setShowRefundModal(true)}
-                      className="text-xs font-semibold text-red-500 hover:text-red-600 transition-colors"
+                      className="text-sm font-semibold text-white bg-red-500 border border-gray-200 px-6 py-3 rounded-full hover:bg-red-600 shadow-sm transition-transform hover:-translate-y-1"
                     >
                       Request refund
                     </button>
@@ -767,22 +759,22 @@ export function CourseDetailClient({ course }: { course: Course }) {
               {showRefundModal && (
                 <motion.div
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm px-4"
                   onClick={(e) => { if (e.target === e.currentTarget) setShowRefundModal(false); }}
                 >
                   <motion.div
-                    initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-                    className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl"
+                    initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
+                    className="bg-white rounded-xl border border-gray-200 shadow-[16px_16px_0_#111111] p-8 w-full max-w-lg"
                   >
-                    <h3 className="font-display font-bold text-gray-900 text-lg mb-1">Request a Refund</h3>
-                    <p className="text-xs text-gray-400 mb-5">Refund requests are reviewed within 2 business days.</p>
-                    <div className="space-y-4">
+                    <h3 className="  uppercase text-4xl text-gray-900 mb-2">Request Refund</h3>
+                    <p className="text-sm font-bold  text-gray-500 mb-8 border-b-4 border-black pb-4">Reviewed in 2 days.</p>
+                    <div className="space-y-6">
                       <div>
-                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block mb-1.5">Reason *</label>
+                        <label className="text-sm  text-gray-900  block mb-3">Reason *</label>
                         <select
                           value={refundReason}
                           onChange={(e) => setRefundReason(e.target.value)}
-                          className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"
+                          className="w-full bg-white border border-gray-200 text-gray-900 font-bold rounded-lg px-5 py-4 text-base outline-none focus:bg-yellow-300 transition-colors cursor-pointer shadow-sm"
                         >
                           <option value="">Select a reason</option>
                           <option value="content_quality">Content quality not as expected</option>
@@ -793,27 +785,27 @@ export function CourseDetailClient({ course }: { course: Course }) {
                         </select>
                       </div>
                       <div>
-                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block mb-1.5">Description</label>
+                        <label className="text-sm  text-gray-900  block mb-3">Description</label>
                         <textarea
                           value={refundDesc}
                           onChange={(e) => setRefundDesc(e.target.value)}
-                          rows={3}
+                          rows={4}
                           placeholder="Tell us more about your issue..."
-                          className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 resize-none"
+                          className="w-full bg-white border border-gray-200 text-gray-900 font-bold rounded-lg px-5 py-4 text-base outline-none focus:bg-white transition-colors resize-none shadow-sm"
                         />
                       </div>
                     </div>
-                    <div className="flex gap-3 mt-5">
+                    <div className="flex gap-4 mt-8">
                       <button
                         onClick={handleRefundRequest}
                         disabled={!refundReason || refundLoading}
-                        className="flex-1 bg-red-500 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-red-600 disabled:opacity-50 transition-colors"
+                        className="flex-1 bg-red-500 border border-gray-200 text-white py-4 rounded-full text-base font-semibold hover:bg-red-600 disabled:opacity-50 transition-transform hover:-translate-y-1 shadow-sm"
                       >
-                        {refundLoading ? "Submitting…" : "Submit Request"}
+                        {refundLoading ? "Wait…" : "Submit"}
                       </button>
                       <button
                         onClick={() => setShowRefundModal(false)}
-                        className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors"
+                        className="flex-1 border border-gray-200 bg-white text-gray-900 py-4 rounded-full text-base font-semibold hover:bg-slate-100 transition-transform hover:-translate-y-1 shadow-sm"
                       >
                         Cancel
                       </button>
@@ -825,21 +817,21 @@ export function CourseDetailClient({ course }: { course: Course }) {
 
             {/* Platform features */}
             <Card>
-              <h2 className="font-display font-bold text-xl text-gray-900 mb-5">Brainwave exclusive features</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <h2 className="  text-4xl uppercase tracking-tight text-gray-900 mb-8 border-b-4 border-black pb-4">Exclusive Features</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {[
-                  { icon: MessageSquare, title: "AI Tutor", desc: "Trained on this exact course — available 24/7", color: "bg-indigo-50 text-indigo-600" },
-                  { icon: Video,         title: "Live Doubt Sessions", desc: "Book 1-on-1 video calls with the instructor", color: "bg-violet-50 text-violet-600" },
-                  { icon: Users,         title: "Course Community", desc: "Discuss doubts and collaborate with peers", color: "bg-sky-50 text-sky-600" },
-                  { icon: Shield,        title: "Progress Monitoring", desc: "AI tracks your pace and keeps you on schedule", color: "bg-emerald-50 text-emerald-600" },
+                  { icon: MessageSquare, title: "AI Tutor", desc: "Trained on this exact course — 24/7", color: "bg-blue-100" },
+                  { icon: Video,         title: "Live Sessions", desc: "Book 1-on-1 calls with the instructor", color: "bg-pink-100" },
+                  { icon: Users,         title: "Community", desc: "Discuss and collaborate with peers", color: "bg-yellow-300" },
+                  { icon: Shield,        title: "Pace Tracker", desc: "AI tracks your pace and progress", color: "bg-green-100" },
                 ].map(({ icon: Icon, title, desc, color }) => (
-                  <div key={title} className="flex items-start gap-3 p-4 rounded-xl border border-gray-100 bg-[#FAFAF9]">
-                    <div className={`h-9 w-9 rounded-xl ${color} flex items-center justify-center shrink-0`}>
-                      <Icon className="h-[18px] w-[18px]" />
+                  <div key={title} className="flex flex-col gap-4 p-6 rounded-xl border border-gray-200 bg-white shadow-md hover:-translate-y-1 transition-transform">
+                    <div className={`h-14 w-14 rounded-full border border-gray-200 ${color} flex items-center justify-center shrink-0`}>
+                      <Icon className="h-6 w-6 text-black" strokeWidth={3} />
                     </div>
                     <div>
-                      <p className="font-semibold text-gray-900 text-sm">{title}</p>
-                      <p className="text-gray-400 text-xs mt-0.5 leading-relaxed">{desc}</p>
+                      <p className=" text-gray-900 text-2xl uppercase tracking-tight">{title}</p>
+                      <p className="text-gray-600 font-bold text-xs  mt-2 leading-relaxed">{desc}</p>
                     </div>
                   </div>
                 ))}
@@ -848,13 +840,13 @@ export function CourseDetailClient({ course }: { course: Course }) {
           </div>
 
           {/* Right (sticky) */}
-          <div className="hidden lg:block w-[340px] xl:w-[370px] shrink-0">
-            <div className="sticky top-[76px]">
+          <div className="hidden lg:block w-[380px] xl:w-[420px] shrink-0">
+            <div className="sticky top-[160px]">
               <BuyCard />
-              <div className="mt-4 p-4 rounded-xl border border-gray-100 bg-white shadow-card text-center">
-                <Shield className="h-5 w-5 text-emerald-600 mx-auto mb-2" />
-                <p className="font-bold text-gray-900 text-sm">30-Day Money-Back Guarantee</p>
-                <p className="text-gray-400 text-xs mt-1">Not satisfied? Full refund, no questions asked.</p>
+              <div className="mt-6 p-6 rounded-xl border border-gray-200 bg-green-100 shadow-sm text-center hover:-translate-y-1 transition-transform">
+                <Shield className="h-10 w-10 text-black mx-auto mb-4" strokeWidth={2.5} />
+                <p className=" uppercase tracking-tight text-2xl text-black">30-Day Guarantee</p>
+                <p className="text-gray-800 font-bold text-sm  mt-3 border-t-4 border-black/20 pt-3 mx-4">Not satisfied? Full refund, no questions asked.</p>
               </div>
             </div>
           </div>
@@ -862,22 +854,22 @@ export function CourseDetailClient({ course }: { course: Course }) {
       </div>
 
       {/* Mobile sticky bar */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-gray-100 px-4 py-3">
-        <div className="flex items-center gap-3 max-w-xl mx-auto">
-          <p className={`font-extrabold text-xl shrink-0 ${isFree ? "text-emerald-600" : "text-gray-900"}`}>{price}</p>
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t-4 border-black px-4 py-4 shadow-[0_-8px_0_rgba(17,17,17,1)]">
+        <div className="flex items-center gap-4 max-w-xl mx-auto">
+          <p className=" text-3xl uppercase text-gray-900 shrink-0">{price}</p>
           {enrolled ? (
             <Link href={`/learn/${course.slug}`} className="flex-1">
-              <button className="w-full py-3 rounded-xl bg-emerald-600 text-white font-bold text-sm flex items-center justify-center gap-2">
-                <Play className="h-4 w-4 fill-current" /> Go to Course
+              <button className="w-full py-4 rounded-full border border-gray-200 bg-blue-100 text-black font-semibold flex items-center justify-center gap-3 shadow-sm hover:-translate-y-1 hover:shadow-md transition-transform">
+                <Play className="h-5 w-5 fill-current" /> Go
               </button>
             </Link>
           ) : (
             <button
               onClick={handleEnroll}
               disabled={enrollLoading}
-              className="flex-1 py-3 rounded-xl bg-indigo-600 text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+              className="flex-1 py-4 rounded-full border border-gray-200 bg-yellow-300 text-black font-semibold flex items-center justify-center gap-3 shadow-sm hover:-translate-y-1 hover:shadow-md transition-transform disabled:opacity-50"
             >
-              {enrollLoading ? "Processing…" : isFree ? "Enrol Free" : `Buy ${price}`}
+              {enrollLoading ? "Wait…" : isFree ? "Free" : `Buy`}
             </button>
           )}
         </div>

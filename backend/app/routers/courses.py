@@ -29,6 +29,15 @@ def generate_slug(title: str) -> str:
     return slug + "-" + str(uuid.uuid4())[:8]
 
 
+@router.get("/categories")
+async def get_categories(db: Session = Depends(get_db)):
+    rows = db.query(Course.category, func.count(Course.id).label("count")).filter(
+        Course.status == "published",
+        Course.category != None,
+    ).group_by(Course.category).order_by(func.count(Course.id).desc()).all()
+    return {"categories": [{"name": r.category, "count": r.count} for r in rows]}
+
+
 @router.get("", response_model=CourseListResponse)
 async def list_courses(
     category: Optional[str] = None,
@@ -432,3 +441,63 @@ async def submit_review(
 
     db.commit()
     return {"message": "Review submitted"}
+
+
+@router.patch("/{course_id}/reviews/{review_id}")
+async def update_review(
+    course_id: str,
+    review_id: str,
+    rating: int = Form(None),
+    review_text: str = Form(None),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from app.models.review import Review
+    review = db.query(Review).filter(
+        Review.id == review_id,
+        Review.course_id == course_id,
+        Review.student_id == current_user.id
+    ).first()
+    if not review:
+        raise HTTPException(status_code=404, detail="Review not found")
+    if rating is not None:
+        review.rating = rating
+    if review_text is not None:
+        review.review_text = review_text
+    # Recompute avg
+    course = db.query(Course).filter(Course.id == course_id).first()
+    all_reviews = db.query(Review).filter(Review.course_id == course_id).all()
+    all_ratings = [r.rating for r in all_reviews]
+    if all_ratings:
+        course.avg_rating = round(sum(all_ratings) / len(all_ratings), 2)
+    db.commit()
+    return {"message": "Review updated"}
+
+
+@router.delete("/{course_id}/reviews/{review_id}")
+async def delete_review(
+    course_id: str,
+    review_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from app.models.review import Review
+    review = db.query(Review).filter(
+        Review.id == review_id,
+        Review.course_id == course_id,
+        Review.student_id == current_user.id
+    ).first()
+    if not review:
+        raise HTTPException(status_code=404, detail="Review not found")
+    db.delete(review)
+    # Recompute avg
+    course = db.query(Course).filter(Course.id == course_id).first()
+    remaining = db.query(Review).filter(Review.course_id == course_id).all()
+    if remaining:
+        course.avg_rating = round(sum(r.rating for r in remaining) / len(remaining), 2)
+        course.review_count = len(remaining)
+    else:
+        course.avg_rating = 0
+        course.review_count = 0
+    db.commit()
+    return {"message": "Review deleted"}

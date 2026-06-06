@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { ArrowUpRight, BookOpen, Clock, Star, Users } from "lucide-react";
+import { BookOpen, Clock, Star, Users, ArrowRight } from "lucide-react";
 import { formatPrice, formatDuration } from "@/lib/utils";
-import { CourseMetaRow, StatusBadge } from "@/components/ui/app-shell";
 
 interface CourseCardProps {
   course: {
@@ -18,100 +17,76 @@ interface CourseCardProps {
   };
 }
 
-const CATEGORY_TONES: Record<string, "info" | "success" | "warning" | "neutral"> = {
-  "Data Science": "info",
-  Programming: "info",
-  Competitive: "warning",
-  Design: "success",
-  Finance: "success",
+const CATEGORY_COLORS: Record<string, string> = {
+  "Data Science": "bg-blue-100 text-blue-700",
+  Programming:    "bg-green-100 text-green-700",
+  Competitive:    "bg-orange-100 text-orange-700",
+  Design:         "bg-pink-100 text-pink-700",
+  Finance:        "bg-yellow-100 text-yellow-700",
+  Mathematics:    "bg-purple-100 text-purple-700",
 };
 
 export function CourseCard({ course }: CourseCardProps) {
-  const categoryTone = CATEGORY_TONES[course.category ?? ""] || "neutral";
+  const catClass = CATEGORY_COLORS[course.category ?? ""] || "bg-gray-100 text-gray-600";
 
   return (
     <Link href={`/courses/${course.slug}`} className="group block h-full">
-      <div className="bw-card flex h-full flex-col overflow-hidden transition duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[7px_7px_0_#111111]">
-        <div className="relative aspect-[1.2] overflow-hidden bg-[#fff4d6]">
+      <div className="card card-hover h-full flex flex-col overflow-hidden">
+        {/* Thumbnail */}
+        <div className="relative aspect-video w-full overflow-hidden bg-gradient-to-br from-blue-100 to-indigo-100 shrink-0">
           {course.thumbnail_url ? (
-            <img
-              src={course.thumbnail_url}
-              alt={course.title}
-              className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
-            />
+            <img src={course.thumbnail_url} alt={course.title}
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,#ffe500_0%,#fff4d6_48%,#8ed8ff_100%)]">
-              <div className="rounded-[18px] border-2 border-black bg-white p-4 shadow-[4px_4px_0_#111111]">
-                <BookOpen className="h-10 w-10 text-slate-900" />
-              </div>
+            <div className="flex h-full w-full items-center justify-center">
+              <BookOpen className="h-12 w-12 text-blue-300" />
             </div>
           )}
-
-          <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4">
-            {course.category ? <StatusBadge tone={categoryTone}>{course.category}</StatusBadge> : <span />}
-            <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-black bg-white text-slate-700 shadow-[2px_2px_0_#111111] transition group-hover:bg-slate-950 group-hover:text-white">
-              <ArrowUpRight className="h-4 w-4" />
-            </div>
-          </div>
-
-          <div className="absolute inset-x-0 bottom-0 p-4">
-            <div className="rounded-[1.25rem] border-2 border-black bg-white p-3 shadow-[3px_3px_0_#111111]">
-              <CourseMetaRow
-                items={[
-                  course.rating ? (
-                    <span key="rating" className="inline-flex items-center gap-1 font-semibold text-amber-600">
-                      <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                      {course.rating.toFixed(1)}
-                    </span>
-                  ) : (
-                    <span key="rating" className="text-slate-400">New</span>
-                  ),
-                  course.total_students ? (
-                    <span key="students" className="inline-flex items-center gap-1">
-                      <Users className="h-3.5 w-3.5" />
-                      {course.total_students >= 1000 ? `${(course.total_students / 1000).toFixed(1)}k` : course.total_students}
-                    </span>
-                  ) : (
-                    <span key="students" className="inline-flex items-center gap-1">
-                      <Users className="h-3.5 w-3.5" />
-                      Fresh cohort
-                    </span>
-                  ),
-                  course.total_duration_seconds ? (
-                    <span key="duration" className="inline-flex items-center gap-1">
-                      <Clock className="h-3.5 w-3.5" />
-                      {formatDuration(course.total_duration_seconds)}
-                    </span>
-                  ) : (
-                    <span key="duration" className="inline-flex items-center gap-1">
-                      <Clock className="h-3.5 w-3.5" />
-                      Self-paced
-                    </span>
-                  ),
-                ]}
-              />
-            </div>
-          </div>
+          {course.category && (
+            <span className={`absolute top-3 left-3 text-xs font-semibold px-2.5 py-1 rounded-full ${catClass}`}>
+              {course.category}
+            </span>
+          )}
         </div>
 
+        {/* Content */}
         <div className="flex flex-1 flex-col p-5">
-          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-slate-500">Course experience</p>
-          <h3 className="mt-2 line-clamp-2 font-display text-lg font-bold uppercase leading-snug text-slate-950 transition group-hover:text-[#ff6b00]">
+          <h3 className="text-[15px] font-semibold text-gray-900 leading-snug line-clamp-2 group-hover:text-blue-600 transition-colors">
             {course.title}
           </h3>
-          <p className="mt-2 text-sm text-slate-500">
-            {course.teacher_name ? `By ${course.teacher_name}` : "Instructor-led premium learning path"}
-          </p>
+          {course.teacher_name && (
+            <p className="text-xs text-gray-400 mt-1">By {course.teacher_name}</p>
+          )}
 
-          <div className="mt-auto flex items-end justify-between gap-4 pt-5">
-            <div>
-              <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-slate-500">Price</p>
-              <p className="mt-1 font-display text-2xl font-extrabold uppercase text-slate-950">
-                {course.price === 0 ? "Free" : course.price ? formatPrice(course.price) : "Free"}
-              </p>
-            </div>
-            <span className="inline-flex items-center rounded-full border-2 border-black bg-[#ffe500] px-4 py-2 text-sm font-extrabold uppercase text-black transition group-hover:bg-[#ff6b00] group-hover:text-white">
-              View details
+          <div className="flex items-center gap-3 mt-3 text-xs text-gray-500">
+            {course.rating ? (
+              <span className="flex items-center gap-1">
+                <Star className="h-3.5 w-3.5 text-yellow-400 fill-yellow-400" />
+                {course.rating.toFixed(1)}
+              </span>
+            ) : null}
+            {course.total_students ? (
+              <span className="flex items-center gap-1">
+                <Users className="h-3.5 w-3.5" />
+                {course.total_students >= 1000
+                  ? `${(course.total_students / 1000).toFixed(1)}k`
+                  : course.total_students}
+              </span>
+            ) : null}
+            {course.total_duration_seconds ? (
+              <span className="flex items-center gap-1">
+                <Clock className="h-3.5 w-3.5" />
+                {formatDuration(course.total_duration_seconds)}
+              </span>
+            ) : null}
+          </div>
+
+          <div className="mt-auto pt-4 flex items-center justify-between">
+            <span className="text-base font-bold text-gray-900">
+              {course.price === 0 || !course.price ? "Free" : formatPrice(course.price)}
+            </span>
+            <span className="flex items-center gap-1 text-sm font-semibold text-blue-600 group-hover:gap-2 transition-all">
+              Enroll <ArrowRight className="h-4 w-4" />
             </span>
           </div>
         </div>

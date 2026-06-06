@@ -76,6 +76,7 @@ export default function MockPackagePublicPage({ params }: { params: { slug: stri
             razorpay_signature: response.razorpay_signature,
           });
           qc.invalidateQueries({ queryKey: ["my-mock-packages"] });
+          qc.invalidateQueries({ queryKey: ["mock-pkg", slug] });
           toast({ title: "Purchase complete" });
         },
       });
@@ -88,7 +89,7 @@ export default function MockPackagePublicPage({ params }: { params: { slug: stri
       }),
   });
 
-  if (isLoading || !pkg) {
+  if (isLoading) {
     return (
       <LightStudioLayout maxWidthClassName="max-w-2xl">
         <div className="animate-pulse space-y-6">
@@ -103,6 +104,18 @@ export default function MockPackagePublicPage({ params }: { params: { slug: stri
     );
   }
 
+  if (!pkg) {
+    return (
+      <LightStudioLayout maxWidthClassName="max-w-2xl">
+        <StudioBackLink href="/catalog/mock-tests">Back to catalog</StudioBackLink>
+        <div className="mt-12 rounded-2xl border border-red-200 bg-red-50 p-8 text-center">
+          <p className="text-lg font-semibold text-red-700">Mock test package not found</p>
+          <p className="mt-2 text-sm text-red-500">This package may have been removed or the link is incorrect.</p>
+        </div>
+      </LightStudioLayout>
+    );
+  }
+
   return (
     <LightStudioLayout maxWidthClassName="max-w-2xl">
       <StudioBackLink href="/catalog/mock-tests">Back to catalog</StudioBackLink>
@@ -111,29 +124,32 @@ export default function MockPackagePublicPage({ params }: { params: { slug: stri
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45 }}
-        className="rounded-2xl border border-gray-100/90 bg-white p-6 sm:p-8 shadow-card"
+        className="rounded-xl border border-gray-200 bg-white p-6 sm:p-10 shadow-sm"
       >
-        <p className="eyebrow mb-2">Mock test package</p>
-        <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-gray-900 tracking-tight">{pkg.title}</h1>
-        {pkg.description && <p className="text-gray-600 mt-3 leading-relaxed">{pkg.description}</p>}
-        <p className="text-3xl font-bold text-gray-900 mt-6 tabular-nums">{formatPrice(pkg.price)}</p>
+        <span className="inline-block mb-4 border border-gray-200 bg-pink-100 px-3 py-1 text-xs font-semibold text-black ">Mock test package</span>
+        <h1 className="  uppercase text-3xl sm:text-4xl text-gray-900 tracking-tight leading-none">{pkg.title}</h1>
+        {pkg.description && <p className="text-gray-700 mt-6 text-lg font-bold leading-relaxed">{pkg.description}</p>}
+        
+        <div className="mt-8 flex items-center gap-4 rounded-xl border border-gray-200 bg-blue-100 p-6 shadow-sm">
+          <p className=" text-4xl  text-gray-900 uppercase tabular-nums">{formatPrice(pkg.price)}</p>
+        </div>
 
         {owned ? (
-          <div className="mt-8 rounded-xl border border-indigo-100 bg-indigo-50/40 p-5">
-            <p className="font-semibold text-gray-900 mb-3">Your papers</p>
-            <ul className="space-y-2">
+          <div className="mt-8 rounded-xl border border-gray-200 bg-yellow-300 p-6 shadow-md">
+            <p className=" text-xl  uppercase tracking-tight text-gray-900 mb-4">Your papers</p>
+            <ul className="space-y-3">
               {(pkg.papers || []).map((p: { id: string; title: string; time_limit_minutes: number }) => (
                 <li key={p.id}>
                   <Link
                     href={`/mock-tests/take/${p.id}`}
-                    className="group flex items-center justify-between gap-4 rounded-xl border border-transparent bg-white/80 px-3 py-2.5 text-sm font-medium text-indigo-700 shadow-sm transition-all hover:border-indigo-200 hover:shadow-card"
+                    className="group flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-lg border border-gray-200 bg-white p-4 shadow-[3px_3px_0_#111111] transition-all hover:-translate-y-1 hover:shadow-[5px_5px_0_#111111]"
                   >
-                    <span className="flex items-center gap-2">
-                      <Play className="h-4 w-4 text-indigo-500" />
+                    <span className="flex items-center gap-3 text-sm font-bold text-gray-900">
+                      <Play className="h-5 w-5 text-black" strokeWidth={3} />
                       {p.title}
                     </span>
-                    <span className="flex items-center gap-1 text-xs font-semibold text-gray-500 tabular-nums">
-                      <Clock className="h-3.5 w-3.5" />
+                    <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-gray-600">
+                      <Clock className="h-4 w-4" strokeWidth={3} />
                       {p.time_limit_minutes} min
                     </span>
                   </Link>
@@ -146,7 +162,7 @@ export default function MockPackagePublicPage({ params }: { params: { slug: stri
             type="button"
             onClick={() => buy.mutate()}
             disabled={buy.isPending}
-            className={`mt-8 w-full sm:w-auto px-8 py-3.5 text-sm ${studioBtnPrimary}`}
+            className={`mt-10 w-full sm:w-auto px-10 py-4 text-base ${studioBtnPrimary}`}
           >
             {buy.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : "Buy package"}
           </button>

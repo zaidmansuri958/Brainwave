@@ -1,83 +1,117 @@
-import { BarChart3, Brain, GraduationCap, Shield, Sparkles, Wallet } from "lucide-react";
+"use client";
+
+import Link from "next/link";
+import { BarChart3, Brain, GraduationCap, Shield, Sparkles, Wallet, Video, HelpCircle, Award, BookOpen, Users, Cpu } from "lucide-react";
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
-import { AppShell, ContentBand, InsightCard, SectionHeader } from "@/components/ui/app-shell";
+import { ArrowRight } from "lucide-react";
 
-const modules = [
+const features = [
   {
-    title: "Create with AI structure",
-    description: "Upload a lecture once and let Brainwave generate chapters, quizzes, summaries, thumbnails, and launch-ready materials.",
-    icon: Sparkles,
-    accentClass: "bg-indigo-50 text-indigo-600",
+    icon: Cpu,
+    title: "AI Course Creation",
+    desc: "Upload materials and AI auto-generates chapters, lessons, summaries, quizzes, and thumbnails — in minutes.",
+    color: "bg-blue-50 text-blue-600",
   },
   {
-    title: "Teach from a real studio",
-    description: "Manage curriculum, live sessions, doubt workflows, students, and promotions inside denser creator-first dashboards.",
-    icon: GraduationCap,
-    accentClass: "bg-amber-50 text-amber-600",
+    icon: Video,
+    title: "Live Sessions",
+    desc: "Host Jitsi-powered live classes with recording, screen sharing, and up to 100 participants.",
+    color: "bg-purple-50 text-purple-600",
   },
   {
-    title: "Learn with better momentum",
-    description: "Resume the right lesson faster, access AI support natively, and stay oriented with clearer status and progress surfaces.",
-    icon: Brain,
-    accentClass: "bg-sky-50 text-sky-600",
+    icon: HelpCircle,
+    title: "Doubt Sessions",
+    desc: "Bookable 1-on-1 or group doubt clearing sessions — with Razorpay payment built in.",
+    color: "bg-green-50 text-green-600",
   },
   {
-    title: "Track what matters",
-    description: "Teacher analytics, learner progress, risk alerts, and moderation queues now sit inside cleaner high-density panels.",
+    icon: Award,
+    title: "Certificates",
+    desc: "Auto-issue verifiable digital certificates when students complete courses.",
+    color: "bg-orange-50 text-orange-600",
+  },
+  {
     icon: BarChart3,
-    accentClass: "bg-emerald-50 text-emerald-600",
+    title: "Analytics Dashboard",
+    desc: "Track student progress, quiz scores, engagement rates, and earnings in real time.",
+    color: "bg-pink-50 text-pink-600",
   },
   {
-    title: "Earn with clarity",
-    description: "Pricing, commissions, payouts, and course performance all feel more transparent, trustworthy, and easier to act on.",
-    icon: Wallet,
-    accentClass: "bg-rose-50 text-rose-600",
-  },
-  {
-    title: "Trust every outcome",
-    description: "Notifications, certificates, guarded states, and account flows use stronger visual cues without sacrificing accessibility.",
     icon: Shield,
-    accentClass: "bg-violet-50 text-violet-600",
+    title: "Secure Payments",
+    desc: "Razorpay-powered payments with instant payouts, refund management, and invoicing.",
+    color: "bg-red-50 text-red-600",
+  },
+  {
+    icon: BookOpen,
+    title: "Mock Tests",
+    desc: "Timed mock exams with multi-section support, auto-scoring, and detailed review.",
+    color: "bg-teal-50 text-teal-600",
+  },
+  {
+    icon: Users,
+    title: "Community",
+    desc: "Course discussion boards with Q&A, teacher moderation, and AI-assisted answers.",
+    color: "bg-yellow-50 text-yellow-600",
+  },
+  {
+    icon: Brain,
+    title: "AI Tutor",
+    desc: "Contextual AI chatbot per course — answers questions based on actual lesson content.",
+    color: "bg-indigo-50 text-indigo-600",
   },
 ];
 
 export default function FeaturesPage() {
   return (
-    <AppShell>
+    <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
-      <main className="bw-shell space-y-6 pb-6">
-        <ContentBand muted className="overflow-hidden">
-          <SectionHeader
-            eyebrow="Platform Features"
-            title="A premium education system across discovery, teaching, learning, and operations."
-            description="The refreshed Brainwave UI is intentionally lighter, denser, and more interactive. Every page now works harder: less blank space, stronger hierarchy, richer proof, and clearer calls to action."
-          />
-          <div className="mt-8 grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {modules.map((module) => (
-                <InsightCard key={module.title} {...module} className="h-full" />
-              ))}
-            </div>
-            <div className="bw-card bw-card-tint p-6">
-              <p className="bw-kicker">What changed materially</p>
-              <div className="mt-5 space-y-4">
-                {[
-                  "Heroes now combine proof, action, and visual structure instead of oversized empty space.",
-                  "Course discovery uses richer cards, smarter filters, and clearer result headers.",
-                  "Learner and teacher shells share a stronger surface system, but each keeps its own workflow identity.",
-                  "Admin views move closer to an operations console with denser tables and status hierarchy.",
-                ].map((item) => (
-                  <div key={item} className="rounded-[1.3rem] bg-white/90 p-4 text-sm leading-7 text-slate-700">
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </div>
+
+      {/* Hero */}
+      <section className="bg-gray-50 border-b border-gray-100 py-16">
+        <div className="page-container text-center max-w-2xl mx-auto">
+          <span className="section-eyebrow">Platform Features</span>
+          <h1 className="section-title mt-3">Everything for modern education</h1>
+          <p className="section-subtitle mx-auto mt-4">
+            A complete LMS built for AI-first educators and ambitious learners across India.
+          </p>
+          <div className="mt-8 flex justify-center gap-3">
+            <Link href="/register" className="btn btn-lg btn-primary">Get started free <ArrowRight className="h-4 w-4" /></Link>
+            <Link href="/courses" className="btn btn-lg btn-secondary">Browse courses</Link>
           </div>
-        </ContentBand>
-      </main>
+        </div>
+      </section>
+
+      {/* Features grid */}
+      <section className="section-padding">
+        <div className="page-container">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {features.map(({ icon: Icon, title, desc, color }) => (
+              <div key={title} className="card p-6 card-hover">
+                <div className={`h-11 w-11 rounded-xl ${color} flex items-center justify-center mb-4`}>
+                  <Icon className="h-5 w-5" />
+                </div>
+                <h3 className="text-[15px] font-semibold text-gray-900 mb-2">{title}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="bg-blue-600 py-16">
+        <div className="page-container text-center max-w-2xl mx-auto">
+          <h2 className="text-3xl font-extrabold text-white mb-3">Ready to experience it?</h2>
+          <p className="text-blue-200 mb-6">Join thousands of students and educators on Brainwave.</p>
+          <Link href="/register" className="btn btn-lg bg-white text-blue-700 hover:bg-blue-50 font-semibold border-0">
+            Create free account <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </section>
+
       <Footer />
-    </AppShell>
+    </div>
   );
 }

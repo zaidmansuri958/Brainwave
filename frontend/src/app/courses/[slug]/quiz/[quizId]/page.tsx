@@ -48,11 +48,11 @@ export default function QuizPage({ params }: { params: { slug: string; quizId: s
       <div className="bw-page min-h-screen">
         <Navbar />
         <div className="bw-shell max-w-2xl px-4 py-12">
-          <div className={`rounded-[30px] border-2 p-8 text-center shadow-[6px_6px_0_#111111] ${passed ? "border-black bg-[#dff8df]" : "border-black bg-[#ffd6d6]"}`}>
+          <div className={`rounded-[30px] border-2 p-8 text-center shadow-md ${passed ? "border-black bg-[#dff8df]" : "border-black bg-[#ffd6d6]"}`}>
             <div className={`neo-icon-badge mx-auto mb-4 h-20 w-20 ${passed ? "bg-white text-[#246b31]" : "bg-white text-[#b93131]"}`}>
               {passed ? <Trophy className="h-10 w-10 text-amber-500" /> : <XCircle className="h-10 w-10 text-red-500" />}
             </div>
-            <h2 className="mb-2 font-display text-2xl font-bold uppercase text-gray-900">
+            <h2 className="mb-2  text-2xl font-bold uppercase text-gray-900">
               {passed ? "Congratulations!" : "Better luck next time!"}
             </h2>
             <p className="mb-6 text-gray-600">
@@ -61,11 +61,11 @@ export default function QuizPage({ params }: { params: { slug: string; quizId: s
 
             <div className="mb-8 grid grid-cols-2 gap-4">
               <div className="neo-panel bg-white p-4">
-                <p className="font-display text-3xl font-bold uppercase text-gray-900">{typeof pct === "number" ? pct.toFixed(1) : pct}%</p>
+                <p className=" text-3xl font-bold uppercase text-gray-900">{typeof pct === "number" ? pct.toFixed(1) : pct}%</p>
                 <p className="mt-1 text-xs font-extrabold uppercase text-gray-500">Score</p>
               </div>
               <div className="neo-panel bg-white p-4">
-                <p className="font-display text-3xl font-bold uppercase text-gray-900">{questions.length}</p>
+                <p className=" text-3xl font-bold uppercase text-gray-900">{questions.length}</p>
                 <p className="mt-1 text-xs font-extrabold uppercase text-gray-500">Questions</p>
               </div>
             </div>

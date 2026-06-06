@@ -176,3 +176,21 @@ async def check_enrollment(
         Enrollment.is_active == True
     ).first()
     return {"enrolled": enrollment is not None}
+
+
+@router.delete("/{enrollment_id}")
+async def cancel_enrollment(
+    enrollment_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from app.middleware.auth_middleware import get_current_user as _get_current_user
+    # Allow admin or the enrolled student to cancel
+    enrollment = db.query(Enrollment).filter(Enrollment.id == enrollment_id).first()
+    if not enrollment:
+        raise HTTPException(status_code=404, detail="Enrollment not found")
+    if current_user.role not in ("admin",) and str(enrollment.student_id) != str(current_user.id):
+        raise HTTPException(status_code=403, detail="Forbidden")
+    enrollment.is_active = False
+    db.commit()
+    return {"message": "Enrollment cancelled"}

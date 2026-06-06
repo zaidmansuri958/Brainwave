@@ -1,131 +1,114 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Banknote, BarChart3, Sparkles, Upload, Video, Wallet } from "lucide-react";
+import { ArrowRight, Upload, Cpu, Users, DollarSign, Video, BarChart3, Award, HelpCircle } from "lucide-react";
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
-import { AppShell, ContentBand, InsightCard, SectionHeader } from "@/components/ui/app-shell";
 
 const steps = [
-  { title: "Record once", description: "Upload lectures, notes, or recordings from any setup.", icon: Upload, accentClass: "bg-indigo-50 text-indigo-600" },
-  { title: "AI builds the structure", description: "Generate curriculum, thumbnails, quizzes, summaries, and launch-ready content.", icon: Sparkles, accentClass: "bg-sky-50 text-sky-600" },
-  { title: "Teach with confidence", description: "Run live sessions, engage the community, and manage students in one studio.", icon: Video, accentClass: "bg-amber-50 text-amber-600" },
-  { title: "Track and grow revenue", description: "Use analytics, promotions, and transparent payouts to scale sustainably.", icon: BarChart3, accentClass: "bg-emerald-50 text-emerald-600" },
+  { step: "01", icon: Upload, title: "Upload your material", desc: "Upload video lectures, PDFs, or slides in any format." },
+  { step: "02", icon: Cpu, title: "AI builds the course", desc: "AI auto-generates chapters, lessons, quizzes, and summaries." },
+  { step: "03", icon: Users, title: "Students enroll", desc: "Publish and students can find, enroll, and pay directly." },
+  { step: "04", icon: DollarSign, title: "Earn and grow", desc: "Get paid with transparent payouts and track analytics." },
+];
+
+const features = [
+  { icon: Video, title: "Live Sessions", desc: "Host live classes with Jitsi — recording, screen share, 100 participants." },
+  { icon: HelpCircle, title: "Doubt Sessions", desc: "Create bookable 1-on-1 or group doubt clearing sessions." },
+  { icon: BarChart3, title: "Analytics", desc: "Track enrollments, revenue, completion rates, and student progress." },
+  { icon: Award, title: "Certificates", desc: "Auto-issue verified digital certificates on course completion." },
 ];
 
 export default function ForTeachersPage() {
   return (
-    <AppShell>
+    <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
-      <main className="bw-shell space-y-6 pb-6">
-        <ContentBand muted>
-          <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-            <div>
-              <span className="eyebrow mb-4">For Educators & Coaches</span>
-              <h1 className="font-display text-[clamp(2.5rem,5.4vw,4.8rem)] font-extrabold leading-[1.02] text-slate-950">
-                Your offline expertise,
-                <br />
-                <span className="text-gradient-indigo">turned into a premium digital classroom.</span>
-              </h1>
-              <p className="bw-muted mt-5 max-w-2xl text-base leading-8">
-                The redesigned teacher experience feels like a creator studio, not a plain admin tool. Launch faster, guide students
-                better, and understand revenue, content, and learner progress without fighting the interface.
-              </p>
-              <div className="mt-7 flex flex-wrap gap-3">
-                <Link href="/register?role=teacher" className="bw-action-primary">
-                  Start teaching free
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-                <Link href="/pricing" className="bw-action-secondary">
-                  <Wallet className="h-4 w-4" />
-                  View commission model
-                </Link>
-              </div>
-            </div>
 
-            <div className="grid gap-4">
-              <div className="bw-card p-5">
-                <p className="bw-kicker">Teacher Studio Snapshot</p>
-                <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-[1.3rem] bg-[#f8f2eb] p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Launch speed</p>
-                    <p className="mt-2 font-display text-3xl font-extrabold text-slate-950">2 min</p>
-                    <p className="mt-1 text-xs text-slate-500">Lecture to structured course</p>
-                  </div>
-                  <div className="rounded-[1.3rem] bg-indigo-50 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-indigo-500">Your keep rate</p>
-                    <p className="mt-2 font-display text-3xl font-extrabold text-indigo-950">Up to 92%</p>
-                    <p className="mt-1 text-xs text-indigo-800">Transparent, teacher-friendly pricing</p>
-                  </div>
-                </div>
-              </div>
-              <div className="bw-card-soft p-5">
-                <p className="bw-kicker">Workflow</p>
-                <div className="mt-4 space-y-3">
-                  {["Upload lecture assets", "AI generates structure", "Review + publish", "Sell, teach, and get paid"].map((item, index) => (
-                    <div key={item} className="flex items-center gap-3 rounded-[1.2rem] bg-white px-4 py-3">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-950 text-xs font-semibold text-white">{index + 1}</span>
-                      <p className="text-sm font-medium text-slate-700">{item}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
+      {/* Hero */}
+      <section className="bg-gradient-to-b from-blue-50/40 to-white section-padding">
+        <div className="page-container">
+          <div className="max-w-3xl">
+            <span className="section-eyebrow">For Educators</span>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 tracking-tight leading-[1.1] mt-3">
+              Turn your expertise into<br />
+              <span className="text-blue-600">a thriving online course</span>
+            </h1>
+            <p className="mt-6 text-lg text-gray-500 leading-relaxed max-w-xl">
+              Upload your content and let AI build the course structure, quizzes, thumbnails, and more — in under an hour.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/register?role=teacher" className="btn btn-lg btn-primary">
+                Start teaching free <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link href="/pricing" className="btn btn-lg btn-secondary">View pricing</Link>
+            </div>
+            <div className="mt-8 flex flex-wrap gap-6 text-sm text-gray-500">
+              <span className="flex items-center gap-1.5">✓ No subscription fees</span>
+              <span className="flex items-center gap-1.5">✓ Keep 90–92% of revenue</span>
+              <span className="flex items-center gap-1.5">✓ Go live in under an hour</span>
             </div>
           </div>
-        </ContentBand>
+        </div>
+      </section>
 
-        <ContentBand>
-          <SectionHeader
-            eyebrow="Studio Benefits"
-            title="Built for serious educators"
-            description="Less white space, stronger grouping, and clearer calls to action give teachers a more operational, premium working environment."
-          />
-          <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {steps.map((step) => (
-              <InsightCard key={step.title} {...step} className="h-full" />
+      {/* How it works */}
+      <section className="section-padding bg-gray-50">
+        <div className="page-container">
+          <div className="text-center mb-12">
+            <span className="section-eyebrow">How it works</span>
+            <h2 className="section-title">From upload to earning in hours</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {steps.map(({ step, icon: Icon, title, desc }, i) => (
+              <div key={step} className="card p-6 relative">
+                {i < steps.length - 1 && <div className="hidden lg:block absolute top-11 -right-3 w-6 h-px bg-gray-200 z-10" />}
+                <div className="h-11 w-11 bg-blue-600 text-white rounded-xl flex items-center justify-center mb-4">
+                  <Icon className="h-5 w-5" />
+                </div>
+                <span className="text-xs font-bold text-gray-300 tracking-widest uppercase">{step}</span>
+                <h3 className="text-[15px] font-semibold text-gray-900 mt-1 mb-2">{title}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">{desc}</p>
+              </div>
             ))}
           </div>
-        </ContentBand>
-
-        <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-          <ContentBand className="h-full">
-            <SectionHeader eyebrow="Economics" title="Teacher revenue should feel transparent." description="The pricing experience now speaks in plain outcomes: what you keep, when you get paid, and where growth unlocks better rates." />
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
-              {[
-                { value: "10%", label: "Starter commission" },
-                { value: "9%", label: "Growth tier" },
-                { value: "8%", label: "Scale tier" },
-              ].map((item) => (
-                <div key={item.label} className="bw-card p-4 text-center">
-                  <p className="font-display text-3xl font-extrabold text-slate-950">{item.value}</p>
-                  <p className="mt-1 text-sm text-slate-500">{item.label}</p>
-                </div>
-              ))}
-            </div>
-          </ContentBand>
-
-          <ContentBand muted className="h-full">
-            <SectionHeader eyebrow="Trust Signals" title="Operational clarity for real teaching businesses." />
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <div className="bw-card p-5">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
-                  <Banknote className="h-5 w-5" />
-                </div>
-                <p className="mt-4 font-display text-xl font-bold text-slate-950">Predictable payouts</p>
-                <p className="bw-muted mt-2 text-sm leading-7">Earnings, pending payouts, tier progress, and commission logic are now easier to understand at a glance.</p>
-              </div>
-              <div className="bw-card p-5">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-50 text-sky-600">
-                  <BarChart3 className="h-5 w-5" />
-                </div>
-                <p className="mt-4 font-display text-xl font-bold text-slate-950">Actionable analytics</p>
-                <p className="bw-muted mt-2 text-sm leading-7">Use performance data, student signals, and content insights without sifting through sparse, generic tables.</p>
-              </div>
-            </div>
-          </ContentBand>
         </div>
-      </main>
+      </section>
+
+      {/* Features */}
+      <section className="section-padding">
+        <div className="page-container">
+          <div className="text-center mb-12">
+            <span className="section-eyebrow">Platform Features</span>
+            <h2 className="section-title">Everything a teacher needs</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-3xl mx-auto">
+            {features.map(({ icon: Icon, title, desc }) => (
+              <div key={title} className="card p-6 card-hover flex gap-4">
+                <div className="h-10 w-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shrink-0">
+                  <Icon className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-[15px] font-semibold text-gray-900">{title}</h3>
+                  <p className="text-sm text-gray-500 mt-1 leading-relaxed">{desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="bg-blue-600 section-padding">
+        <div className="page-container text-center max-w-2xl mx-auto">
+          <h2 className="text-3xl font-extrabold text-white mb-4">Ready to start teaching?</h2>
+          <p className="text-blue-200 mb-8">Join 200+ educators already earning on Brainwave.</p>
+          <Link href="/register?role=teacher" className="btn btn-lg bg-white text-blue-700 hover:bg-blue-50 font-semibold border-0">
+            Create free teacher account <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </section>
+
       <Footer />
-    </AppShell>
+    </div>
   );
 }

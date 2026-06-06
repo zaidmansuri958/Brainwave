@@ -3,11 +3,11 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { doubtApi, teacherApi } from "@/lib/api";
 import { Navbar } from "@/components/layout/Navbar";
-import { HelpCircle, Plus, Calendar, Clock, DollarSign, Loader2, ExternalLink } from "lucide-react";
+import { HelpCircle, Plus, Calendar, Clock, DollarSign, Loader2, ExternalLink, X, Trash2, CheckSquare } from "lucide-react";
 import { formatDate, formatPrice } from "@/lib/utils";
 
-const inputClass =
-  "w-full bg-gray-50 text-gray-900 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all text-sm placeholder:text-gray-300";
+const labelClass = "mb-2 block text-sm font-black uppercase tracking-widest text-slate-800";
+const inputClass = "w-full rounded-[16px] border-4 border-black bg-[#f4f4f5] px-5 py-4 text-base font-bold text-slate-900 shadow-[4px_4px_0_#111111] outline-none transition-shadow focus:bg-white focus:shadow-[6px_6px_0_#ff6b00]";
 
 export default function TeacherDoubtSessionsPage() {
   const queryClient = useQueryClient();
@@ -49,32 +49,49 @@ export default function TeacherDoubtSessionsPage() {
     },
   });
 
+  const deleteSession = useMutation({
+    mutationFn: (sessionId: string) => doubtApi.delete(sessionId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["teacher-doubt-sessions"] }),
+  });
+
+  const endSession = useMutation({
+    mutationFn: (sessionId: string) => doubtApi.end(sessionId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["teacher-doubt-sessions"] }),
+  });
+
   return (
-    <div className="min-h-screen bg-[#FAFAF9]">
+    <div className="bw-page min-h-screen">
       <Navbar />
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
+      <div className="max-w-4xl mx-auto px-4 py-10 mb-20">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-10 gap-4">
           <div>
-            <h1 className="font-display font-extrabold text-2xl text-gray-900">Doubt Sessions</h1>
-            <p className="text-gray-500 mt-1">Create one-on-one or group doubt clearing sessions</p>
+            <span className="inline-block rounded-full border-2 border-black bg-[#ffe500] px-3 py-1 text-xs font-black uppercase tracking-widest text-black shadow-[2px_2px_0_#111111] mb-4">
+              Teacher Studio
+            </span>
+            <h1 className="font-display font-black uppercase tracking-tight text-4xl text-slate-900">Doubt Sessions</h1>
+            <p className="text-slate-600 font-bold text-sm mt-1">Create one-on-one or group doubt clearing sessions</p>
           </div>
           <button
             onClick={() => setShowForm(true)}
-            className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 transition-colors text-sm font-semibold"
-            style={{ boxShadow: "0 4px 14px rgba(99,102,241,0.3)" }}
+            className="inline-flex items-center justify-center gap-2 rounded-full border-4 border-black bg-[#ff6b00] px-6 py-3 text-base font-black uppercase tracking-widest text-white shadow-[4px_4px_0_#111111] transition-all hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0_#111111]"
           >
-            <Plus className="h-4 w-4" /> New Slot
+            <Plus className="h-5 w-5" strokeWidth={3} /> New Slot
           </button>
         </div>
 
         {/* Create Form */}
         {showForm && (
-          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm mb-6">
-            <h2 className="font-display font-bold text-gray-900 mb-4">Create Doubt Session Slot</h2>
-            <div className="space-y-4">
+          <div className="rounded-[32px] border-4 border-black bg-white p-8 sm:p-10 shadow-[8px_8px_0_#111111] mb-10">
+            <div className="flex items-center justify-between mb-8 border-b-4 border-black pb-4">
+              <h2 className="font-display font-black uppercase tracking-tight text-2xl text-slate-900">Create Doubt Session Slot</h2>
+              <button onClick={() => setShowForm(false)} className="flex h-10 w-10 items-center justify-center rounded-full border-4 border-black bg-white shadow-[2px_2px_0_#111111] transition-transform hover:-translate-y-1">
+                <X className="h-5 w-5 text-black" strokeWidth={3} />
+              </button>
+            </div>
+            <div className="space-y-6">
               <div>
-                <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Title *</label>
+                <label className={labelClass}>Title <span className="text-[#ff6b00]">*</span></label>
                 <input
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
@@ -82,13 +99,13 @@ export default function TeacherDoubtSessionsPage() {
                   className={inputClass}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Course (Optional)</label>
+                  <label className={labelClass}>Course (Optional)</label>
                   <select
                     value={form.course_id}
                     onChange={(e) => setForm({ ...form, course_id: e.target.value })}
-                    className={inputClass}
+                    className={inputClass + " appearance-none"}
                   >
                     <option value="">Any course</option>
                     {(courses || []).map((c: any) => (
@@ -97,20 +114,20 @@ export default function TeacherDoubtSessionsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Session Type</label>
+                  <label className={labelClass}>Session Type</label>
                   <select
                     value={form.session_type}
                     onChange={(e) => setForm({ ...form, session_type: e.target.value as any, max_students: e.target.value === "one_on_one" ? 1 : 5 })}
-                    className={inputClass}
+                    className={inputClass + " appearance-none"}
                   >
                     <option value="one_on_one">1-on-1</option>
                     <option value="group">Group</option>
                   </select>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Date &amp; Time *</label>
+                  <label className={labelClass}>Date &amp; Time <span className="text-[#ff6b00]">*</span></label>
                   <input
                     type="datetime-local"
                     value={form.scheduled_at}
@@ -119,7 +136,7 @@ export default function TeacherDoubtSessionsPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Duration (mins)</label>
+                  <label className={labelClass}>Duration (mins)</label>
                   <input
                     type="number"
                     value={form.duration_minutes}
@@ -131,7 +148,7 @@ export default function TeacherDoubtSessionsPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Price (INR)</label>
+                  <label className={labelClass}>Price (INR)</label>
                   <input
                     type="number"
                     value={form.price}
@@ -143,7 +160,7 @@ export default function TeacherDoubtSessionsPage() {
               </div>
               {form.session_type === "group" && (
                 <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Max Students</label>
+                  <label className={labelClass}>Max Students</label>
                   <input
                     type="number"
                     value={form.max_students}
@@ -155,26 +172,26 @@ export default function TeacherDoubtSessionsPage() {
                 </div>
               )}
               <div>
-                <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Description</label>
+                <label className={labelClass}>Description</label>
                 <textarea
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  rows={2}
+                  rows={3}
                   placeholder="What topics will you cover?"
                   className={`${inputClass} resize-none`}
                 />
               </div>
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t-4 border-black mt-8 pt-8">
                 <button
                   onClick={() => createSession.mutate(form)}
                   disabled={!form.title || !form.scheduled_at || createSession.isPending}
-                  className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-indigo-700 disabled:opacity-50 transition-colors font-semibold"
+                  className="flex-1 inline-flex items-center justify-center gap-2 rounded-full border-4 border-black bg-[#ffe500] px-8 py-4 text-base font-black uppercase tracking-widest text-black shadow-[4px_4px_0_#111111] transition-all hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0_#111111] disabled:opacity-50"
                 >
-                  {createSession.isPending ? "Creating..." : "Create Slot"}
+                  {createSession.isPending ? <Loader2 className="h-6 w-6 animate-spin" strokeWidth={3} /> : "Create Slot"}
                 </button>
                 <button
                   onClick={() => setShowForm(false)}
-                  className="text-gray-500 hover:text-gray-700 px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
+                  className="flex-1 inline-flex items-center justify-center gap-2 rounded-full border-4 border-black bg-white px-8 py-4 text-base font-black uppercase tracking-widest text-black shadow-[4px_4px_0_#111111] transition-all hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0_#111111]"
                 >
                   Cancel
                 </button>
@@ -186,57 +203,77 @@ export default function TeacherDoubtSessionsPage() {
         {/* Sessions List */}
         {isLoading ? (
           <div className="flex items-center justify-center py-24">
-            <Loader2 className="h-8 w-8 text-indigo-600 animate-spin" />
+            <Loader2 className="h-10 w-10 text-black animate-spin" strokeWidth={3} />
           </div>
         ) : !sessions?.length ? (
-          <div className="text-center py-24">
-            <HelpCircle className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-700 text-lg font-semibold">No doubt sessions yet</p>
-            <p className="text-gray-400 text-sm mt-1">Create a slot to let students book time with you</p>
+          <div className="text-center py-24 rounded-[32px] border-4 border-black bg-white shadow-[8px_8px_0_#111111]">
+            <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-[32px] border-4 border-black bg-[#f7a8d8] shadow-[6px_6px_0_#111111] mb-8">
+              <HelpCircle className="h-10 w-10 text-black" strokeWidth={3} />
+            </div>
+            <p className="font-display text-2xl font-black uppercase tracking-tight text-slate-900 mb-2">No doubt sessions yet</p>
+            <p className="text-slate-600 font-bold">Create a slot to let students book time with you</p>
           </div>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-6">
             {sessions.map((session: any) => (
-              <div key={session.id} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-                <div className="flex items-start justify-between gap-4">
+              <div key={session.id} className="rounded-[24px] border-4 border-black bg-white p-6 shadow-[4px_4px_0_#111111] transition-all hover:-translate-y-1 hover:shadow-[8px_8px_0_#111111]">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
-                        session.status === "booked"     ? "bg-green-50 text-green-700 border border-green-100" :
-                        session.status === "available"  ? "bg-blue-50 text-blue-700 border border-blue-100" :
-                        "bg-gray-100 text-gray-500"
+                    <div className="flex items-center gap-3 mb-4">
+                      <span className={`inline-flex items-center gap-2 rounded-full border-4 border-black px-3 py-1 text-xs font-black uppercase tracking-widest text-black shadow-[2px_2px_0_#111111] ${
+                        session.status === "booked"     ? "bg-[#7dde92]" :
+                        session.status === "available"  ? "bg-[#8ed8ff]" :
+                        "bg-gray-100"
                       }`}>
                         {session.status}
                       </span>
-                      <span className="text-xs text-gray-400">{session.session_type === "one_on_one" ? "1-on-1" : "Group"}</span>
+                      <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">{session.session_type === "one_on_one" ? "1-on-1" : "Group"}</span>
                     </div>
-                    <h3 className="text-gray-900 font-semibold">{session.title}</h3>
+                    <h3 className="font-display text-2xl font-black uppercase tracking-tight text-slate-900">{session.title}</h3>
                     {session.description && (
-                      <p className="text-gray-500 text-sm mt-1">{session.description}</p>
+                      <p className="text-slate-600 font-bold text-sm mt-2">{session.description}</p>
                     )}
-                    <div className="flex flex-wrap gap-4 mt-3 text-sm text-gray-400">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
+                    <div className="flex flex-wrap gap-5 mt-4 text-sm font-bold text-slate-700">
+                      <span className="flex items-center gap-2">
+                        <Calendar className="h-5 w-5 text-black" strokeWidth={2.5} />
                         {formatDate(session.scheduled_at)}
                       </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
+                      <span className="flex items-center gap-2">
+                        <Clock className="h-5 w-5 text-black" strokeWidth={2.5} />
                         {session.duration_minutes} mins
                       </span>
-                      <span className="flex items-center gap-1">
-                        <DollarSign className="h-4 w-4" />
+                      <span className="flex items-center gap-2 rounded-[8px] border-2 border-black bg-[#ffe500] px-2 py-1 shadow-[2px_2px_0_#111111]">
+                        <DollarSign className="h-4 w-4 text-black" strokeWidth={3} />
                         {session.price === 0 ? "Free" : formatPrice(session.price)}
                       </span>
                     </div>
                   </div>
-                  <div className="flex-shrink-0">
+                  <div className="flex-shrink-0 mt-4 sm:mt-0 flex flex-wrap gap-3">
                     {session.status === "booked" && (
                       <button
                         onClick={() => joinSession.mutate(session.id)}
                         disabled={joinSession.isPending}
-                        className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-indigo-700 transition-colors font-semibold"
+                        className="inline-flex items-center justify-center gap-2 rounded-full border-4 border-black bg-[#7dde92] px-6 py-3 text-sm font-black uppercase tracking-widest text-black shadow-[4px_4px_0_#111111] transition-all hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0_#111111]"
                       >
-                        <ExternalLink className="h-4 w-4" /> Join
+                        <ExternalLink className="h-5 w-5" strokeWidth={3} /> Join
+                      </button>
+                    )}
+                    {session.status === "booked" && (
+                      <button
+                        onClick={() => endSession.mutate(session.id)}
+                        disabled={endSession.isPending}
+                        className="inline-flex items-center justify-center gap-2 rounded-full border-4 border-black bg-[#ffe500] px-4 py-3 text-sm font-black uppercase tracking-widest text-black shadow-[4px_4px_0_#111111] transition-all hover:-translate-y-1 hover:shadow-[6px_6px_0_#111111]"
+                      >
+                        <CheckSquare className="h-5 w-5" strokeWidth={3} /> End
+                      </button>
+                    )}
+                    {session.status === "available" && (
+                      <button
+                        onClick={() => { if (confirm("Delete this slot?")) deleteSession.mutate(session.id); }}
+                        disabled={deleteSession.isPending}
+                        className="inline-flex items-center justify-center gap-2 rounded-full border-4 border-black bg-white px-4 py-3 text-sm font-black uppercase tracking-widest text-black shadow-[4px_4px_0_#111111] transition-all hover:-translate-y-1 hover:bg-red-100 hover:shadow-[6px_6px_0_#111111]"
+                      >
+                        <Trash2 className="h-5 w-5" strokeWidth={3} />
                       </button>
                     )}
                   </div>
