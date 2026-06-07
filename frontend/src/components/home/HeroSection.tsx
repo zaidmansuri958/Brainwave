@@ -1,9 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Bot, Video, Brain, Award, Play, TrendingUp, CheckCircle } from "lucide-react";
+import Image from "next/image";
+import { ArrowRight, Bot, Video, Brain, Award, Play } from "lucide-react";
+import { useAuthStore } from "@/stores/authStore";
 
 export function HeroSection() {
+  const { isAuthenticated, user } = useAuthStore();
+  const ctaHref = isAuthenticated()
+    ? user?.role === "teacher" ? "/teacher/dashboard" : "/dashboard"
+    : "/register";
+
   return (
     <section className="relative overflow-hidden bg-white pt-10 pb-16 lg:pt-16 lg:pb-24">
       {/* Background decoration */}
@@ -40,9 +47,9 @@ export function HeroSection() {
 
             {/* CTA buttons */}
             <div className="flex flex-wrap items-center gap-3 mb-10">
-              <Link href="/register"
+              <Link href={ctaHref}
                 className="inline-flex items-center gap-2 rounded-full bg-violet-600 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-700 transition-colors shadow-md shadow-violet-200">
-                Start Learning Free <ArrowRight className="h-4 w-4" />
+                {isAuthenticated() ? "Go to Dashboard" : "Start Learning Free"} <ArrowRight className="h-4 w-4" />
               </Link>
               <Link href="/courses"
                 className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-6 py-3 text-sm font-semibold text-gray-700 hover:border-violet-300 hover:text-violet-700 transition-colors shadow-sm">
@@ -75,84 +82,18 @@ export function HeroSection() {
           </div>
 
           {/* Right — Illustration */}
-          <div className="relative flex items-center justify-center">
-            {/* Main circle bg */}
-            <div className="relative h-[420px] w-[420px] lg:h-[480px] lg:w-[480px]">
-              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-violet-100 to-violet-50" />
-
-              {/* Student figure placeholder */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="relative">
-                  {/* Body */}
-                  <div className="flex flex-col items-center">
-                    {/* Head */}
-                    <div className="h-20 w-20 rounded-full bg-gradient-to-br from-amber-200 to-amber-300 shadow-lg mb-2" />
-                    {/* Hoodie body */}
-                    <div className="h-32 w-40 rounded-t-3xl bg-gradient-to-br from-violet-500 to-violet-700 shadow-lg flex items-end justify-center pb-4">
-                      {/* Laptop */}
-                      <div className="h-16 w-24 rounded-lg bg-gray-800 border-2 border-gray-700 relative">
-                        <div className="absolute inset-1 rounded bg-blue-400/20 flex items-center justify-center">
-                          <div className="text-[8px] text-white font-mono opacity-70">{'{ code }'}</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Floating cards */}
-              {/* AI Tutor card */}
-              <div className="absolute left-0 top-16 bg-white rounded-2xl shadow-xl border border-gray-100 p-3 w-36">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="h-6 w-6 rounded-full bg-violet-100 flex items-center justify-center">
-                    <Bot className="h-3.5 w-3.5 text-violet-600" />
-                  </div>
-                  <span className="text-xs font-semibold text-gray-800">AI Tutor</span>
-                </div>
-                <div className="bg-violet-50 rounded-lg p-2 text-[10px] text-violet-700">
-                  Hello! How can I help you today?
-                </div>
-              </div>
-
-              {/* Live Class card */}
-              <div className="absolute right-0 top-12 bg-white rounded-2xl shadow-xl border border-gray-100 p-3 w-40">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <div className="h-5 w-5 rounded bg-violet-600 flex items-center justify-center">
-                    <Play className="h-3 w-3 text-white fill-white" />
-                  </div>
-                  <span className="text-xs font-semibold text-gray-800">Live</span>
-                  <span className="ml-auto text-[9px] font-bold text-white bg-red-500 px-1.5 py-0.5 rounded">LIVE</span>
-                </div>
-                <p className="text-[10px] font-semibold text-gray-700">Data Structures in Python</p>
-                <p className="text-[9px] text-gray-400">by Arjun Patel</p>
-                <div className="flex items-center gap-1 mt-1">
-                  {[1,2,3].map(i => <div key={i} className="h-4 w-4 rounded-full bg-gradient-to-br from-amber-200 to-amber-400 border border-white" />)}
-                  <span className="text-[9px] text-gray-400 ml-1">+320</span>
-                </div>
-              </div>
-
-              {/* Quiz completed */}
-              <div className="absolute right-0 bottom-24 bg-white rounded-2xl shadow-xl border border-gray-100 p-3 w-36">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-[10px] font-semibold text-gray-700">Quiz Completed</span>
-                </div>
-                <p className="text-[10px] text-gray-500 mb-1">Your Score</p>
-                <p className="text-2xl font-extrabold text-violet-600">92%</p>
-              </div>
-
-              {/* Progress card */}
-              <div className="absolute left-0 bottom-20 bg-white rounded-2xl shadow-xl border border-gray-100 p-3 w-36">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-semibold text-gray-700">Progress</span>
-                  <TrendingUp className="h-3.5 w-3.5 text-green-500" />
-                </div>
-                <p className="text-2xl font-extrabold text-gray-900">75%</p>
-                <div className="mt-1.5 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full w-3/4 bg-violet-500 rounded-full" />
-                </div>
-                <p className="text-[9px] text-gray-400 mt-1">Keep it up! 🎉</p>
-              </div>
+          <div className="relative flex items-center justify-center lg:justify-end">
+            <div className="relative w-full max-w-[580px] lg:max-w-[640px]">
+              {/* Soft glow behind image */}
+              <div className="absolute inset-12 rounded-full bg-gradient-to-br from-violet-200 to-violet-100 blur-3xl opacity-70" />
+              <Image
+                src="/images/hero-student.png"
+                alt="Student learning with AI on Brainwave"
+                width={640}
+                height={640}
+                className="relative object-contain w-full h-auto"
+                priority
+              />
             </div>
           </div>
         </div>

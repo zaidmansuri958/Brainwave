@@ -53,8 +53,13 @@ function InnerQuiz({
   const { startQuiz, answerQuestion, nextQuestion, prevQuestion, finishQuiz } = useActions();
 
   useEffect(() => {
-    startQuiz();
-  }, [startQuiz]);
+    try {
+      startQuiz();
+    } catch {
+      // react-quiz-kit throws "Quiz have already started" if called twice — safe to ignore
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const total = questions.length;
   const current = questions[idx - 1];

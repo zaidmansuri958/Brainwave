@@ -62,12 +62,11 @@ export function DashboardLayout({ children, title, subtitle, actions, breadcrumb
           <div className="flex items-center gap-3">
             {/* Search */}
             <div className="relative hidden md:block">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search..."
-                className="pl-9 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg w-56 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
-                style={{ fontFamily: "var(--font-sans)" }}
+                className="w-52 rounded-xl border border-gray-200 bg-gray-50 py-2 pl-10 pr-4 text-sm text-gray-700 placeholder-gray-400 outline-none transition-all focus:border-violet-400 focus:ring-2 focus:ring-violet-100 focus:bg-white"
               />
             </div>
 

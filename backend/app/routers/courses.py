@@ -215,8 +215,8 @@ async def publish_course(
     return {"message": "Course published", "course_id": str(course_id)}
 
 
-MAX_VIDEO_BYTES = 2 * 1024 * 1024 * 1024  # 2 GB
-MAX_VIDEO_DURATION_SEC = 30 * 60  # 30 minutes
+MAX_VIDEO_BYTES = 4 * 1024 * 1024 * 1024  # 4 GB
+MAX_VIDEO_DURATION_SEC = 4 * 60 * 60  # 4 hours
 
 
 def _probe_video_duration_seconds(content: bytes, filename: str) -> Optional[float]:

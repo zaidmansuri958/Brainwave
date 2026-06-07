@@ -1,71 +1,98 @@
-﻿"use client";
+"use client";
 import Link from "next/link";
-import { ArrowRight, CheckCircle, TrendingUp, Play } from "lucide-react";
-export function CTASection() {
-  return (
-    <section className="py-16 mx-4 sm:mx-6 lg:mx-8 mb-12">
-      <div className="mx-auto max-w-7xl">
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-violet-600 via-violet-700 to-purple-800 px-8 py-14 lg:px-16">
-          {/* Background decoration */}
-          <div className="absolute inset-0 opacity-20">
-            <div className="absolute right-0 top-0 h-64 w-64 rounded-full bg-white/20 blur-3xl -translate-y-1/2 translate-x-1/2" />
-            <div className="absolute left-1/2 bottom-0 h-48 w-48 rounded-full bg-violet-400/30 blur-2xl" />
-          </div>
+import Image from "next/image";
+import { ArrowRight, Bot, Video, Shield, Briefcase, Users } from "lucide-react";
+import { useAuthStore } from "@/stores/authStore";
 
-          <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-            {/* Left content */}
-            <div>
-              <h2 className="text-3xl lg:text-4xl font-extrabold text-white leading-tight mb-4">
-                Ready to Transform<br />Your Future?
+const features = [
+  { icon: Bot,      label: "AI Tutor",      sub: "24/7 Support"          },
+  { icon: Video,    label: "Live Classes",  sub: "Interactive"           },
+  { icon: Shield,   label: "Certificates",  sub: "Industry Recognized"   },
+  { icon: Briefcase,label: "Job Ready",     sub: "Real Projects"         },
+];
+
+export function CTASection() {
+  const { isAuthenticated, user } = useAuthStore();
+  const ctaHref = isAuthenticated()
+    ? user?.role === "teacher" ? "/teacher/dashboard" : "/dashboard"
+    : "/register";
+
+  return (
+    <section className="py-16 px-4 sm:px-6 lg:px-8 mb-12">
+      <div className="mx-auto max-w-7xl">
+
+        {/* Outer card — taller so left content fits without clipping */}
+        <div className="relative rounded-3xl overflow-hidden min-h-[540px] bg-[#ece9ff]">
+
+          {/* ── Left dark panel (diagonal clip) ─────────────────────────── */}
+          <div
+            className="absolute inset-y-0 left-0 z-10 w-[52%] bg-gradient-to-br from-[#2d0f6e] via-[#3b12a0] to-[#4a1fc1] flex flex-col justify-between py-12 px-10 lg:px-14"
+            style={{ clipPath: "polygon(0 0, 100% 0, 84% 100%, 0 100%)" }}
+          >
+            {/* Top content — constrained to safe (non-clipped) width */}
+            <div className="max-w-[72%]">
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 mb-7">
+                <Users className="h-3.5 w-3.5 text-white/80" />
+                <span className="text-xs font-semibold text-white/90">Join 50,000+ Learners</span>
+              </div>
+
+              {/* Heading */}
+              <h2 className="text-4xl lg:text-5xl font-extrabold leading-tight mb-4">
+                <span className="text-white">Ready to Transform</span><br />
+                <span className="text-violet-300">Your Future?</span>
               </h2>
-              <p className="text-violet-200 text-base mb-8 leading-relaxed">
-                Join thousands of learners who are already building skills and achieving their dreams.
+
+              {/* Description */}
+              <p className="text-white/70 text-sm leading-relaxed mb-7">
+                Learn in-demand skills, get certified, work on real-world projects and land your dream career.
               </p>
-              <div className="flex flex-wrap gap-3 mb-8">
-                <Link href="/register"
-                  className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-violet-700 hover:bg-violet-50 transition-colors shadow-lg">
-                  Start Learning Free <ArrowRight className="h-4 w-4" />
+
+              {/* Buttons */}
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  href={ctaHref}
+                  className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-violet-700 hover:bg-violet-50 transition-colors shadow-lg"
+                >
+                  {isAuthenticated() ? "Go to Dashboard" : "Start Learning Free"} <ArrowRight className="h-4 w-4" />
                 </Link>
-                <Link href="/courses"
-                  className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white hover:bg-white/20 transition-colors">
-                  Explore Courses
+                <Link
+                  href="/courses"
+                  className="inline-flex items-center gap-2 rounded-full border-2 border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white hover:bg-white/20 transition-colors"
+                >
+                  Browse Courses
                 </Link>
               </div>
-              <div className="flex flex-wrap gap-5 text-sm text-violet-200">
-                {["No credit card required", "Cancel anytime", "Learn at your own pace"].map((t) => (
-                  <div key={t} className="flex items-center gap-1.5">
-                    <CheckCircle className="h-4 w-4 text-green-300" />
-                    {t}
+            </div>
+
+            {/* Bottom feature pills — max-w keeps them inside non-clipped zone */}
+            <div className="max-w-[68%]">
+              <div className="flex items-start gap-5 mt-8">
+                {features.map(({ icon: Icon, label, sub }) => (
+                  <div key={label} className="flex flex-col items-center gap-1.5 min-w-0">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/15 border border-white/20 shrink-0">
+                      <Icon className="h-5 w-5 text-white" />
+                    </div>
+                    <p className="text-[11px] font-semibold text-white text-center leading-tight">{label}</p>
+                    <p className="text-[10px] text-white/50 text-center">{sub}</p>
                   </div>
                 ))}
               </div>
             </div>
-
-            {/* Right illustration */}
-            <div className="flex justify-center lg:justify-end">
-              <div className="relative h-56 w-56 lg:h-64 lg:w-64">
-                <div className="absolute inset-0 rounded-full bg-white/10" />
-                {/* Student figure */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                  <div className="h-16 w-16 rounded-full bg-amber-200" />
-                  <div className="h-20 w-28 rounded-t-2xl bg-violet-400/60" />
-                </div>
-                {/* Floating elements */}
-                <div className="absolute -top-2 -right-4 bg-white rounded-xl p-2.5 shadow-lg">
-                  <div className="flex items-center gap-1.5">
-                    <TrendingUp className="h-4 w-4 text-green-500" />
-                    <span className="text-xs font-bold text-gray-800">+92% Growth</span>
-                  </div>
-                </div>
-                <div className="absolute -bottom-2 -left-4 bg-white rounded-xl p-2.5 shadow-lg">
-                  <div className="flex items-center gap-1.5">
-                    <Play className="h-4 w-4 text-violet-600 fill-violet-600" />
-                    <span className="text-xs font-bold text-gray-800">1K+ Lessons</span>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
+
+          {/* ── Right light panel ────────────────────────────────────────── */}
+          <div className="absolute inset-0 flex items-end justify-end">
+            <Image
+              src="/images/hero-student.png"
+              alt="Student learning with Brainwave"
+              width={520}
+              height={520}
+              className="object-contain object-bottom h-full w-auto"
+              priority
+            />
+          </div>
+
         </div>
       </div>
     </section>

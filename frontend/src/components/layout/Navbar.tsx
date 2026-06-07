@@ -2,26 +2,29 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Bell, ChevronDown, GraduationCap, LayoutDashboard, LogOut,
-  Menu, Search, User, X, Sparkles, BookOpen, Users, PlayCircle,
-  BarChart3, FileText, Star, Shield
+  Bell, ChevronDown, LayoutDashboard, LogOut,
+  Menu, Search, User, X, BookOpen,
+  BarChart3, FileText, Star, ClipboardList, Package,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { cn } from "@/lib/utils";
 
 const coursesDropdown = [
-  { label: "All Courses", href: "/courses", icon: BookOpen },
-  { label: "Top Rated", href: "/courses?sort=rating", icon: Star },
-  { label: "Data Science", href: "/courses?category=Data+Science", icon: BarChart3 },
-  { label: "Programming", href: "/courses?category=Programming", icon: FileText },
+  { label: "All Courses",     href: "/courses",                          icon: BookOpen      },
+  { label: "Top Rated",       href: "/courses?sort=rating",              icon: Star          },
+  { label: "Data Science",    href: "/courses?category=Data+Science",    icon: BarChart3     },
+  { label: "Programming",     href: "/courses?category=Programming",     icon: FileText      },
+  { label: "Mock Tests",      href: "/catalog/mock-tests",               icon: ClipboardList },
+  { label: "Study Materials", href: "/catalog/materials",                icon: Package       },
 ];
 
 const resourcesDropdown = [
-  { label: "Blog", href: "#" },
-  { label: "Tutorials", href: "#" },
-  { label: "Webinars", href: "#" },
+  { label: "Blog",          href: "#" },
+  { label: "Tutorials",     href: "#" },
+  { label: "Webinars",      href: "#" },
   { label: "Documentation", href: "#" },
 ];
 
@@ -87,18 +90,23 @@ export function Navbar() {
       )}
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between gap-4">
+        <div className="flex h-16 items-center justify-between gap-4" ref={dropdownRef}>
 
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 shrink-0">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-600 text-white">
-              <Sparkles className="h-4 w-4" />
-            </div>
+            <Image
+              src="/images/logo.png"
+              alt="Brainwave"
+              width={32}
+              height={32}
+              className="h-8 w-8 rounded-lg object-cover"
+              priority
+            />
             <span className="text-xl font-bold text-gray-900 tracking-tight">Brainwave</span>
           </Link>
 
           {/* Desktop nav */}
-          <nav className="hidden lg:flex items-center gap-1" ref={dropdownRef}>
+          <nav className="hidden lg:flex items-center gap-1">
             {/* Courses dropdown */}
             <div className="relative">
               <button
@@ -161,7 +169,7 @@ export function Navbar() {
           </nav>
 
           {/* Right side */}
-          <div className="flex items-center gap-2" ref={dropdownRef}>
+          <div className="flex items-center gap-2">
             {/* Search */}
             <div className="hidden md:flex relative">
               {searchOpen ? (
@@ -174,9 +182,9 @@ export function Navbar() {
                 </div>
               ) : (
                 <button onClick={() => setSearchOpen(true)}
-                  className="flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-4 py-2 text-sm text-gray-400 hover:border-violet-300 hover:bg-violet-50 transition-colors w-48">
-                  <Search className="h-4 w-4" />
-                  <span>Search for courses, skills...</span>
+                  className="flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-4 py-2 text-sm text-gray-400 hover:border-violet-300 hover:bg-violet-50 transition-colors w-52 whitespace-nowrap">
+                  <Search className="h-4 w-4 shrink-0" />
+                  <span className="truncate">Search courses, skills...</span>
                 </button>
               )}
             </div>
@@ -253,10 +261,12 @@ export function Navbar() {
       {mobileOpen && (
         <div className="lg:hidden border-t border-gray-100 bg-white px-4 py-3 space-y-1">
           {[
-            { label: "Courses", href: "/courses" },
-            { label: "For Teachers", href: "/for-teachers" },
-            { label: "Community", href: "/features" },
-            { label: "Pricing", href: "/pricing" },
+            { label: "Courses",         href: "/courses"              },
+            { label: "Mock Tests",      href: "/catalog/mock-tests"   },
+            { label: "Study Materials", href: "/catalog/materials"    },
+            { label: "For Teachers",    href: "/for-teachers"         },
+            { label: "Community",       href: "/features"             },
+            { label: "Pricing",         href: "/pricing"              },
           ].map((link) => (
             <Link key={link.href} href={link.href}
               onClick={() => setMobileOpen(false)}

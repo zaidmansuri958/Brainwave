@@ -3,8 +3,13 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { adminApi } from "@/lib/api";
-import { formatPrice } from "@/lib/utils";
 import { DashboardLayout, MetricCard, SectionCard, Badge } from "@/components/layout/DashboardLayout";
+
+// Always show ₹ symbol — "Free" makes no sense in an admin financial context
+function fmtRupee(n: number | null | undefined) {
+  if (n == null) return "—";
+  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
+}
 import { Users, BookOpen, DollarSign, ShieldCheck, TrendingUp, CheckCircle, XCircle, ChevronRight, ExternalLink, Star } from "lucide-react";
 
 export default function AdminDashboardPage() {
@@ -13,11 +18,11 @@ export default function AdminDashboardPage() {
   const [rejectReason, setRejectReason] = useState("");
   const [activeTab, setActiveTab] = useState<"overview" | "teachers" | "courses" | "refunds">("overview");
 
-  const { data: stats } = useQuery({ queryKey: ["admin-stats"], queryFn: () => adminApi.stats().then((r) => r.data) });
+  const { data: stats, isLoading: statsLoading } = useQuery({ queryKey: ["admin-stats"], queryFn: () => adminApi.stats().then((r) => r.data) });
   const { data: pendingData } = useQuery({ queryKey: ["pending-teachers"], queryFn: () => adminApi.pendingTeachers().then((r) => r.data) });
-  const { data: teachersData } = useQuery({ queryKey: ["admin-teachers"], queryFn: () => adminApi.teachers().then((r) => r.data), enabled: activeTab === "teachers" });
-  const { data: coursesData } = useQuery({ queryKey: ["admin-courses"], queryFn: () => adminApi.courses().then((r) => r.data), enabled: activeTab === "courses" });
-  const { data: refundsData } = useQuery({ queryKey: ["admin-refunds"], queryFn: () => adminApi.refunds().then((r) => r.data), enabled: activeTab === "refunds" });
+  const { data: teachersData, isLoading: teachersLoading } = useQuery({ queryKey: ["admin-teachers"], queryFn: () => adminApi.teachers().then((r) => r.data), enabled: activeTab === "teachers" });
+  const { data: coursesData, isLoading: coursesLoading } = useQuery({ queryKey: ["admin-courses"], queryFn: () => adminApi.courses().then((r) => r.data), enabled: activeTab === "courses" });
+  const { data: refundsData, isLoading: refundsLoading } = useQuery({ queryKey: ["admin-refunds"], queryFn: () => adminApi.refunds().then((r) => r.data), enabled: activeTab === "refunds" });
 
   const pending = pendingData?.pending || [];
   const teachers = teachersData?.teachers || [];
@@ -71,10 +76,20 @@ export default function AdminDashboardPage() {
     >
       {/* Metrics */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-        <MetricCard label="Total Users"    value={stats?.total_users ?? "—"}    icon={Users}     color="blue" />
-        <MetricCard label="Active Courses" value={stats?.total_courses ?? "—"}  icon={BookOpen}  color="purple" />
-        <MetricCard label="Platform Revenue" value={stats?.total_revenue != null ? formatPrice(stats.total_revenue) : "—"} icon={DollarSign} color="green" />
-        <MetricCard label="Pending Reviews" value={pending.length}              icon={ShieldCheck} color="orange" />
+        {statsLoading
+          ? Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 animate-pulse">
+                <div className="h-10 w-10 bg-gray-100 rounded-xl mb-4" />
+                <div className="h-6 w-24 bg-gray-100 rounded-lg mb-2" />
+                <div className="h-4 w-16 bg-gray-100 rounded-lg" />
+              </div>
+            ))
+          : <>
+              <MetricCard label="Total Users"      value={stats?.total_users    ?? 0} icon={Users}      color="blue"   />
+              <MetricCard label="Active Courses"   value={stats?.total_courses  ?? 0} icon={BookOpen}   color="purple" />
+              <MetricCard label="Platform Revenue" value={fmtRupee(stats?.total_revenue)}  icon={DollarSign} color="green"  />
+              <MetricCard label="Pending Reviews"  value={stats?.pending_verifications ?? pending.length} icon={ShieldCheck} color="orange" />
+            </>}
       </div>
 
       {/* Tabs */}
@@ -204,11 +219,11 @@ export default function AdminDashboardPage() {
               <div className="mt-4 pt-4 border-t border-gray-100">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-500">Total Revenue</span>
-                  <span className="text-sm font-bold text-green-600">{stats?.total_revenue != null ? formatPrice(stats.total_revenue) : "—"}</span>
+                  <span className="text-sm font-bold text-green-600">{fmtRupee(stats?.total_revenue)}</span>
                 </div>
                 <div className="flex items-center justify-between mt-2">
                   <span className="text-sm text-gray-500">Platform Revenue</span>
-                  <span className="text-sm font-bold text-blue-600">{stats?.platform_revenue != null ? formatPrice(stats.platform_revenue) : "—"}</span>
+                  <span className="text-sm font-bold text-blue-600">{fmtRupee(stats?.platform_revenue)}</span>
                 </div>
               </div>
             </SectionCard>
@@ -239,7 +254,10 @@ export default function AdminDashboardPage() {
 
       {/* Teachers tab */}
       {activeTab === "teachers" && (
-        <SectionCard title="All Teachers">
+        <SectionCard title={`All Teachers (${teachers.length})`}>
+          {teachersLoading ? (
+            <div className="space-y-2">{Array.from({length:5}).map((_,i)=><div key={i} className="h-12 bg-gray-100 rounded-xl animate-pulse"/>)}</div>
+          ) : (
           <table className="dash-table">
             <thead>
               <tr>
@@ -264,7 +282,7 @@ export default function AdminDashboardPage() {
                     </div>
                   </td>
                   <td className="font-medium text-gray-700">{t.total_students ?? 0}</td>
-                  <td className="font-medium text-orange-600">{formatPrice(t.pending_payout || 0)}</td>
+                  <td className="font-medium text-orange-600">{fmtRupee(t.pending_payout || 0)}</td>
                   <td>
                     <div className="flex gap-1.5">
                       <Badge variant={t.identity_verified ? "success" : "neutral"}>ID {t.identity_verified ? "✓" : "—"}</Badge>
@@ -275,12 +293,16 @@ export default function AdminDashboardPage() {
               ))}
             </tbody>
           </table>
+          )}
         </SectionCard>
       )}
 
       {/* Courses tab */}
       {activeTab === "courses" && (
-        <SectionCard title="Course Moderation">
+        <SectionCard title={`Course Moderation (${courses.length})`}>
+          {coursesLoading ? (
+            <div className="space-y-2">{Array.from({length:5}).map((_,i)=><div key={i} className="h-12 bg-gray-100 rounded-xl animate-pulse"/>)}</div>
+          ) : (
           <table className="dash-table">
             <thead>
               <tr>
@@ -308,7 +330,7 @@ export default function AdminDashboardPage() {
                       {c.moderation_status || "pending"}
                     </Badge>
                   </td>
-                  <td className="font-medium text-gray-700">{formatPrice(c.price || 0)}</td>
+                  <td className="font-medium text-gray-700">{fmtRupee(c.price || 0)}</td>
                   <td>
                     <div className="flex gap-2">
                       {c.moderation_status !== "approved" && (
@@ -331,13 +353,16 @@ export default function AdminDashboardPage() {
               ))}
             </tbody>
           </table>
+          )}
         </SectionCard>
       )}
 
       {/* Refunds tab */}
       {activeTab === "refunds" && (
-        <SectionCard title="Refund Requests">
-          {refunds.length === 0 ? (
+        <SectionCard title={`Refund Requests${refunds.length > 0 ? ` (${refunds.length} pending)` : ""}`}>
+          {refundsLoading ? (
+            <div className="space-y-2">{Array.from({length:4}).map((_,i)=><div key={i} className="h-12 bg-gray-100 rounded-xl animate-pulse"/>)}</div>
+          ) : refunds.length === 0 ? (
             <div className="text-center py-10">
               <CheckCircle className="h-10 w-10 text-green-200 mx-auto mb-3" />
               <p className="text-sm text-gray-500">No pending refund requests</p>

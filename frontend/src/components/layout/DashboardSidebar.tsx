@@ -28,14 +28,16 @@ const studentNav: NavItem[] = [
 ];
 
 const teacherNav: NavItem[] = [
-  { label: "Dashboard",       href: "/teacher/dashboard",     icon: LayoutDashboard },
-  { label: "My Courses",      href: "/teacher/courses",       icon: BookOpen },
-  { label: "Students",        href: "/teacher/students",      icon: Users },
-  { label: "Live Sessions",   href: "/teacher/live-sessions", icon: Video },
-  { label: "Doubt Sessions",  href: "/teacher/doubt-sessions",icon: HelpCircle },
-  { label: "Earnings",        href: "/teacher/earnings",      icon: DollarSign },
-  { label: "Analytics",       href: "/teacher/analytics",     icon: BarChart2 },
-  { label: "Profile",         href: "/profile",               icon: Settings },
+  { label: "Dashboard",       href: "/teacher/dashboard",       icon: LayoutDashboard },
+  { label: "My Courses",      href: "/teacher/courses",         icon: BookOpen },
+  { label: "Study Materials", href: "/teacher/study-materials", icon: FileText },
+  { label: "Mock Tests",      href: "/teacher/mock-tests",      icon: ClipboardList },
+  { label: "Students",        href: "/teacher/students",        icon: Users },
+  { label: "Live Sessions",   href: "/teacher/live-sessions",   icon: Video },
+  { label: "Doubt Sessions",  href: "/teacher/doubt-sessions",  icon: HelpCircle },
+  { label: "Earnings",        href: "/teacher/earnings",        icon: DollarSign },
+  { label: "Analytics",       href: "/teacher/analytics",       icon: BarChart2 },
+  { label: "Profile",         href: "/profile",                 icon: Settings },
 ];
 
 const adminNav: NavItem[] = [

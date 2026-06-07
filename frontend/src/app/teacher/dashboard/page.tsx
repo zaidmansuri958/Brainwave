@@ -4,7 +4,12 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { BookOpen, Users, DollarSign, TrendingUp, Plus, ChevronRight, ArrowRight, Star, AlertTriangle, BarChart2, Video, HelpCircle } from "lucide-react";
 import { teacherApi } from "@/lib/api";
-import { formatPrice, getRiskEmoji } from "@/lib/utils";
+import { getRiskEmoji } from "@/lib/utils";
+
+function fmtRupee(n: number | null | undefined) {
+  if (n == null) return "—";
+  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
+}
 import { DashboardLayout, MetricCard, SectionCard, Badge } from "@/components/layout/DashboardLayout";
 
 export default function TeacherDashboard() {
@@ -82,7 +87,7 @@ export default function TeacherDashboard() {
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
         <MetricCard
           label="Total Earnings"
-          value={isLoading ? "—" : formatPrice(data?.my_earnings || 0)}
+          value={isLoading ? "—" : fmtRupee(data?.my_earnings || 0)}
           icon={DollarSign}
           color="green"
           trend={12}
@@ -102,7 +107,7 @@ export default function TeacherDashboard() {
         />
         <MetricCard
           label="Pending Payout"
-          value={isLoading ? "—" : formatPrice(data?.pending_payout || 0)}
+          value={isLoading ? "—" : fmtRupee(data?.pending_payout || 0)}
           icon={TrendingUp}
           color="orange"
         />
@@ -154,7 +159,7 @@ export default function TeacherDashboard() {
                           <span className="font-medium text-gray-700">{c.enrollments}</span>
                         </div>
                       </td>
-                      <td className="font-semibold text-gray-800">{formatPrice(c.revenue || 0)}</td>
+                      <td className="font-semibold text-gray-800">{fmtRupee(c.revenue || 0)}</td>
                       <td>
                         {c.avg_quiz_score != null ? (
                           <div className="flex items-center gap-1.5">
@@ -263,7 +268,7 @@ export default function TeacherDashboard() {
                     <span>{icon}</span> {label}
                   </span>
                   <span className={`text-sm font-semibold ${color}`}>
-                    {value != null ? formatPrice(value) : "—"}
+                    {value != null ? fmtRupee(value) : "—"}
                   </span>
                 </div>
               ))}

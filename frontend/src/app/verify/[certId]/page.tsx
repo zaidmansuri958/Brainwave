@@ -6,10 +6,9 @@ import Link from "next/link";
 
 async function getCertificate(certId: string) {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || "http://backend:8000/api/v1"}/certificates/verify/${certId}`,
-      { cache: "no-store" }
-    );
+    // API_INTERNAL_URL for server-side fetch (localhost when running locally, backend:8000 in Docker)
+    const base = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+    const res = await fetch(`${base}/certificates/verify/${certId}`, { cache: "no-store" });
     return res.json();
   } catch {
     return { valid: false };
@@ -66,12 +65,11 @@ export default async function CertificateVerifyPage({ params }: { params: { cert
                   ))}
                 </div>
 
-                {cert.pdf_url && (
-                  <a href={cert.pdf_url} target="_blank" rel="noopener noreferrer"
-                    className="btn btn-md btn-primary w-full justify-center mt-5">
-                    <Download className="h-4 w-4" /> Download PDF
-                  </a>
-                )}
+                {/* Always show view/download — never use pdf_url (broken CDN links in old DB records) */}
+                <Link href={`/certificates/${params.certId}`}
+                  className="btn btn-md btn-primary w-full justify-center mt-5">
+                  <Download className="h-4 w-4" /> View &amp; Download Certificate
+                </Link>
               </div>
             </div>
           ) : (

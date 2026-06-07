@@ -1,120 +1,208 @@
 "use client";
 
-import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, ArrowLeft, Mail, ShieldAlert, Users } from "lucide-react";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
+import { AlertTriangle, Users, Mail, Bell, Clock, CheckCircle2, Loader2, TrendingUp } from "lucide-react";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { CourseManageNav } from "@/components/teacher/CourseManageNav";
 import { teacherApi } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
-import { PanelCard, PanelHero, PanelPage, SectionHeader } from "@/components/panels/PanelPrimitives";
+import { toast } from "@/hooks/use-toast";
+import { useState } from "react";
 
-function riskTone(risk: string) {
-  if (risk === "high") return "border-rose-200 bg-rose-50 text-rose-700";
-  if (risk === "medium") return "border-amber-200 bg-amber-50 text-amber-700";
-  return "border-emerald-200 bg-emerald-50 text-emerald-700";
+function RiskBadge({ level }: { level: string }) {
+  const map: Record<string, string> = {
+    high:   "bg-red-50   text-red-700   border-red-200",
+    medium: "bg-amber-50 text-amber-700 border-amber-200",
+    low:    "bg-green-50 text-green-700 border-green-200",
+  };
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-bold capitalize ${map[level] ?? map.low}`}>
+      {level === "high" && <AlertTriangle className="h-3 w-3" />}
+      {level} risk
+    </span>
+  );
+}
+
+function ProgressBar({ value }: { value: number }) {
+  const color = value >= 80 ? "bg-green-500" : value >= 50 ? "bg-violet-500" : value >= 20 ? "bg-amber-500" : "bg-red-400";
+  return (
+    <div className="h-1.5 w-full rounded-full bg-gray-100 overflow-hidden">
+      <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${Math.max(value, 2)}%` }} />
+    </div>
+  );
 }
 
 export default function TeacherCourseStudentsPage({ params }: { params: { id: string } }) {
+  const [nudging, setNudging] = useState<string | null>(null);
+  const [search,  setSearch]  = useState("");
+
   const { data, isLoading } = useQuery({
     queryKey: ["teacher-course-students", params.id],
-    queryFn: () => teacherApi.students(params.id).then((r) => r.data),
+    queryFn:  () => teacherApi.students(params.id).then(r => r.data),
   });
 
-  const students = data?.students || [];
-  const atRisk = students.filter((student: any) => student.risk_level === "high");
+  const { data: course } = useQuery({
+    queryKey: ["teacher-course", params.id],
+    queryFn:  () => teacherApi.getCourse(params.id).then(r => r.data),
+  });
+
+  const allStudents: any[] = data?.students || [];
+  const students = allStudents.filter(s =>
+    !search || s.name?.toLowerCase().includes(search.toLowerCase()) || s.email?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const atRisk   = allStudents.filter(s => s.risk_level === "high").length;
+  const avgProg  = allStudents.length ? Math.round(allStudents.reduce((s, st) => s + (st.progress_percent || 0), 0) / allStudents.length) : 0;
+
+  const handleNudge = async (studentId: string) => {
+    setNudging(studentId);
+    try {
+      await teacherApi.nudge(params.id, studentId);
+      toast({ title: "Nudge sent!", description: "Student will receive a notification." });
+    } catch {
+      toast({ title: "Couldn't send nudge", variant: "destructive" });
+    } finally {
+      setNudging(null);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <DashboardLayout title="Students" breadcrumbs={[{ label: "Teacher", href: "/teacher/dashboard" }, { label: "My Courses", href: "/teacher/courses" }, { label: "Students" }]}>
+        <div className="flex justify-center py-24"><Loader2 className="h-8 w-8 animate-spin text-violet-500" /></div>
+      </DashboardLayout>
+    );
+  }
 
   return (
-    <div className="min-h-screen">
-      <Navbar />
-      <PanelPage>
-        <div className="mb-5">
-          <Link href="/teacher/students" className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-sky-700">
-            <ArrowLeft className="h-4 w-4" />
-            Back to student overview
-          </Link>
+    <DashboardLayout
+      title={course?.title || "Students"}
+      subtitle="Monitor progress, engagement and at-risk learners"
+      breadcrumbs={[
+        { label: "Teacher",    href: "/teacher/dashboard" },
+        { label: "My Courses", href: "/teacher/courses"   },
+        { label: "Students"                                },
+      ]}
+    >
+      <div className="max-w-4xl py-6">
+        <CourseManageNav courseId={params.id} />
+
+        {/* Stats row */}
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          {[
+            { icon: Users,        label: "Total Students",   value: allStudents.length, iconBg: "bg-blue-50",   iconColor: "text-blue-600"  },
+            { icon: AlertTriangle,label: "At-Risk Students", value: atRisk,             iconBg: "bg-red-50",    iconColor: "text-red-500"   },
+            { icon: TrendingUp,   label: "Avg Completion",   value: `${avgProg}%`,      iconBg: "bg-green-50",  iconColor: "text-green-600" },
+          ].map(({ icon: Icon, label, value, iconBg, iconColor }) => (
+            <div key={label} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex items-center gap-4">
+              <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${iconBg} shrink-0`}>
+                <Icon className={`h-5 w-5 ${iconColor}`} />
+              </div>
+              <div>
+                <p className="text-xl font-extrabold text-gray-900 leading-none">{value}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{label}</p>
+              </div>
+            </div>
+          ))}
         </div>
 
-        <PanelHero
-          eyebrow="Faculty Panel"
-          title="Course student roster."
-          description="Progress, engagement risk, and last activity are grouped together here so the teacher can intervene quickly."
-          chips={[`${students.length} students`, `${atRisk.length} high-risk learners`]}
-        />
+        {/* Search */}
+        {allStudents.length > 5 && (
+          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2.5 mb-5 shadow-sm">
+            <Users className="h-4 w-4 text-gray-400 shrink-0" />
+            <input value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Search by name or email…"
+              className="flex-1 text-sm text-gray-700 outline-none placeholder-gray-400 bg-transparent" />
+          </div>
+        )}
 
-        <section className="mt-8">
-          <PanelCard>
-            <SectionHeader title="Learners" description="Live roster derived directly from the course-level teacher API." />
-            {isLoading ? (
-              <div className="space-y-4">
-                {[1, 2, 3, 4].map((item) => (
-                  <div key={item} className="h-32 animate-pulse rounded-xl border border-gray-200/10 bg-black/5" />
-                ))}
-              </div>
-            ) : students.length === 0 ? (
-              <div className="rounded-xl border border-gray-200 border-dashed bg-white px-6 py-16 text-center shadow-sm">
-                <Users className="mx-auto h-12 w-12 text-slate-300 mb-4" />
-                <p className=" text-2xl  uppercase tracking-tight text-gray-900">No enrolled students yet</p>
-                <p className="mt-2 text-sm font-bold text-gray-500">When students enroll, they will appear here.</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {students.map((student: any) => (
-                  <div key={student.student_id} className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:-translate-x-1 hover:shadow-md">
-                    <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-                      <div className="flex items-center gap-6">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-xl border border-gray-200 bg-blue-100 text-2xl  text-black shadow-sm">
-                          {(student.name || "?").slice(0, 1).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className=" text-xl  uppercase tracking-tight text-gray-900">{student.name}</p>
-                          <p className="mt-1 flex items-center gap-2 text-sm font-bold text-gray-600">
-                            <Mail className="h-4 w-4" />
-                            {student.email}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-3">
-                        <span className={`inline-block rounded-full border border-gray-200 px-4 py-2 text-xs font-semibold  ${student.risk_level === "high" ? "bg-orange-500 text-white" : student.risk_level === "medium" ? "bg-yellow-300 text-black" : "bg-green-100 text-black"}`}>
-                          {student.risk_level} risk
-                        </span>
-                        <span className="inline-block rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-black ">
-                          {student.progress_percent}% complete
-                        </span>
-                        <button
-                          onClick={() => teacherApi.nudge(params.id, student.student_id)}
-                          className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-pink-100 px-5 py-2 text-xs font-semibold text-black  transition-transform hover:-translate-y-1 hover:shadow-sm"
-                        >
-                          <ShieldAlert className="h-4 w-4" />
-                          Send nudge
-                        </button>
-                      </div>
+        {/* Students list */}
+        {students.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-dashed border-gray-200">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-100 mb-4">
+              <Users className="h-7 w-7 text-violet-500" />
+            </div>
+            <p className="text-base font-bold text-gray-900 mb-1">
+              {search ? "No students match your search" : "No enrolled students yet"}
+            </p>
+            <p className="text-sm text-gray-500">
+              {search ? "Try a different name or email" : "Students will appear here once they enroll."}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {students.map((student: any) => (
+              <div key={student.student_id}
+                className={`bg-white rounded-2xl border shadow-sm p-5 transition-all ${
+                  student.risk_level === "high"
+                    ? "border-red-200 hover:border-red-300"
+                    : "border-gray-200 hover:border-violet-200 hover:shadow-md"
+                }`}>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+
+                  {/* Left — avatar + info */}
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className={`flex h-11 w-11 items-center justify-center rounded-full shrink-0 text-sm font-bold ${
+                      student.risk_level === "high" ? "bg-red-100 text-red-600" : "bg-violet-100 text-violet-600"
+                    }`}>
+                      {(student.name || "?").charAt(0).toUpperCase()}
                     </div>
-                    <div className="mt-6 h-3 overflow-hidden rounded-full border border-gray-200 bg-slate-100">
-                      <div className="h-full border-r-2 border-black bg-yellow-300" style={{ width: `${Math.max(student.progress_percent || 0, 4)}%` }} />
-                    </div>
-                    <div className="mt-4 flex flex-wrap gap-4 text-xs font-semibold text-gray-500">
-                      <span>Enrolled: {formatDate(student.enrolled_at)}</span>
-                      <span>•</span>
-                      <span>Last active: {student.last_active ? formatDate(student.last_active) : "Not yet"}</span>
-                      {student.risk_level === "high" ? (
-                        <>
-                          <span>•</span>
-                          <span className="inline-flex items-center gap-1 text-orange-500">
-                            <AlertTriangle className="h-4 w-4" />
-                            Needs attention
-                          </span>
-                        </>
-                      ) : null}
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-gray-900 truncate">{student.name}</p>
+                      <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                        <Mail className="h-3 w-3 shrink-0" />
+                        <span className="truncate">{student.email}</span>
+                      </p>
                     </div>
                   </div>
-                ))}
+
+                  {/* Right — badges + nudge */}
+                  <div className="flex flex-wrap items-center gap-2 shrink-0">
+                    <RiskBadge level={student.risk_level || "low"} />
+                    <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${
+                      (student.progress_percent || 0) >= 80
+                        ? "bg-green-50 text-green-700 border-green-200"
+                        : "bg-gray-100 text-gray-600 border-gray-200"
+                    }`}>
+                      <CheckCircle2 className="h-3 w-3" />
+                      {student.progress_percent || 0}% done
+                    </span>
+                    <button onClick={() => handleNudge(student.student_id)} disabled={nudging === student.student_id}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-violet-200 bg-violet-50 hover:bg-violet-100 text-violet-700 text-[11px] font-bold px-3 py-1.5 transition-colors disabled:opacity-50">
+                      {nudging === student.student_id
+                        ? <Loader2 className="h-3 w-3 animate-spin" />
+                        : <Bell className="h-3 w-3" />}
+                      Nudge
+                    </button>
+                  </div>
+                </div>
+
+                {/* Progress bar */}
+                <div className="mt-4">
+                  <ProgressBar value={student.progress_percent || 0} />
+                </div>
+
+                {/* Meta row */}
+                <div className="flex flex-wrap gap-4 mt-3 text-[11px] text-gray-400">
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    Enrolled {formatDate(student.enrolled_at)}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    Last active: {student.last_active ? formatDate(student.last_active) : "Never"}
+                  </span>
+                  {student.risk_level === "high" && (
+                    <span className="flex items-center gap-1 text-red-500 font-semibold">
+                      <AlertTriangle className="h-3 w-3" /> Needs attention
+                    </span>
+                  )}
+                </div>
               </div>
-            )}
-          </PanelCard>
-        </section>
-      </PanelPage>
-      <Footer />
-    </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </DashboardLayout>
   );
 }
