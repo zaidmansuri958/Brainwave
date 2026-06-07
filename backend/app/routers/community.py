@@ -194,8 +194,9 @@ async def get_replies(
     }
 
 
-@router.patch("/posts/{post_id}/replies/{reply_id}/official")
+@router.patch("/{course_id}/posts/{post_id}/replies/{reply_id}/official")
 async def mark_official_answer(
+    course_id: str,
     post_id: str,
     reply_id: str,
     current_user: User = Depends(get_current_user),
@@ -216,8 +217,9 @@ async def mark_official_answer(
     return {"message": "Marked as official answer"}
 
 
-@router.post("/posts/{post_id}/upvote")
+@router.post("/{course_id}/posts/{post_id}/upvote")
 async def upvote_post(
+    course_id: str,
     post_id: str,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -230,8 +232,9 @@ async def upvote_post(
     return {"upvotes": post.upvotes}
 
 
-@router.patch("/posts/{post_id}/pin")
+@router.patch("/{course_id}/posts/{post_id}/pin")
 async def pin_post(
+    course_id: str,
     post_id: str,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)

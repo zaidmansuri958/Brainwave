@@ -104,12 +104,20 @@ async def get_featured_courses(db: Session = Depends(get_db)):
     return {"courses": [CourseResponse.from_orm(c) for c in courses]}
 
 
-@router.get("/{slug}", response_model=CourseResponse)
+@router.get("/{slug}")
 async def get_course(slug: str, db: Session = Depends(get_db)):
     course = db.query(Course).filter(Course.slug == slug).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
-    return CourseResponse.from_orm(course)
+    from app.utils.pricing import effective_course_price
+    from fastapi.encoders import jsonable_encoder
+    eff = effective_course_price(db, course)
+    base = float(course.price)
+    discount_pct = round((1 - eff / base) * 100) if base > 0 and eff < base else 0
+    data = jsonable_encoder(CourseResponse.from_orm(course))
+    data["effective_price"] = eff
+    data["discount_percent"] = discount_pct
+    return data
 
 
 @router.post("", response_model=CourseResponse)

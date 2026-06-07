@@ -10,7 +10,7 @@ import {
   Lock, X, Send, BookOpen, FileText, Bookmark,
   Download, RotateCcw, Layers, Zap, MessageSquare,
   Brain, Map, Star, Flame, Trophy, Users, ChevronDown,
-  ChevronUp, Bot, BadgeCheck, Clock, ThumbsUp, Plus, Reply,
+  ChevronUp, Bot, BadgeCheck, Clock, ThumbsUp, Plus, Reply, BarChart3,
 } from "lucide-react";
 import { useCourseStore } from "@/stores/courseStore";
 import { toast } from "@/hooks/use-toast";
@@ -131,9 +131,10 @@ function CurriculumSidebar({
 }
 
 // ── AI Tutor sidebar ───────────────────────────────────────────────────────────
-function AITutorSidebar({ courseId, lessonTitle, completedCount, totalLessons, overallProgress }: {
+function AITutorSidebar({ courseId, lessonTitle, completedCount, totalLessons, overallProgress, externalPrompt, onExternalPromptConsumed }: {
   courseId: string; lessonTitle: string;
   completedCount: number; totalLessons: number; overallProgress: number;
+  externalPrompt?: string; onExternalPromptConsumed?: () => void;
 }) {
   const { accessToken } = useAuthStore();
   type Msg = { role: "user" | "assistant"; content: string };
@@ -150,6 +151,14 @@ function AITutorSidebar({ courseId, lessonTitle, completedCount, totalLessons, o
   ];
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+
+  useEffect(() => {
+    if (externalPrompt) {
+      send(externalPrompt);
+      onExternalPromptConsumed?.();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [externalPrompt]);
 
   const send = async (text: string) => {
     if (!text.trim() || streaming) return;
@@ -304,10 +313,10 @@ function AITutorSidebar({ courseId, lessonTitle, completedCount, totalLessons, o
         </div>
         <div className="grid grid-cols-4 gap-2">
           {[
-            { icon: BookOpen, label: "Lessons",  value: completedCount, bg: "bg-blue-50",   color: "text-blue-500"   },
-            { icon: Brain,    label: "Avg Quiz",  value: "87%",          bg: "bg-green-50",  color: "text-green-500"  },
-            { icon: Trophy,   label: "Top 10%",   value: "Rank",         bg: "bg-amber-50",  color: "text-amber-500"  },
-            { icon: Flame,    label: "Streak",    value: "7 Day",        bg: "bg-red-50",    color: "text-red-500"    },
+            { icon: BookOpen, label: "Lessons",  value: completedCount,                          bg: "bg-blue-50",   color: "text-blue-500"   },
+            { icon: BarChart3, label: "Progress", value: `${overallProgress}%`,                  bg: "bg-green-50",  color: "text-green-500"  },
+            { icon: Trophy,   label: "Done",      value: `${completedCount}/${totalLessons}`,     bg: "bg-amber-50",  color: "text-amber-500"  },
+            { icon: Flame,    label: "Active",    value: completedCount > 0 ? "Yes" : "—",        bg: "bg-red-50",    color: "text-red-500"    },
           ].map(({ icon: Icon, label, value, bg, color }) => (
             <div key={label} className={`${bg} rounded-xl p-2 text-center`}>
               <Icon className={`h-4 w-4 ${color} mx-auto mb-1`} />
@@ -327,6 +336,7 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
   const { setCurrentLesson }  = useCourseStore();
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"notes" | "transcript" | "ai" | "bookmark" | "download" | "community">("ai");
+  const [pendingAiPrompt, setPendingAiPrompt] = useState("");
   const [newPost, setNewPost] = useState("");
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState("");
@@ -632,7 +642,9 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
                         <p className="text-sm text-gray-700 leading-relaxed">{lessonData.ai_summary}</p>
                         <div className="flex items-center gap-3 mt-4">
                           <span className="text-xs text-gray-400">Estimated reading time: 2 min</span>
-                          <button className="inline-flex items-center gap-1 text-xs text-violet-600 font-medium hover:underline">
+                          <button
+                            onClick={() => setPendingAiPrompt(`Please regenerate a comprehensive AI summary for the lesson: "${lessonData?.title}". Include an overview, key concepts, and main takeaways.`)}
+                            className="inline-flex items-center gap-1 text-xs text-violet-600 font-medium hover:underline">
                             <RotateCcw className="h-3 w-3" /> Regenerate
                           </button>
                         </div>
@@ -647,18 +659,21 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
                     <h3 className="text-sm font-bold text-gray-900 mb-3">Smart Actions</h3>
                     <div className="grid grid-cols-2 gap-2.5 mb-3">
                       {[
-                        { label: "Generate Notes", icon: FileText, color: "text-violet-600", bg: "bg-violet-50 hover:bg-violet-100" },
-                        { label: "Flashcards",     icon: Layers,   color: "text-amber-600",  bg: "bg-amber-50  hover:bg-amber-100"  },
-                        { label: "Practice Quiz",  icon: Brain,    color: "text-pink-600",   bg: "bg-pink-50   hover:bg-pink-100"   },
-                        { label: "Mind Map",       icon: Map,      color: "text-green-600",  bg: "bg-green-50  hover:bg-green-100"  },
-                      ].map(({ label, icon: Icon, color, bg }) => (
+                        { label: "Generate Notes", icon: FileText, color: "text-violet-600", bg: "bg-violet-50 hover:bg-violet-100", prompt: `Generate detailed study notes for the lesson: "${lessonData?.title}". Include key concepts, definitions, and important points.` },
+                        { label: "Flashcards",     icon: Layers,   color: "text-amber-600",  bg: "bg-amber-50  hover:bg-amber-100",  prompt: `Create 5 flashcard-style Q&A pairs for the lesson: "${lessonData?.title}". Format as Q: ... A: ...` },
+                        { label: "Practice Quiz",  icon: Brain,    color: "text-pink-600",   bg: "bg-pink-50   hover:bg-pink-100",   prompt: `Give me a short 3-question practice quiz about the lesson: "${lessonData?.title}". Then provide the answers.` },
+                        { label: "Mind Map",       icon: Map,      color: "text-green-600",  bg: "bg-green-50  hover:bg-green-100",  prompt: `Create a text-based mind map for the lesson: "${lessonData?.title}". Show the main topic and its branches.` },
+                      ].map(({ label, icon: Icon, color, bg, prompt }) => (
                         <button key={label}
+                          onClick={() => setPendingAiPrompt(prompt)}
                           className={`flex items-center gap-2 ${bg} rounded-xl px-3 py-2.5 text-xs font-semibold ${color} transition-colors border border-transparent`}>
                           <Icon className="h-4 w-4 shrink-0" />{label}
                         </button>
                       ))}
                     </div>
-                    <button className="w-full flex items-center justify-center gap-2 rounded-xl border border-violet-200 bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-bold py-2.5 transition-colors">
+                    <button
+                      onClick={() => setPendingAiPrompt(`I have a doubt about the lesson: "${lessonData?.title}". Can you explain the key concepts in simple terms and answer common questions about this topic?`)}
+                      className="w-full flex items-center justify-center gap-2 rounded-xl border border-violet-200 bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-bold py-2.5 transition-colors">
                       <MessageSquare className="h-4 w-4" /> Ask AI Doubt
                     </button>
                   </div>
@@ -832,6 +847,8 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
             completedCount={completedCount}
             totalLessons={totalLessons}
             overallProgress={overallProgress}
+            externalPrompt={pendingAiPrompt}
+            onExternalPromptConsumed={() => setPendingAiPrompt("")}
           />
         </aside>
       </div>

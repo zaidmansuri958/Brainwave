@@ -253,6 +253,7 @@ function RegisterPageContent() {
               )},
             ].map(({ label, logo }) => (
               <button key={label} type="button"
+                onClick={() => toast({ title: `${label} sign-up coming soon`, description: "Please use email and password for now." })}
                 className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm">
                 {logo}<span>{label}</span>
               </button>

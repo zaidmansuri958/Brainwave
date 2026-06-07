@@ -79,3 +79,17 @@ async def logout(
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user: User = Depends(get_current_user)):
     return UserResponse.from_orm(current_user)
+
+
+@router.post("/forgot-password")
+async def forgot_password(data: dict, db: Session = Depends(get_db)):
+    """
+    Password reset stub. Always returns 200 to prevent email enumeration.
+    Email delivery requires SMTP configuration — wire up a mail service here.
+    """
+    email = data.get("email", "").strip().lower()
+    user = db.query(User).filter(User.email == email).first()
+    if user:
+        # TODO: generate a time-limited reset token, store it, and email the reset link
+        pass
+    return {"message": "If that email is registered, a reset link has been sent."}

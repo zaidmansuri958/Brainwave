@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores/authStore";
 import { enrollmentApi, doubtApi } from "@/lib/api";
+import { toast } from "@/hooks/use-toast";
 import {
   Star, Users, Clock, BookOpen, Play, Check, ChevronDown, ChevronUp,
   Award, Globe, Zap, Shield, MessageSquare, Video, Lock, Unlock,
@@ -212,8 +213,10 @@ export function CourseDetailClient({ course }: { course: Course }) {
   const [refundLoading, setRefundLoading] = useState(false);
   const [refundDone, setRefundDone] = useState(false);
 
-  const isFree = Number(course.price) === 0;
-  const price = isFree ? "Free" : `₹${Number(course.price).toLocaleString("en-IN")}`;
+  const effectivePrice = course.effective_price ?? Number(course.price);
+  const isFree = effectivePrice === 0;
+  const price = isFree ? "Free" : `₹${Number(effectivePrice).toLocaleString("en-IN")}`;
+  const discountPct: number = course.discount_percent ?? 0;
   const totalLessons = course.chapters?.reduce((s, c) => s + c.lessons.length, 0) || 0;
   const whatYouLearn = getWYL(course);
 
@@ -394,12 +397,16 @@ export function CourseDetailClient({ course }: { course: Course }) {
           ) : (
             <>
               <span className="text-3xl font-extrabold text-gray-900">{price}</span>
-              <span className="text-sm text-gray-400 line-through">
-                ₹{Math.round(Number(course.price) * 1.5).toLocaleString("en-IN")}
-              </span>
-              <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                33% OFF
-              </span>
+              {discountPct > 0 && (
+                <>
+                  <span className="text-sm text-gray-400 line-through">
+                    ₹{Math.round(Number(course.price)).toLocaleString("en-IN")}
+                  </span>
+                  <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                    {discountPct}% OFF
+                  </span>
+                </>
+              )}
             </>
           )}
         </div>
@@ -438,7 +445,17 @@ export function CourseDetailClient({ course }: { course: Course }) {
             <Bookmark className={`h-4 w-4 ${wishlist ? "fill-violet-600" : ""}`} />
             {wishlist ? "Saved" : "Save"}
           </button>
-          <button className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700 flex items-center justify-center gap-1.5 transition-all">
+          <button
+            onClick={async () => {
+              const url = window.location.href;
+              if (navigator.share) {
+                await navigator.share({ title: course.title, url }).catch(() => {});
+              } else {
+                await navigator.clipboard.writeText(url).catch(() => {});
+                toast({ title: "Link copied!", description: "Course link copied to clipboard." });
+              }
+            }}
+            className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700 flex items-center justify-center gap-1.5 transition-all">
             <Share2 className="h-4 w-4" /> Share
           </button>
         </div>

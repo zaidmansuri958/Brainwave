@@ -366,7 +366,7 @@ export default function CurriculumPage({ params }: { params: { id: string } }) {
                   <div className="divide-y divide-gray-50">
                     {(ch.lessons || []).map((les: any) => (
                       <div key={les.id} className="flex items-center gap-3 px-5 py-3 hover:bg-violet-50/20 transition-colors">
-                        <GripVertical className="h-4 w-4 text-gray-300 shrink-0" />
+                        <GripVertical className="h-4 w-4 text-gray-200 shrink-0 cursor-not-allowed" title="Drag-to-reorder coming soon" />
                         <div className="flex-1 min-w-0">
                           <InlineEdit initial={les.title}
                             onSave={title => updateLesson.mutate({ lessonId: les.id, data: { title } })}

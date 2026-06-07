@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { courseApi, teacherApi } from "@/lib/api";
 import { useDropzone } from "react-dropzone";
@@ -224,27 +224,36 @@ export default function CreateCoursePage() {
     }
   };
 
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const pollAIStatus = () => {
     if (!courseId) return;
-    const interval = setInterval(async () => {
+    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    pollIntervalRef.current = setInterval(async () => {
       try {
         const { data } = await courseApi.aiStatus(courseId!);
         const s = data.ai_processing;
         setAiProgress(s.progress_percent || 0);
         setCompletedSteps(s.steps_completed || []);
         if (s.status === "completed") {
-          clearInterval(interval);
+          clearInterval(pollIntervalRef.current!);
+          pollIntervalRef.current = null;
           setAiProgress(100);
           setAiDone(true);
           setActiveSection("publish");
           toast({ title: "AI has built your course!", description: "Review and publish when ready." });
         } else if (s.status === "failed") {
-          clearInterval(interval);
+          clearInterval(pollIntervalRef.current!);
+          pollIntervalRef.current = null;
           toast({ title: "AI processing failed", description: data.error || "Check materials and retry.", variant: "destructive" });
         }
       } catch {}
     }, 3000);
   };
+
+  useEffect(() => {
+    return () => { if (pollIntervalRef.current) clearInterval(pollIntervalRef.current); };
+  }, []);
 
   const handlePublish = async () => {
     if (!courseId) return;
