@@ -61,6 +61,8 @@ interface Course {
   total_chapters: number;
   certificate_enabled: boolean;
   tags?: string[];
+  effective_price?: number;
+  discount_percent?: number;
   chapters?: Chapter[];
   teacher?: {
     id: string;

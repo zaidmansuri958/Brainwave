@@ -688,9 +688,18 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
               )}
               {activeTab === "transcript" && (
                 <div className="text-sm text-gray-700 leading-relaxed">
-                  {lessonData?.ai_summary
-                    ? <p className="italic text-gray-500">Auto-transcript will appear here after processing.</p>
-                    : <p className="text-gray-400 text-center py-8">No transcript available</p>}
+                  {lessonData?.ai_summary ? (
+                    <div className="space-y-3">
+                      <p className="text-xs font-semibold text-violet-600 uppercase tracking-wide">Lesson Summary</p>
+                      <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{lessonData.ai_summary}</p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-10 gap-3 text-center">
+                      <FileText className="h-10 w-10 text-gray-200" />
+                      <p className="text-sm font-semibold text-gray-500">Transcript not yet generated</p>
+                      <p className="text-xs text-gray-400 max-w-xs">AI transcript generation is queued. Check back after a few minutes once processing completes.</p>
+                    </div>
+                  )}
                 </div>
               )}
               {activeTab === "bookmark" && (

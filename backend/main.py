@@ -130,8 +130,11 @@ async def request_refund(
         return JSONResponse(status_code=401, content={"detail": "Not authenticated"})
 
     token = auth_header.split(" ")[1]
-    from app.utils.jwt import decode_access_token
-    payload = decode_access_token(token)
+    from app.utils.jwt import verify_token
+    try:
+        payload = verify_token(token)
+    except Exception:
+        return JSONResponse(status_code=401, content={"detail": "Invalid token"})
     if not payload:
         return JSONResponse(status_code=401, content={"detail": "Invalid token"})
 
