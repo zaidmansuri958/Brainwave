@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.schemas.user import UserRegister, UserLogin, GoogleAuth, TokenRefresh, AuthResponse, UserResponse
+from app.schemas.user import UserRegister, UserLogin, GoogleAuth, TokenRefresh, AuthResponse, UserResponse, UserUpdate
 from app.services.auth_service import register_user, login_user, get_or_create_google_user
 from app.utils.jwt import verify_token, create_access_token, blacklist_token, get_current_user_payload
 from app.middleware.auth_middleware import get_current_user
@@ -78,6 +78,26 @@ async def logout(
 
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user: User = Depends(get_current_user)):
+    return UserResponse.from_orm(current_user)
+
+
+@router.patch("/me", response_model=UserResponse)
+async def update_me(
+    data: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Update the current user's own profile (name, avatar). Works for any role."""
+    payload = data.dict(exclude_unset=True)
+    if "full_name" in payload and payload["full_name"] is not None:
+        full_name = payload["full_name"].strip()
+        if not full_name:
+            raise HTTPException(status_code=400, detail="Full name cannot be empty")
+        current_user.full_name = full_name
+    if "avatar_url" in payload and payload["avatar_url"] is not None:
+        current_user.avatar_url = payload["avatar_url"]
+    db.commit()
+    db.refresh(current_user)
     return UserResponse.from_orm(current_user)
 
 

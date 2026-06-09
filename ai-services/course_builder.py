@@ -36,10 +36,22 @@ Return ONLY valid JSON in this exact format:
 
 
 async def structure_course(transcript: str, language: str = None) -> dict:
-    """Use Llama 3 to structure raw transcript into course chapters and lessons."""
+    """Structure raw transcript into course chapters/lessons. Prefers Gemini (fast cloud);
+    falls back to local Llama 3, then to a minimal hardcoded structure."""
     lang_note = ""
     if language:
         lang_note = f"\n\nWrite all titles, descriptions, and lesson text in: {language}."
+
+    # Primary: Gemini (avoids slow local llama3 on CPU)
+    from gemini_client import gemini_available, generate_json
+    if gemini_available():
+        try:
+            data = generate_json(COURSE_STRUCTURE_PROMPT.format(content=transcript[:8000]) + lang_note, timeout=90)
+            if data.get("chapters"):
+                return data
+        except Exception as e:
+            print(f"Gemini structuring failed, falling back to llama3: {e}")
+
     try:
         async with httpx.AsyncClient(timeout=180) as client:
             resp = await client.post(

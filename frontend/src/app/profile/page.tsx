@@ -21,7 +21,7 @@ function ProfileCard({ title, children }: { title: string; children: React.React
 }
 
 export default function ProfilePage() {
-  const { user } = useAuthStore();
+  const { user, setUser } = useAuthStore();
   const { toast } = useToast();
   const isTeacher = user?.role === "teacher";
 
@@ -60,10 +60,16 @@ export default function ProfilePage() {
 
   const updateProfile = useMutation({
     mutationFn: async () => {
-      if (isTeacher) return teacherApi.updateProfile(form);
-      return authApi.me();
+      // Teacher-specific fields (bio, expertise, payout) persist via the teacher profile endpoint.
+      if (isTeacher) await teacherApi.updateProfile(form);
+      // Name (and avatar) live on the user record for every role — persist them for real.
+      const res = await authApi.updateProfile({ full_name: form.full_name });
+      return res.data;
     },
-    onSuccess: () => toast({ title: "Profile updated" }),
+    onSuccess: (updatedUser) => {
+      if (updatedUser) setUser(updatedUser);
+      toast({ title: "Profile updated" });
+    },
     onError: (error) => toast({ title: "Couldn't update profile", description: getApiErrorMessage(error), variant: "destructive" }),
   });
 

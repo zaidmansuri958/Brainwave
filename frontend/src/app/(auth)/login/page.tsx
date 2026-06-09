@@ -20,12 +20,23 @@ export default function LoginPage() {
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Resolve where to send the user after auth: honor a safe ?redirect= target,
+  // otherwise fall back to the role's default dashboard.
+  const resolveDestination = (role?: string) => {
+    const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+    const r = params.get("redirect");
+    if (r && r.startsWith("/") && !r.startsWith("//") && !r.startsWith("/login") && !r.startsWith("/register")) {
+      return r;
+    }
+    if (role === "teacher") return "/teacher/dashboard";
+    if (role === "admin") return "/admin/dashboard";
+    return "/dashboard";
+  };
+
   // Redirect already-authenticated users
   useEffect(() => {
     if (isAuthenticated()) {
-      if (user?.role === "teacher") router.replace("/teacher/dashboard");
-      else if (user?.role === "admin") router.replace("/admin/dashboard");
-      else router.replace("/dashboard");
+      router.replace(resolveDestination(user?.role));
     }
   }, []);
 
@@ -37,9 +48,7 @@ export default function LoginPage() {
       setTokens(data.access_token, data.refresh_token);
       setUser(data.user);
       toast({ title: "Welcome back!", description: `Logged in as ${data.user.full_name}` });
-      if (data.user.role === "teacher") router.push("/teacher/dashboard");
-      else if (data.user.role === "admin") router.push("/admin/dashboard");
-      else router.push("/dashboard");
+      router.push(resolveDestination(data.user.role));
     } catch (error: any) {
       toast({ title: "Login failed", description: error.response?.data?.detail || "Invalid credentials", variant: "destructive" });
     } finally {

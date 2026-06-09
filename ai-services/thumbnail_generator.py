@@ -45,10 +45,14 @@ async def generate_with_gemini(
     faculty_face_image_url: str = None,
     custom_prompt: str = None,
 ) -> bytes:
-    """Generate thumbnail using Gemini Imagen API."""
-    import google.generativeai as genai
+    """Generate a thumbnail via the Imagen REST API (`:predict`).
 
-    genai.configure(api_key=GEMINI_API_KEY)
+    NOTE: Imagen image generation requires a billing-enabled Google project; on free-tier
+    keys this returns 404/429 and the caller falls back to the PIL placeholder. Using REST
+    (not the pinned old SDK, which lacks ImageGenerationModel) so this works as soon as a
+    paid key is supplied. Model is configurable via IMAGEN_MODEL."""
+    import base64
+    import httpx
 
     extra = ""
     if lesson_title:
@@ -67,17 +71,20 @@ async def generate_with_gemini(
     {extra}
     Style: Modern, vibrant colors, clean design. No text. 16:9 aspect ratio."""
 
-    model = genai.ImageGenerationModel("imagen-3.0-generate-001")
-    result = model.generate_images(
-        prompt=prompt,
-        number_of_images=1,
-        aspect_ratio="16:9",
+    model = os.getenv("IMAGEN_MODEL", "imagen-3.0-generate-002")
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:predict"
+    resp = httpx.post(
+        url,
+        headers={"Content-Type": "application/json", "X-goog-api-key": GEMINI_API_KEY},
+        json={"instances": [{"prompt": prompt}], "parameters": {"sampleCount": 1, "aspectRatio": "16:9"}},
+        timeout=120,
     )
-
-    img = result.images[0]._pil_image
-    buf = io.BytesIO()
-    img.save(buf, format="PNG")
-    return buf.getvalue()
+    resp.raise_for_status()
+    preds = resp.json().get("predictions", [])
+    b64 = preds[0].get("bytesBase64Encoded") if preds else None
+    if not b64:
+        raise RuntimeError("Imagen returned no image bytes")
+    return base64.b64decode(b64)
 
 
 def generate_placeholder_thumbnail(title: str, category: str) -> bytes:

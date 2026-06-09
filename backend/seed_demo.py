@@ -79,6 +79,13 @@ def ensure_base_catalog() -> None:
 def upsert_user(db: Session, *, email: str, full_name: str, password: str, role: str) -> User:
     user = db.query(User).filter(User.email == email).first()
     if user:
+        # Re-seeding must make the documented credentials actually valid, even when the
+        # user already exists from a prior seed. Reset password/role/name to seed values.
+        user.password_hash = pwd_ctx.hash(password)
+        user.role = role
+        user.full_name = full_name
+        user.is_verified = True
+        db.flush()
         return user
 
     user = User(
