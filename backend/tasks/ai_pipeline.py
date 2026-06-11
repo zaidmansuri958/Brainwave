@@ -120,6 +120,9 @@ def process_course_material(self, course_id: str, material_ids: list):
                         json=payload,
                         timeout=600,
                     )
+                    if resp.status_code != 200:
+                        material.processing_error = f"transcribe HTTP {resp.status_code}: {resp.text[:200]}"
+                        print(f"Transcription HTTP error: {material.processing_error}")
                     if resp.status_code == 200:
                         data = resp.json()
                         content = data.get("text", "")
@@ -230,23 +233,28 @@ def process_course_material(self, course_id: str, material_ids: list):
         try:
             chapters = db.query(Chapter).filter(Chapter.course_id == course_id).order_by(Chapter.order_index).all()
             for chapter in chapters:
-                chapter_content = " ".join([l.ai_summary or l.title for l in chapter.lessons])
-                if not chapter_content:
-                    continue
-                resp = httpx.post(
-                    f"{AI_SERVICE_URL}/generate-quiz",
-                    json={
-                        "content": chapter_content,
-                        "num_questions": 5,
-                        "language": instruct_lang,
-                    },
-                    timeout=120,
-                )
-                if resp.status_code == 200:
-                    quiz_data = resp.json()
-                    if isinstance(quiz_data, str):
-                        quiz_data = json.loads(quiz_data)
-                    save_quiz(db, course_id, chapter, quiz_data)
+                # Per-chapter isolation: a single failed/rate-limited chapter must not abort
+                # quiz generation for the remaining chapters.
+                try:
+                    chapter_content = " ".join([l.ai_summary or l.title for l in chapter.lessons])
+                    if not chapter_content:
+                        continue
+                    resp = httpx.post(
+                        f"{AI_SERVICE_URL}/generate-quiz",
+                        json={
+                            "content": chapter_content,
+                            "num_questions": 5,
+                            "language": instruct_lang,
+                        },
+                        timeout=120,
+                    )
+                    if resp.status_code == 200:
+                        quiz_data = resp.json()
+                        if isinstance(quiz_data, str):
+                            quiz_data = json.loads(quiz_data)
+                        save_quiz(db, course_id, chapter, quiz_data)
+                except Exception as ce:
+                    print(f"Quiz generation failed for chapter {chapter.id}: {ce}")
             update_status(course_id, ai_progress="75", steps_completed="transcription,moderate,structuring,quizzes")
         except Exception as e:
             print(f"Quiz generation failed: {e}")

@@ -104,6 +104,51 @@ async def get_featured_courses(db: Session = Depends(get_db)):
     return {"courses": [CourseResponse.from_orm(c) for c in courses]}
 
 
+@router.get("/search")
+async def search_courses(
+    q: Optional[str] = None,
+    level: Optional[str] = None,
+    category: Optional[str] = None,
+    sort_by: str = "relevance",
+    max_price: Optional[float] = None,
+    limit: int = 24,
+    db: Session = Depends(get_db),
+):
+    """Full course search for the site search page. Declared BEFORE /{slug} so the
+    literal path isn't captured by the slug route."""
+    query = db.query(Course).filter(Course.status == "published")
+
+    if q:
+        query = query.filter(
+            or_(
+                Course.title.ilike(f"%{q}%"),
+                Course.description.ilike(f"%{q}%"),
+                Course.short_description.ilike(f"%{q}%"),
+                Course.category.ilike(f"%{q}%"),
+            )
+        )
+    if level:
+        query = query.filter(Course.difficulty_level == level)
+    if category:
+        query = query.filter(Course.category.ilike(f"%{category}%"))
+    if max_price is not None:
+        query = query.filter(Course.price <= max_price)
+
+    sort_map = {
+        "relevance": Course.enrolled_count.desc(),
+        "newest": Course.created_at.desc(),
+        "rating": Course.avg_rating.desc(),
+        "popular": Course.enrolled_count.desc(),
+        "price_asc": Course.price.asc(),
+        "price_desc": Course.price.desc(),
+    }
+    query = query.order_by(sort_map.get(sort_by, Course.enrolled_count.desc()))
+
+    total = query.count()
+    courses = query.limit(limit).all()
+    return {"courses": [CourseResponse.from_orm(c) for c in courses], "total": total}
+
+
 @router.get("/{slug}")
 async def get_course(slug: str, db: Session = Depends(get_db)):
     course = db.query(Course).filter(Course.slug == slug).first()

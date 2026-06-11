@@ -121,8 +121,9 @@ async def extract_text(data: ExtractTextRequest):
         tmp_path = tmp.name
 
     try:
+        from transcription import internalize_url
         async with httpx.AsyncClient() as client:
-            resp = await client.get(data.file_url)
+            resp = await client.get(internalize_url(data.file_url))
             with open(tmp_path, "wb") as f:
                 f.write(resp.content)
 

@@ -2,8 +2,23 @@ from faster_whisper import WhisperModel
 import os
 import tempfile
 import subprocess
+from urllib.parse import urlsplit, urlunsplit, quote
 
 _model = None
+
+
+def internalize_url(file_url: str) -> str:
+    """Stored file URLs use STORAGE_PUBLIC_URL (e.g. http://localhost:9000) so browsers can
+    reach them, but server-side fetches from inside Docker must use the internal MinIO
+    endpoint (e.g. http://minio:9000). Also percent-encode the path so spaces in filenames
+    don't break the request."""
+    public = (os.getenv("STORAGE_PUBLIC_URL", "") or "").rstrip("/")
+    internal = (os.getenv("MINIO_ENDPOINT_URL", "") or "").rstrip("/")
+    url = file_url
+    if public and internal and url.startswith(public):
+        url = internal + url[len(public):]
+    parts = urlsplit(url)
+    return urlunsplit((parts.scheme, parts.netloc, quote(parts.path), parts.query, parts.fragment))
 
 
 def get_model():
@@ -75,11 +90,13 @@ def transcribe_from_url(file_url: str, material_id: str, language: str = None) -
     if ext not in (".mp4", ".mp3", ".webm", ".mkv", ".mov", ".avi", ".wav", ".ogg", ".m4a"):
         ext = ".mp4"
 
+    fetch_url = internalize_url(file_url)
+
     with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as tmp:
         tmp_path = tmp.name
 
     try:
-        with httpx.stream("GET", file_url) as response:
+        with httpx.stream("GET", fetch_url) as response:
             with open(tmp_path, "wb") as f:
                 for chunk in response.iter_bytes():
                     f.write(chunk)

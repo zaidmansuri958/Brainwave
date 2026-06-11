@@ -51,6 +51,7 @@ export const authApi = {
   login: (data: any) => api.post("/auth/login", data),
   googleAuth: (token: string, role: string) => api.post("/auth/google", { google_token: token, role }),
   me: () => api.get("/auth/me"),
+  updateProfile: (data: any) => api.patch("/auth/me", data),
   logout: () => api.post("/auth/logout"),
 };
 

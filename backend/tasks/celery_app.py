@@ -1,6 +1,14 @@
 from celery import Celery
 from celery.schedules import crontab
 import os
+import sys
+
+# The `celery` console-script does not put the project root on sys.path the way
+# `python` does, so task-time imports like `from app.database import ...` fail with
+# ModuleNotFoundError. Ensure the backend root (parent of this `tasks/` package) is importable.
+_BACKEND_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _BACKEND_ROOT not in sys.path:
+    sys.path.insert(0, _BACKEND_ROOT)
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
