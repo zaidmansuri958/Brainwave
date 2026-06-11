@@ -3,145 +3,220 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { mockTestsApi } from "@/lib/api";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import {
   ClipboardList, Loader2, Search, Timer,
-  BookOpen, IndianRupee, ArrowRight, Brain,
+  BookOpen, ArrowRight, Brain, Zap, Trophy,
+  CheckCircle2, SlidersHorizontal, X,
 } from "lucide-react";
 import { useState } from "react";
-import { motion } from "framer-motion";
 
 function fmtRupee(n: number) {
   if (n === 0) return "Free";
-  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency", currency: "INR", maximumFractionDigits: 0,
+  }).format(n);
 }
+
+type Filter = "all" | "free" | "paid";
 
 export default function MockTestsCatalogPage() {
   const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<Filter>("all");
 
   const { data, isLoading } = useQuery({
     queryKey: ["mock-catalog"],
-    queryFn:  () => mockTestsApi.catalog().then(r => r.data),
+    queryFn: () => mockTestsApi.catalog().then((r) => r.data),
   });
 
-  const allPackages: any[] = data?.packages || [];
-  const packages = allPackages.filter(p =>
-    !search || p.title?.toLowerCase().includes(search.toLowerCase())
-  );
+  const all: any[] = data?.packages || [];
+  const packages = all.filter((p) => {
+    const q = !search || p.title?.toLowerCase().includes(search.toLowerCase());
+    const f =
+      filter === "free" ? p.price === 0 :
+      filter === "paid" ? p.price > 0 : true;
+    return q && f;
+  });
+
+  const freeCount = all.filter((p) => p.price === 0).length;
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <Navbar />
-
-      {/* Hero */}
-      <section className="bg-gradient-to-br from-slate-900 via-violet-950 to-indigo-900 relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-violet-500/10 blur-3xl" />
-          <div className="absolute bottom-0 left-1/4 w-64 h-64 rounded-full bg-indigo-500/10 blur-2xl" />
-        </div>
-        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/10">
-              <Brain className="h-3.5 w-3.5 text-white/80" />
+    <DashboardLayout
+      title="Mock Test Packages"
+      subtitle="Timed, exam-style papers with instant scoring and performance analytics"
+    >
+      {/* Stats row */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        {[
+          { icon: ClipboardList, label: "Total Packages",  value: all.length,  color: "blue"   },
+          { icon: Zap,           label: "Free Packages",   value: freeCount,   color: "green"  },
+          { icon: Trophy,        label: "Avg Papers/Pack", value: all.length ? Math.round(all.reduce((s, p) => s + (p.papers_count || 0), 0) / all.length) : 0, color: "purple" },
+        ].map((s) => (
+          <div key={s.label} className="card p-4 flex items-center gap-3">
+            <div className={`flex h-10 w-10 items-center justify-center rounded-xl shrink-0 ${
+              s.color === "blue"   ? "bg-blue-50 text-blue-600" :
+              s.color === "green"  ? "bg-green-50 text-green-600" :
+              "bg-purple-50 text-purple-600"
+            }`}>
+              <s.icon className="h-5 w-5" />
             </div>
-            <span className="text-xs font-bold text-violet-300 uppercase tracking-widest">Practice</span>
+            <div>
+              <p className="text-xl font-bold text-gray-900 leading-none">{s.value}</p>
+              <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
+            </div>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-3">Mock Test Packages</h1>
-          <p className="text-violet-200 text-base max-w-xl mb-8">
-            Timed papers with structured sections — instant scoring and detailed analysis when you submit.
-          </p>
-          {/* Search */}
-          <div className="flex items-center gap-3 bg-white/10 border border-white/20 rounded-2xl px-4 py-3 max-w-md backdrop-blur-sm">
-            <Search className="h-4 w-4 text-white/60 shrink-0" />
-            <input value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="Search test packages…"
-              className="flex-1 bg-transparent text-sm text-white placeholder-white/50 outline-none" />
-          </div>
+        ))}
+      </div>
+
+      {/* Search + filter bar */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search test packages…"
+            className="input !pl-10"
+          />
         </div>
-      </section>
+        <div className="flex items-center gap-2 shrink-0">
+          {(["all", "free", "paid"] as Filter[]).map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`btn btn-md capitalize ${filter === f ? "btn-primary" : "btn-secondary"}`}
+            >
+              {f}
+            </button>
+          ))}
+          {(search || filter !== "all") && (
+            <button
+              onClick={() => { setSearch(""); setFilter("all"); }}
+              className="btn btn-md btn-secondary flex items-center gap-1.5"
+            >
+              <X className="h-3.5 w-3.5" /> Clear
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Results count */}
+      {!isLoading && (
+        <p className="text-sm text-gray-500 mb-4">
+          {packages.length} package{packages.length !== 1 ? "s" : ""} found
+          {filter !== "all" && <span className="ml-1 text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium capitalize">{filter}</span>}
+          {search && <span className="ml-1 text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">"{search}"</span>}
+        </p>
+      )}
 
       {/* Content */}
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10">
-
-        {isLoading ? (
-          <div className="flex justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
-          </div>
-        ) : packages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-dashed border-gray-200">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-100 mb-4">
-              <ClipboardList className="h-8 w-8 text-violet-500" />
+      {isLoading ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="card animate-pulse">
+              <div className="h-2 bg-gray-100 rounded-t-xl" />
+              <div className="p-5 space-y-3">
+                <div className="h-4 bg-gray-100 rounded w-3/4" />
+                <div className="h-3 bg-gray-100 rounded w-1/2" />
+                <div className="h-3 bg-gray-100 rounded w-2/3" />
+              </div>
             </div>
-            <p className="text-base font-bold text-gray-900 mb-1">
-              {search ? "No packages match your search" : "No mock test packages yet"}
-            </p>
-            <p className="text-sm text-gray-500">
-              {search ? "Try a different keyword" : "Teachers are working on it — check back soon!"}
-            </p>
-          </div>
-        ) : (
-          <>
-            <div className="flex items-center justify-between mb-6">
-              <p className="text-sm text-gray-500">
-                <strong className="text-gray-900">{packages.length}</strong> package{packages.length !== 1 ? "s" : ""} available
-              </p>
-              <Link href="/dashboard" className="text-xs font-semibold text-violet-600 hover:text-violet-700 flex items-center gap-1">
-                My tests <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
+          ))}
+        </div>
+      ) : packages.length === 0 ? (
+        <div className="card p-16 text-center">
+          <ClipboardList className="h-12 w-12 text-gray-200 mx-auto mb-4" />
+          <p className="font-semibold text-gray-700 mb-1">
+            {search || filter !== "all" ? "No packages match your filters" : "No test packages yet"}
+          </p>
+          <p className="text-sm text-gray-400">
+            {search || filter !== "all"
+              ? "Try adjusting your search or filter"
+              : "Teachers are building packages — check back soon!"}
+          </p>
+          {(search || filter !== "all") && (
+            <button
+              onClick={() => { setSearch(""); setFilter("all"); }}
+              className="btn btn-md btn-secondary mt-4"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {packages.map((p: any) => (
+            <Link
+              key={p.id}
+              href={`/catalog/mock-tests/${p.slug}`}
+              className="card group hover:-translate-y-0.5 transition-all duration-200 overflow-hidden flex flex-col"
+            >
+              {/* Accent top bar */}
+              <div className="h-1 bg-gradient-to-r from-violet-500 to-blue-500" />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {packages.map((p: any, i: number) => (
-                <motion.div key={p.id}
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: i * 0.05 }}>
-                  <Link href={`/catalog/mock-tests/${p.slug}`}
-                    className="group flex flex-col bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:border-violet-200 transition-all h-full overflow-hidden">
+              <div className="p-5 flex flex-col flex-1">
+                {/* Header */}
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 shrink-0">
+                    <ClipboardList className="h-5 w-5 text-violet-600" />
+                  </div>
+                  <span className={`text-sm font-bold ${p.price === 0 ? "text-green-600" : "text-gray-900"}`}>
+                    {fmtRupee(p.price)}
+                  </span>
+                </div>
 
-                    {/* Card top */}
-                    <div className="bg-gradient-to-br from-violet-50 to-indigo-50 px-5 py-6 border-b border-gray-100">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white border border-violet-100 shadow-sm mb-4 group-hover:scale-110 transition-transform">
-                        <ClipboardList className="h-6 w-6 text-violet-600" />
-                      </div>
-                      <h3 className="text-base font-bold text-gray-900 line-clamp-2 group-hover:text-violet-700 transition-colors">
-                        {p.title}
-                      </h3>
-                      {p.description && (
-                        <p className="text-xs text-gray-500 mt-2 line-clamp-2">{p.description}</p>
-                      )}
-                    </div>
+                {/* Title + desc */}
+                <h3 className="text-[15px] font-semibold text-gray-900 mb-1.5 line-clamp-2 group-hover:text-violet-700 transition-colors">
+                  {p.title}
+                </h3>
+                {p.description && (
+                  <p className="text-xs text-gray-500 line-clamp-2 mb-4 flex-1">{p.description}</p>
+                )}
 
-                    {/* Card bottom */}
-                    <div className="px-5 py-4 flex items-center justify-between mt-auto">
-                      <div className="flex items-center gap-3 text-xs text-gray-500">
-                        {p.papers_count > 0 && (
-                          <span className="flex items-center gap-1">
-                            <BookOpen className="h-3.5 w-3.5" />
-                            {p.papers_count} paper{p.papers_count !== 1 ? "s" : ""}
-                          </span>
-                        )}
-                        {p.total_duration_minutes > 0 && (
-                          <span className="flex items-center gap-1">
-                            <Timer className="h-3.5 w-3.5" />
-                            {p.total_duration_minutes} min
-                          </span>
-                        )}
-                      </div>
-                      <span className={`text-sm font-extrabold ${p.price === 0 ? "text-green-600" : "text-gray-900"}`}>
-                        {fmtRupee(p.price)}
+                {/* Footer meta */}
+                <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-100">
+                  <div className="flex items-center gap-3 text-xs text-gray-500">
+                    {p.papers_count > 0 && (
+                      <span className="flex items-center gap-1">
+                        <BookOpen className="h-3.5 w-3.5" />
+                        {p.papers_count} paper{p.papers_count !== 1 ? "s" : ""}
                       </span>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
-            </div>
-          </>
-        )}
-      </main>
+                    )}
+                    {p.total_duration_minutes > 0 && (
+                      <span className="flex items-center gap-1">
+                        <Timer className="h-3.5 w-3.5" />
+                        {p.total_duration_minutes} min
+                      </span>
+                    )}
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-violet-500 group-hover:translate-x-0.5 transition-all" />
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
 
-      <Footer />
-    </div>
+      {/* Info strip */}
+      {!isLoading && all.length > 0 && (
+        <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[
+            { icon: Trophy,       color: "bg-amber-50 text-amber-600",  title: "Instant Results",       desc: "Score and full analysis right after submission" },
+            { icon: CheckCircle2, color: "bg-green-50 text-green-600",  title: "Detailed Explanations", desc: "Every question has a full walkthrough" },
+            { icon: Brain,        color: "bg-violet-50 text-violet-600", title: "Expert Crafted",       desc: "Questions by verified subject specialists" },
+          ].map((f) => (
+            <div key={f.title} className="card p-4 flex items-start gap-3">
+              <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${f.color} shrink-0`}>
+                <f.icon className="h-4.5 w-4.5" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-900">{f.title}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{f.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </DashboardLayout>
   );
 }

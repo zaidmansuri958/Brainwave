@@ -1,7 +1,6 @@
-import os
 import io
-from PIL import Image, ImageDraw, ImageFont
-import hashlib
+import os
+from PIL import Image, ImageDraw
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
@@ -15,24 +14,6 @@ async def generate_thumbnail(
     faculty_face_image_url: str = None,
     custom_prompt: str = None,
 ) -> bytes:
-    """
-    Generate course thumbnail.
-    Uses Gemini Imagen if API key available, otherwise creates a styled placeholder.
-    """
-    if GEMINI_API_KEY and GEMINI_API_KEY != "your_gemini_api_key_here":
-        try:
-            return await generate_with_gemini(
-                title,
-                category,
-                description,
-                lesson_title=lesson_title,
-                module_title=module_title,
-                faculty_face_image_url=faculty_face_image_url,
-                custom_prompt=custom_prompt,
-            )
-        except Exception as e:
-            print(f"Gemini thumbnail failed: {e}")
-
     return generate_placeholder_thumbnail(title, category)
 
 
@@ -87,11 +68,10 @@ async def generate_with_gemini(
     return base64.b64decode(b64)
 
 
+
 def generate_placeholder_thumbnail(title: str, category: str) -> bytes:
-    """Generate a styled placeholder thumbnail using PIL."""
     width, height = 1280, 720
 
-    # Color palette based on category
     colors = {
         "Mathematics": ("#1e40af", "#3b82f6"),
         "Physics": ("#7c3aed", "#a78bfa"),
@@ -108,7 +88,6 @@ def generate_placeholder_thumbnail(title: str, category: str) -> bytes:
     img = Image.new("RGB", (width, height), bg_color)
     draw = ImageDraw.Draw(img)
 
-    # Background gradient effect
     for y in range(height):
         ratio = y / height
         r1, g1, b1 = int(bg_color[1:3], 16), int(bg_color[3:5], 16), int(bg_color[5:7], 16)
@@ -118,17 +97,14 @@ def generate_placeholder_thumbnail(title: str, category: str) -> bytes:
         b = int(b1 + (b2 - b1) * ratio * 0.3)
         draw.line([(0, y), (width, y)], fill=(r, g, b))
 
-    # Add decorative circles
     draw.ellipse([width - 300, -100, width + 100, 300], fill=accent + "40", outline=None)
     draw.ellipse([-100, height - 200, 200, height + 100], fill=accent + "30", outline=None)
 
-    # Category badge
     draw.rectangle([60, 60, 60 + len(category) * 14 + 30, 100], fill=accent, outline=None)
+    draw.text((75, 68), category, fill="white")
 
-    # Title text (wrap)
     words = title.split()
-    lines = []
-    current = ""
+    lines, current = [], ""
     for word in words:
         test = (current + " " + word).strip()
         if len(test) > 30:
@@ -144,7 +120,6 @@ def generate_placeholder_thumbnail(title: str, category: str) -> bytes:
         draw.text((60, y_pos), line, fill="white")
         y_pos += 60
 
-    # Platform watermark
     draw.text((60, height - 60), "Brainwave.ai", fill="#ffffff80")
 
     buf = io.BytesIO()

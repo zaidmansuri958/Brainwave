@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 108">
+  <!-- amazon text -->
+  <text x="0" y="68" font-family="Arial, Helvetica, sans-serif" font-size="68" font-weight="400" fill="#221F1F" letter-spacing="-1">amazon</text>
+  <!-- smile arrow -->
+  <path d="M14 84 Q120 118 224 100 Q280 93 312 80" stroke="#FF9900" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <!-- arrowhead -->
+  <polygon points="304,72 316,80 302,86" fill="#FF9900"/>
+</svg>

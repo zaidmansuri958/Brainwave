@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Save, BookOpen, Plus, Trash2, ChevronDown, ChevronUp, Brain, GripVertical, Check, X as XIcon } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { CourseManageNav } from "@/components/teacher/CourseManageNav";
+import { CourseProcessingStatus } from "@/components/teacher/CourseProcessingStatus";
 import { curriculumApi, teacherApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { getApiErrorMessage } from "@/lib/apiError";
@@ -321,6 +322,7 @@ export default function CurriculumPage({ params }: { params: { id: string } }) {
     >
       <div className="max-w-3xl py-6">
         <CourseManageNav courseId={id} />
+        <CourseProcessingStatus courseId={id} />
 
         {/* Chapters section */}
         <div className="mb-8">
@@ -366,7 +368,7 @@ export default function CurriculumPage({ params }: { params: { id: string } }) {
                   <div className="divide-y divide-gray-50">
                     {(ch.lessons || []).map((les: any) => (
                       <div key={les.id} className="flex items-center gap-3 px-5 py-3 hover:bg-violet-50/20 transition-colors">
-                        <GripVertical className="h-4 w-4 text-gray-200 shrink-0 cursor-not-allowed" title="Drag-to-reorder coming soon" />
+                        <GripVertical className="h-4 w-4 text-gray-200 shrink-0 cursor-not-allowed" />
                         <div className="flex-1 min-w-0">
                           <InlineEdit initial={les.title}
                             onSave={title => updateLesson.mutate({ lessonId: les.id, data: { title } })}

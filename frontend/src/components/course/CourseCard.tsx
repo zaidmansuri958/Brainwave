@@ -9,12 +9,19 @@ interface CourseCardProps {
     title: string;
     thumbnail_url?: string;
     teacher_name?: string;
+    teacher_avatar?: string;
     rating?: number;
     total_students?: number;
     total_duration_seconds?: number;
     price?: number;
     category?: string;
   };
+}
+
+function teacherImg(name: string, avatar?: string): string {
+  if (avatar) return avatar;
+  const idx = (name.split("").reduce((s, c) => s + c.charCodeAt(0), 0) % 6) + 1;
+  return `/images/teacher${idx}.png`;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -55,7 +62,14 @@ export function CourseCard({ course }: CourseCardProps) {
             {course.title}
           </h3>
           {course.teacher_name && (
-            <p className="text-xs text-gray-400 mt-1">By {course.teacher_name}</p>
+            <div className="flex items-center gap-2 mt-2">
+              <img
+                src={teacherImg(course.teacher_name, course.teacher_avatar)}
+                alt={course.teacher_name}
+                className="h-6 w-6 rounded-full object-cover ring-1 ring-gray-200 shrink-0"
+              />
+              <p className="text-xs text-gray-500 truncate">{course.teacher_name}</p>
+            </div>
           )}
 
           <div className="flex items-center gap-3 mt-3 text-xs text-gray-500">

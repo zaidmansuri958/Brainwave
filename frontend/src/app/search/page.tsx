@@ -66,7 +66,7 @@ function SearchPageContent() {
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input value={query} onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search courses, topics, teachers..."
-                className="input pl-10 pr-8" autoFocus />
+                className="input !pl-10 pr-8" autoFocus />
               {query && (
                 <button type="button" onClick={() => setQuery("")}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 42">
+  <defs>
+    <clipPath id="ibm-letters">
+      <text x="1" y="36" font-family="'Arial Black', 'Helvetica Neue', Arial, sans-serif" font-size="40" font-weight="900" letter-spacing="1">IBM</text>
+    </clipPath>
+  </defs>
+  <!-- 8 horizontal stripes clipped to IBM shape -->
+  <rect x="0" y="0"  width="100" height="4.2" fill="#1F70C1" clip-path="url(#ibm-letters)"/>
+  <rect x="0" y="5"  width="100" height="4.2" fill="#1F70C1" clip-path="url(#ibm-letters)"/>
+  <rect x="0" y="10" width="100" height="4.2" fill="#1F70C1" clip-path="url(#ibm-letters)"/>
+  <rect x="0" y="15" width="100" height="4.2" fill="#1F70C1" clip-path="url(#ibm-letters)"/>
+  <rect x="0" y="20" width="100" height="4.2" fill="#1F70C1" clip-path="url(#ibm-letters)"/>
+  <rect x="0" y="25" width="100" height="4.2" fill="#1F70C1" clip-path="url(#ibm-letters)"/>
+  <rect x="0" y="30" width="100" height="4.2" fill="#1F70C1" clip-path="url(#ibm-letters)"/>
+  <rect x="0" y="35" width="100" height="4.2" fill="#1F70C1" clip-path="url(#ibm-letters)"/>
+</svg>

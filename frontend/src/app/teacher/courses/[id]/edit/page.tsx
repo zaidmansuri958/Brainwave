@@ -13,6 +13,7 @@ import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { getApiErrorMessage } from "@/lib/apiError";
 import { CourseManageNav } from "@/components/teacher/CourseManageNav";
+import { CourseProcessingStatus } from "@/components/teacher/CourseProcessingStatus";
 import { TRANSCRIPTION_LANGS } from "@/lib/transcriptionLangs";
 
 // ── Static lists ────────────────────────────────────────────────────────────────
@@ -249,6 +250,7 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
     >
       <div className="max-w-3xl py-6">
         <CourseManageNav courseId={params.id} />
+        <CourseProcessingStatus courseId={params.id} />
 
         <form id="edit-form" onSubmit={e => { e.preventDefault(); updateCourse.mutate(); }} className="space-y-5">
 

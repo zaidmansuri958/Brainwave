@@ -449,7 +449,9 @@ async def get_course_reviews(course_id: str, db: Session = Depends(get_db)):
         "reviews": [
             {
                 "id": str(r.id),
+                "student_id": str(r.student_id),
                 "student_name": r.student.full_name if r.student else "Anonymous",
+                "student_avatar": r.student.avatar_url if r.student else None,
                 "rating": r.rating,
                 "review_text": r.review_text,
                 "created_at": r.created_at.isoformat()

@@ -64,7 +64,7 @@ export default function CoursesPage() {
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 placeholder="Search courses, teachers, topics..."
-                className="input pl-10"
+                className="input !pl-10"
               />
             </div>
             <button

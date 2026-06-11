@@ -4,11 +4,11 @@ import Link from "next/link";
 import { Star, Users, ArrowRight, Linkedin, Twitter } from "lucide-react";
 
 const teachers = [
-  { name: "Dr. Arjun Patel", specialty: "AI & Data Science Expert", rating: 4.9, students: 12600, experience: "12+ Years Experience", color: "from-violet-400 to-violet-600", initials: "AP" },
-  { name: "Riya Sharma", specialty: "Data Science Lead", rating: 4.8, students: 9800, experience: "8+ Years Experience", color: "from-pink-400 to-rose-500", initials: "RS" },
-  { name: "John Smith", specialty: "Full Stack Developer", rating: 4.8, students: 13000, experience: "10+ Years Experience", color: "from-blue-400 to-blue-600", initials: "JS" },
-  { name: "Neha Verma", specialty: "UI/UX Design Expert", rating: 4.9, students: 6700, experience: "9+ Years Experience", color: "from-amber-400 to-orange-500", initials: "NV" },
-  { name: "Rahul Marketa", specialty: "Digital Marketing Strategist", rating: 4.8, students: 7700, experience: "7+ Years Experience", color: "from-green-400 to-teal-500", initials: "RM" },
+  { name: "Dr. Arjun Patel",  specialty: "AI & Data Science Expert",       rating: 4.9, students: 12600, experience: "12+ Years Experience", image: "/images/teacher1.png" },
+  { name: "Riya Sharma",      specialty: "Data Science Lead",               rating: 4.8, students: 9800,  experience: "8+ Years Experience",  image: "/images/teacher2.png" },
+  { name: "John Smith",       specialty: "Full Stack Developer",            rating: 4.8, students: 13000, experience: "10+ Years Experience", image: "/images/teacher3.png" },
+  { name: "Neha Verma",       specialty: "UI/UX Design Expert",             rating: 4.9, students: 6700,  experience: "9+ Years Experience",  image: "/images/teacher4.png" },
+  { name: "Rahul Marketa",    specialty: "Digital Marketing Strategist",    rating: 4.8, students: 7700,  experience: "7+ Years Experience",  image: "/images/teacher5.png" },
 ];
 
 export function TopTeachersSection() {
@@ -34,8 +34,8 @@ export function TopTeachersSection() {
 
               {/* Avatar */}
               <div className="flex justify-center mb-3">
-                <div className={`h-16 w-16 rounded-full bg-gradient-to-br ${teacher.color} flex items-center justify-center text-white text-lg font-bold shadow-md`}>
-                  {teacher.initials}
+                <div className="h-16 w-16 rounded-full overflow-hidden ring-2 ring-violet-100 shadow-md">
+                  <img src={teacher.image} alt={teacher.name} className="h-full w-full object-cover" />
                 </div>
               </div>
 
