@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, Play, Award, Package, TrendingUp, Clock, ChevronRight, ArrowRight, CheckCircle } from "lucide-react";
+import { BookOpen, Play, Award, Package, TrendingUp, Clock, ChevronRight, ArrowRight, CheckCircle, ClipboardList, Timer, FileText } from "lucide-react";
 import { certApi, enrollmentApi, materialsApi, mockTestsApi } from "@/lib/api";
 import { useAuthStore } from "@/stores/authStore";
 import { DashboardLayout, MetricCard, SectionCard, Badge } from "@/components/layout/DashboardLayout";
@@ -180,37 +180,81 @@ export default function StudentDashboard() {
             )}
           </SectionCard>
 
-          {/* Mock Test Packages */}
-          {mocks.length > 0 && (
-            <SectionCard
-              title="My Mock Tests"
-              action={
-                <Link href="/catalog/mock-tests" className="text-sm text-blue-600 hover:text-blue-700 font-medium">View catalog</Link>
-              }
-            >
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {mocks.slice(0, 4).map((pkg: any) => (
-                  <div key={pkg.package_id} className="border border-gray-100 rounded-xl p-3 hover:border-blue-200 hover:bg-blue-50/30 transition-colors">
-                    <div className="flex items-center gap-2.5 mb-2">
-                      <div className="h-8 w-8 bg-orange-50 rounded-lg flex items-center justify-center">
-                        <Package className="h-4 w-4 text-orange-500" />
-                      </div>
-                      <p className="text-sm font-semibold text-gray-800 truncate">{pkg.title}</p>
-                    </div>
-                    <p className="text-xs text-gray-500">{(pkg.papers || []).length} papers available</p>
-                    {(pkg.papers || []).length > 0 && (
-                      <Link
-                        href={`/mock-tests/take/${pkg.papers[0].id}`}
-                        className="mt-2 flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700"
-                      >
-                        Take test <ChevronRight className="h-3 w-3" />
-                      </Link>
-                    )}
-                  </div>
-                ))}
+          {/* Mock Test Packages — purchased only */}
+          <SectionCard
+            title="My Mock Tests"
+            action={
+              <Link href="/catalog/mock-tests" className="text-sm text-violet-600 hover:text-violet-700 font-medium flex items-center gap-1">
+                Browse more <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            }
+          >
+            {mocks.length === 0 ? (
+              <div className="text-center py-10">
+                <ClipboardList className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+                <p className="text-sm font-medium text-gray-500">No mock tests purchased yet</p>
+                <Link href="/catalog/mock-tests" className="mt-3 inline-flex items-center gap-1.5 text-sm text-violet-600 font-medium hover:text-violet-700">
+                  Explore mock tests <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
               </div>
-            </SectionCard>
-          )}
+            ) : (
+              <div className="space-y-3">
+                {mocks.slice(0, 4).map((pkg: any) => {
+                  const papers = pkg.papers || [];
+                  return (
+                    <div
+                      key={pkg.package_id}
+                      className="rounded-xl border border-gray-100 overflow-hidden hover:border-violet-200 transition-colors"
+                    >
+                      {/* Package header */}
+                      <div className="flex items-center gap-3 bg-gradient-to-r from-violet-50 to-indigo-50 px-4 py-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600 shrink-0">
+                          <ClipboardList className="h-4.5 w-4.5 text-white" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-gray-900 truncate">{pkg.title}</p>
+                          <p className="text-[11px] text-gray-500">
+                            {papers.length} paper{papers.length !== 1 ? "s" : ""}
+                            {pkg.total_duration_minutes ? ` · ${pkg.total_duration_minutes} min total` : ""}
+                          </p>
+                        </div>
+                        <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                          Owned
+                        </span>
+                      </div>
+
+                      {/* Paper list */}
+                      {papers.length > 0 && (
+                        <div className="divide-y divide-gray-50">
+                          {papers.slice(0, 3).map((p: any) => (
+                            <Link
+                              key={p.id}
+                              href={`/mock-tests/take/${p.id}`}
+                              className="flex items-center gap-3 px-4 py-2.5 hover:bg-violet-50/40 transition-colors group"
+                            >
+                              <FileText className="h-4 w-4 text-violet-400 shrink-0" />
+                              <span className="text-sm text-gray-700 truncate flex-1">{p.title}</span>
+                              {p.time_limit_minutes ? (
+                                <span className="flex items-center gap-1 text-[11px] text-gray-400 shrink-0">
+                                  <Timer className="h-3 w-3" /> {p.time_limit_minutes}m
+                                </span>
+                              ) : null}
+                              <span className="flex items-center gap-1 text-xs font-semibold text-violet-600 shrink-0">
+                                Start <ChevronRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
+                              </span>
+                            </Link>
+                          ))}
+                          {papers.length > 3 && (
+                            <p className="px-4 py-2 text-[11px] text-gray-400">+{papers.length - 3} more paper{papers.length - 3 !== 1 ? "s" : ""}</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </SectionCard>
         </div>
 
         {/* Right column */}

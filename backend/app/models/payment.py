@@ -60,6 +60,7 @@ class Payout(Base):
     amount = Column(Numeric(10, 2), nullable=True)
     razorpay_payout_id = Column(String(255), nullable=True)
     status = Column(String(20), default="pending")  # pending, processing, completed, failed
+    failure_reason = Column(Text, nullable=True)
     initiated_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     initiated_at = Column(DateTime(timezone=True), server_default=func.now())
     completed_at = Column(DateTime(timezone=True), nullable=True)

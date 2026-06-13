@@ -2,6 +2,7 @@ import uuid
 import re
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from pydantic import BaseModel
 from typing import Optional, List, Any
 
@@ -15,6 +16,7 @@ from app.models.mock_exam import (
     MockTestQuestion,
     MockTestPurchase,
     MockTestAttempt,
+    MockTestReview,
 )
 from app.services.payment_service import create_razorpay_order, verify_razorpay_signature, record_payment
 
@@ -58,6 +60,8 @@ class PaperIn(BaseModel):
     title: str
     time_limit_minutes: int
     total_marks: Optional[float] = None
+    marks_per_question: float = 1.0
+    negative_marks: float = 0.0
     order_index: int = 0
 
 
@@ -78,6 +82,8 @@ async def add_paper(
         title=data.title,
         time_limit_minutes=data.time_limit_minutes,
         total_marks=data.total_marks,
+        marks_per_question=data.marks_per_question,
+        negative_marks=data.negative_marks,
         order_index=data.order_index,
     )
     db.add(paper)
@@ -228,6 +234,8 @@ async def package_builder_detail(
                 "title": p.title,
                 "time_limit_minutes": p.time_limit_minutes,
                 "total_marks": float(p.total_marks) if p.total_marks is not None else None,
+                "marks_per_question": float(p.marks_per_question or 1),
+                "negative_marks": float(p.negative_marks or 0),
                 "order_index": p.order_index,
                 "sections": out_secs,
             }
@@ -257,7 +265,17 @@ async def package_by_slug(slug: str, db: Session = Depends(get_db)):
         "price": float(pkg.price),
         "currency": pkg.currency,
         "teacher_id": str(pkg.teacher_id),
-        "papers": [{"id": str(p.id), "title": p.title, "time_limit_minutes": p.time_limit_minutes} for p in papers],
+        "papers": [
+            {
+                "id": str(p.id),
+                "title": p.title,
+                "time_limit_minutes": p.time_limit_minutes,
+                "total_marks": float(p.total_marks) if p.total_marks is not None else None,
+                "marks_per_question": float(p.marks_per_question or 1),
+                "negative_marks": float(p.negative_marks or 0),
+            }
+            for p in papers
+        ],
     }
 
 
@@ -306,6 +324,9 @@ async def get_paper_for_take(
         "paper_id": str(paper.id),
         "title": paper.title,
         "time_limit_minutes": paper.time_limit_minutes,
+        "marks_per_question": float(paper.marks_per_question or 1),
+        "negative_marks": float(paper.negative_marks or 0),
+        "total_marks": float(paper.total_marks) if paper.total_marks is not None else None,
         "sections": out_secs,
     }
 
@@ -313,18 +334,56 @@ async def get_paper_for_take(
 @router.get("/catalog")
 async def catalog(db: Session = Depends(get_db)):
     rows = db.query(MockTestPackage).filter(MockTestPackage.status == "published").all()
-    return {
-        "packages": [
+
+    out = []
+    for r in rows:
+        papers = (
+            db.query(MockTestPaper)
+            .filter(MockTestPaper.package_id == r.id)
+            .order_by(MockTestPaper.order_index)
+            .all()
+        )
+        paper_ids = [p.id for p in papers]
+        total_duration = sum(int(p.time_limit_minutes or 0) for p in papers)
+        total_marks = sum(float(p.total_marks or 0) for p in papers)
+
+        # Count questions across all sections of all papers in one query
+        questions_count = 0
+        if paper_ids:
+            section_ids = [
+                s.id
+                for s in db.query(MockTestSection.id)
+                .filter(MockTestSection.paper_id.in_(paper_ids))
+                .all()
+            ]
+            if section_ids:
+                questions_count = (
+                    db.query(func.count(MockTestQuestion.id))
+                    .filter(MockTestQuestion.section_id.in_(section_ids))
+                    .scalar()
+                    or 0
+                )
+
+        teacher = r.teacher
+        out.append(
             {
                 "id": str(r.id),
                 "title": r.title,
                 "slug": r.slug,
+                "description": r.description,
                 "price": float(r.price),
+                "currency": r.currency,
                 "teacher_id": str(r.teacher_id),
+                "teacher_name": (teacher.full_name if teacher else None),
+                "papers_count": len(papers),
+                "total_duration_minutes": total_duration,
+                "total_questions": int(questions_count),
+                "total_marks": total_marks,
+                "created_at": r.created_at.isoformat() if r.created_at else None,
             }
-            for r in rows
-        ]
-    }
+        )
+
+    return {"packages": out}
 
 
 class MockPurchaseConfirm(BaseModel):
@@ -394,6 +453,7 @@ async def purchase_confirm(
 
 class AttemptSubmit(BaseModel):
     answers: dict
+    time_taken_seconds: Optional[int] = None
 
 
 @router.post("/papers/{paper_id}/attempt")
@@ -418,21 +478,37 @@ async def submit_attempt(
     if not pur:
         raise HTTPException(status_code=403, detail="Purchase required")
     sections = db.query(MockTestSection).filter(MockTestSection.paper_id == paper_id).all()
+    marks_per_q = float(paper.marks_per_question or 1)
+    neg_per_q = float(paper.negative_marks or 0)
     total = 0.0
     earned = 0.0
+    correct_count = 0
+    wrong_count = 0
+    skipped_count = 0
     for sec in sections:
         questions = (
             db.query(MockTestQuestion).filter(MockTestQuestion.section_id == sec.id).order_by(MockTestQuestion.order_index).all()
         )
         for q in questions:
-            total += float(q.marks or 0)
+            q_marks = float(q.marks or marks_per_q)
+            total += q_marks
             ans = (data.answers or {}).get(str(q.id), "")
             if q.question_type in ("mcq", "mcq_multi"):
-                if str(ans).lower().strip() == str(q.correct_answer or "").lower().strip():
-                    earned += float(q.marks or 0)
-            elif ans and q.correct_answer and str(ans).lower() in str(q.correct_answer).lower():
-                earned += float(q.marks or 0) * 0.5
-    pct = (earned / total * 100) if total > 0 else 0
+                if not ans or str(ans).strip() == "":
+                    skipped_count += 1
+                elif str(ans).lower().strip() == str(q.correct_answer or "").lower().strip():
+                    correct_count += 1
+                    earned += q_marks
+                else:
+                    wrong_count += 1
+                    earned -= neg_per_q
+            else:
+                if ans and q.correct_answer and str(ans).lower() in str(q.correct_answer).lower():
+                    correct_count += 1
+                    earned += q_marks * 0.5
+    penalty_deducted = round(wrong_count * neg_per_q, 2)
+    net_score = max(0.0, earned)
+    pct = (net_score / total * 100) if total > 0 else 0
     from datetime import datetime, timezone
 
     att = MockTestAttempt(
@@ -440,12 +516,24 @@ async def submit_attempt(
         paper_id=paper_id,
         answers=data.answers,
         score_percent=round(pct, 2),
-        total_score=earned,
+        total_score=round(net_score, 2),
+        time_taken_seconds=data.time_taken_seconds,
         submitted_at=datetime.now(timezone.utc),
     )
     db.add(att)
     db.commit()
-    return {"score_percent": round(pct, 2), "total_score": earned, "max_score": total}
+    db.refresh(att)
+    return {
+        "attempt_id": str(att.id),
+        "score_percent": round(pct, 2),
+        "total_score": round(net_score, 2),
+        "max_score": round(total, 2),
+        "correct_count": correct_count,
+        "wrong_count": wrong_count,
+        "skipped_count": skipped_count,
+        "penalty_deducted": penalty_deducted,
+        "time_taken_seconds": data.time_taken_seconds,
+    }
 
 
 class PackageUpdate(BaseModel):
@@ -492,6 +580,8 @@ class PaperUpdate(BaseModel):
     title: Optional[str] = None
     time_limit_minutes: Optional[int] = None
     total_marks: Optional[float] = None
+    marks_per_question: Optional[float] = None
+    negative_marks: Optional[float] = None
     order_index: Optional[int] = None
 
 
@@ -596,6 +686,7 @@ async def list_attempts(
                 "id": str(a.id),
                 "score_percent": float(a.score_percent or 0),
                 "total_score": float(a.total_score or 0),
+                "time_taken_seconds": a.time_taken_seconds,
                 "submitted_at": a.submitted_at.isoformat() if a.submitted_at else None,
             }
             for a in attempts
@@ -653,12 +744,424 @@ async def my_packages(current_user: User = Depends(get_current_user), db: Sessio
     out = []
     for r in rows:
         pkg = r.package
-        papers = db.query(MockTestPaper).filter(MockTestPaper.package_id == r.package_id).all()
+        papers = (
+            db.query(MockTestPaper)
+            .filter(MockTestPaper.package_id == r.package_id)
+            .order_by(MockTestPaper.order_index)
+            .all()
+        )
+        total_duration = sum(int(p.time_limit_minutes or 0) for p in papers)
         out.append(
             {
                 "package_id": str(r.package_id),
                 "title": pkg.title if pkg else "",
-                "papers": [{"id": str(p.id), "title": p.title} for p in papers],
+                "slug": pkg.slug if pkg else None,
+                "purchased_at": r.purchased_at.isoformat() if r.purchased_at else None,
+                "total_duration_minutes": total_duration,
+                "papers": [
+                    {
+                        "id": str(p.id),
+                        "title": p.title,
+                        "time_limit_minutes": p.time_limit_minutes,
+                        "total_marks": float(p.total_marks) if p.total_marks is not None else None,
+                    }
+                    for p in papers
+                ],
             }
         )
     return {"packages": out}
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# Analytics helpers
+# ──────────────────────────────────────────────────────────────────────────
+def _score_breakdown(paper: MockTestPaper, answers: dict, db: Session) -> dict:
+    """Recompute a single attempt's score + per-section breakdown from stored answers."""
+    answers = answers or {}
+    marks_per_q = float(paper.marks_per_question or 1)
+    neg_per_q = float(paper.negative_marks or 0)
+    sections = (
+        db.query(MockTestSection)
+        .filter(MockTestSection.paper_id == paper.id)
+        .order_by(MockTestSection.order_index)
+        .all()
+    )
+    total_marks = earned = 0.0
+    correct = wrong = skipped = total_q = attempted = 0
+    section_rows = []
+    for sec in sections:
+        questions = (
+            db.query(MockTestQuestion)
+            .filter(MockTestQuestion.section_id == sec.id)
+            .order_by(MockTestQuestion.order_index)
+            .all()
+        )
+        s_correct = s_wrong = s_skipped = 0
+        s_total = len(questions)
+        s_earned = 0.0
+        s_max = 0.0
+        for q in questions:
+            q_marks = float(q.marks or marks_per_q)
+            total_marks += q_marks
+            s_max += q_marks
+            total_q += 1
+            ans = answers.get(str(q.id), "")
+            is_blank = not ans or str(ans).strip() == ""
+            is_correct = (not is_blank) and str(ans).lower().strip() == str(q.correct_answer or "").lower().strip()
+            if is_blank:
+                skipped += 1
+                s_skipped += 1
+            elif is_correct:
+                correct += 1
+                s_correct += 1
+                attempted += 1
+                earned += q_marks
+                s_earned += q_marks
+            else:
+                wrong += 1
+                s_wrong += 1
+                attempted += 1
+                earned -= neg_per_q
+                s_earned -= neg_per_q
+        section_rows.append({
+            "section_id": str(sec.id),
+            "title": sec.title,
+            "total_questions": s_total,
+            "correct": s_correct,
+            "wrong": s_wrong,
+            "skipped": s_skipped,
+            "score": round(max(0.0, s_earned), 2),
+            "max_score": round(s_max, 2),
+            "accuracy": round((s_correct / (s_correct + s_wrong) * 100), 1) if (s_correct + s_wrong) > 0 else 0.0,
+        })
+    net = max(0.0, earned)
+    return {
+        "total_score": round(net, 2),
+        "max_score": round(total_marks, 2),
+        "score_percent": round((net / total_marks * 100), 2) if total_marks > 0 else 0.0,
+        "correct_count": correct,
+        "wrong_count": wrong,
+        "skipped_count": skipped,
+        "total_questions": total_q,
+        "attempted": attempted,
+        "accuracy": round((correct / attempted * 100), 1) if attempted > 0 else 0.0,
+        "penalty_deducted": round(wrong * neg_per_q, 2),
+        "sections": section_rows,
+    }
+
+
+def _best_attempts_for_paper(paper_id: str, db: Session):
+    """Return the single best (highest total_score) submitted attempt per student for a paper."""
+    rows = (
+        db.query(MockTestAttempt)
+        .filter(MockTestAttempt.paper_id == paper_id, MockTestAttempt.submitted_at.isnot(None))
+        .all()
+    )
+    best = {}
+    for a in rows:
+        sid = str(a.student_id)
+        score = float(a.total_score or 0)
+        if sid not in best or score > float(best[sid].total_score or 0):
+            best[sid] = a
+    return list(best.values())
+
+
+@router.get("/papers/{paper_id}/leaderboard")
+async def paper_leaderboard(
+    paper_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    paper = db.query(MockTestPaper).filter(MockTestPaper.id == paper_id).first()
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+
+    best = _best_attempts_for_paper(paper_id, db)
+    best.sort(key=lambda a: float(a.total_score or 0), reverse=True)
+    total_students = len(best)
+
+    # Resolve names in one query
+    student_ids = [a.student_id for a in best]
+    users = {}
+    if student_ids:
+        for u in db.query(User).filter(User.id.in_(student_ids)).all():
+            users[str(u.id)] = u
+
+    entries = []
+    my_rank = None
+    my_score = None
+    for idx, a in enumerate(best):
+        rank = idx + 1
+        sid = str(a.student_id)
+        u = users.get(sid)
+        is_me = sid == str(current_user.id)
+        if is_me:
+            my_rank = rank
+            my_score = float(a.total_score or 0)
+        entries.append({
+            "rank": rank,
+            "student_id": sid,
+            "student_name": (u.full_name if u else "Student"),
+            "student_avatar": (u.avatar_url if u else None),
+            "total_score": float(a.total_score or 0),
+            "score_percent": float(a.score_percent or 0),
+            "time_taken_seconds": a.time_taken_seconds,
+            "is_me": is_me,
+        })
+
+    scores = [float(a.total_score or 0) for a in best]
+    highest = max(scores) if scores else 0.0
+    average = round(sum(scores) / len(scores), 2) if scores else 0.0
+    ahead_of = (total_students - my_rank) if my_rank else 0
+    percentile = round(((total_students - my_rank) / total_students) * 100, 1) if (my_rank and total_students > 1) else (100.0 if my_rank == 1 and total_students == 1 else 0.0)
+
+    # Score distribution histogram (10 buckets across max possible marks)
+    max_marks = float(paper.total_marks or (max(scores) if scores else 100)) or 100
+    buckets = [0] * 10
+    for s in scores:
+        b = min(9, int((s / max_marks) * 10)) if max_marks > 0 else 0
+        buckets[b] += 1
+    distribution = [
+        {"range": f"{int(i*10)}-{int((i+1)*10)}%", "count": buckets[i]}
+        for i in range(10)
+    ]
+
+    return {
+        "paper_id": str(paper.id),
+        "paper_title": paper.title,
+        "total_students": total_students,
+        "highest_score": round(highest, 2),
+        "average_score": average,
+        "max_marks": round(max_marks, 2),
+        "my_rank": my_rank,
+        "my_score": my_score,
+        "ahead_of": ahead_of,
+        "percentile": percentile,
+        "topper": entries[0] if entries else None,
+        "leaderboard": entries[:50],
+        "distribution": distribution,
+    }
+
+
+@router.get("/papers/{paper_id}/analytics")
+async def paper_analytics(
+    paper_id: str,
+    attempt_id: Optional[str] = Query(None),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    paper = db.query(MockTestPaper).filter(MockTestPaper.id == paper_id).first()
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+
+    q = db.query(MockTestAttempt).filter(
+        MockTestAttempt.paper_id == paper_id,
+        MockTestAttempt.student_id == current_user.id,
+        MockTestAttempt.submitted_at.isnot(None),
+    )
+    if attempt_id:
+        attempt = q.filter(MockTestAttempt.id == attempt_id).first()
+    else:
+        attempt = q.order_by(MockTestAttempt.submitted_at.desc()).first()
+    if not attempt:
+        raise HTTPException(status_code=404, detail="No attempt found")
+
+    breakdown = _score_breakdown(paper, attempt.answers, db)
+
+    # Cohort comparison: per-section average accuracy across all students' best attempts
+    cohort = _best_attempts_for_paper(paper_id, db)
+    section_avgs = {}
+    if cohort:
+        agg = {}
+        for a in cohort:
+            bd = _score_breakdown(paper, a.answers, db)
+            for s in bd["sections"]:
+                agg.setdefault(s["section_id"], []).append(s["accuracy"])
+        for sid, vals in agg.items():
+            section_avgs[sid] = round(sum(vals) / len(vals), 1) if vals else 0.0
+
+    sections = []
+    for s in breakdown["sections"]:
+        sections.append({**s, "cohort_avg_accuracy": section_avgs.get(s["section_id"], 0.0)})
+
+    # Strengths / weaknesses
+    ranked = sorted(breakdown["sections"], key=lambda x: x["accuracy"], reverse=True)
+    strengths = [s["title"] for s in ranked if s["accuracy"] >= 60][:3]
+    weaknesses = [s["title"] for s in reversed(ranked) if s["accuracy"] < 60][:3]
+
+    return {
+        "attempt_id": str(attempt.id),
+        "paper_id": str(paper.id),
+        "paper_title": paper.title,
+        "submitted_at": attempt.submitted_at.isoformat() if attempt.submitted_at else None,
+        "time_taken_seconds": attempt.time_taken_seconds,
+        "time_limit_minutes": paper.time_limit_minutes,
+        **breakdown,
+        "sections": sections,
+        "strengths": strengths,
+        "weaknesses": weaknesses,
+    }
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# Package stats (public) + Reviews
+# ──────────────────────────────────────────────────────────────────────────
+@router.get("/slug/{slug}/stats")
+async def package_stats(slug: str, db: Session = Depends(get_db)):
+    pkg = db.query(MockTestPackage).filter(MockTestPackage.slug == slug).first()
+    if not pkg:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    paper_ids = [p.id for p in db.query(MockTestPaper.id).filter(MockTestPaper.package_id == pkg.id).all()]
+
+    enrolled = db.query(func.count(MockTestPurchase.id)).filter(MockTestPurchase.package_id == pkg.id).scalar() or 0
+
+    total_attempts = 0
+    distinct_test_takers = set()
+    highest = 0.0
+    score_sum = 0.0
+    score_n = 0
+    if paper_ids:
+        attempts = (
+            db.query(MockTestAttempt)
+            .filter(MockTestAttempt.paper_id.in_(paper_ids), MockTestAttempt.submitted_at.isnot(None))
+            .all()
+        )
+        total_attempts = len(attempts)
+        for a in attempts:
+            distinct_test_takers.add(str(a.student_id))
+            sp = float(a.score_percent or 0)
+            score_sum += sp
+            score_n += 1
+            highest = max(highest, sp)
+
+    avg_rating = db.query(func.avg(MockTestReview.rating)).filter(MockTestReview.package_id == pkg.id).scalar() or 0
+    review_count = db.query(func.count(MockTestReview.id)).filter(MockTestReview.package_id == pkg.id).scalar() or 0
+
+    return {
+        "enrolled_count": int(enrolled),
+        "test_takers": len(distinct_test_takers),
+        "total_attempts": total_attempts,
+        "avg_score_percent": round(score_sum / score_n, 1) if score_n else 0.0,
+        "highest_score_percent": round(highest, 1),
+        "avg_rating": round(float(avg_rating), 2),
+        "review_count": int(review_count),
+    }
+
+
+@router.get("/packages/{package_id}/reviews")
+async def get_package_reviews(package_id: str, db: Session = Depends(get_db)):
+    reviews = (
+        db.query(MockTestReview)
+        .filter(MockTestReview.package_id == package_id)
+        .order_by(MockTestReview.created_at.desc())
+        .all()
+    )
+    avg = db.query(func.avg(MockTestReview.rating)).filter(MockTestReview.package_id == package_id).scalar() or 0
+    return {
+        "avg_rating": round(float(avg), 2),
+        "total_reviews": len(reviews),
+        "reviews": [
+            {
+                "id": str(r.id),
+                "student_id": str(r.student_id),
+                "student_name": r.student.full_name if r.student else "Anonymous",
+                "student_avatar": r.student.avatar_url if r.student else None,
+                "rating": r.rating,
+                "review_text": r.review_text,
+                "created_at": r.created_at.isoformat() if r.created_at else None,
+            }
+            for r in reviews
+        ],
+    }
+
+
+class MockReviewIn(BaseModel):
+    rating: int
+    review_text: Optional[str] = None
+
+
+@router.post("/packages/{package_id}/reviews")
+async def submit_package_review(
+    package_id: str,
+    data: MockReviewIn,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if data.rating < 1 or data.rating > 5:
+        raise HTTPException(status_code=400, detail="Rating must be between 1 and 5")
+    owns = (
+        db.query(MockTestPurchase)
+        .filter(MockTestPurchase.student_id == current_user.id, MockTestPurchase.package_id == package_id)
+        .first()
+    )
+    if not owns:
+        raise HTTPException(status_code=403, detail="You must own this package to review it")
+    existing = (
+        db.query(MockTestReview)
+        .filter(MockTestReview.student_id == current_user.id, MockTestReview.package_id == package_id)
+        .first()
+    )
+    if existing:
+        raise HTTPException(status_code=400, detail="You have already reviewed this package")
+    review = MockTestReview(
+        student_id=current_user.id,
+        package_id=package_id,
+        rating=data.rating,
+        review_text=data.review_text,
+    )
+    db.add(review)
+    db.commit()
+    return {"message": "Review submitted"}
+
+
+@router.patch("/packages/{package_id}/reviews/{review_id}")
+async def update_package_review(
+    package_id: str,
+    review_id: str,
+    data: MockReviewIn,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    review = (
+        db.query(MockTestReview)
+        .filter(
+            MockTestReview.id == review_id,
+            MockTestReview.package_id == package_id,
+            MockTestReview.student_id == current_user.id,
+        )
+        .first()
+    )
+    if not review:
+        raise HTTPException(status_code=404, detail="Review not found")
+    if data.rating is not None:
+        if data.rating < 1 or data.rating > 5:
+            raise HTTPException(status_code=400, detail="Rating must be between 1 and 5")
+        review.rating = data.rating
+    if data.review_text is not None:
+        review.review_text = data.review_text
+    db.commit()
+    return {"message": "Review updated"}
+
+
+@router.delete("/packages/{package_id}/reviews/{review_id}")
+async def delete_package_review(
+    package_id: str,
+    review_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    review = (
+        db.query(MockTestReview)
+        .filter(
+            MockTestReview.id == review_id,
+            MockTestReview.package_id == package_id,
+            MockTestReview.student_id == current_user.id,
+        )
+        .first()
+    )
+    if not review:
+        raise HTTPException(status_code=404, detail="Review not found")
+    db.delete(review)
+    db.commit()
+    return {"message": "Review deleted"}

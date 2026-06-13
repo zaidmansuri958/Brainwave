@@ -25,6 +25,10 @@ services:
       - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID}
       - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET}
       - RAZORPAY_WEBHOOK_SECRET=${RAZORPAY_WEBHOOK_SECRET}
+      # RazorpayX payouts: leave RAZORPAYX_ACCOUNT_NUMBER blank to run payouts in SIMULATED mode.
+      # Set it (and keep RAZORPAYX_MODE=auto) once RazorpayX is enabled to disburse for real.
+      - RAZORPAYX_ACCOUNT_NUMBER=${RAZORPAYX_ACCOUNT_NUMBER:-}
+      - RAZORPAYX_MODE=${RAZORPAYX_MODE:-auto}
       - PLATFORM_CUT_PERCENT=20
       - RESEND_API_KEY=${RESEND_API_KEY}
       - PLATFORM_EMAIL=${PLATFORM_EMAIL}

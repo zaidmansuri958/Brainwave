@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
+from app.config import settings
 from app.database import get_db
 from app.middleware.auth_middleware import get_current_admin
 from app.models.user import User, TeacherProfile
@@ -284,53 +285,134 @@ async def get_all_payments(
     }
 
 
+MIN_PAYOUT = float(settings.payout_min_amount)
+
+
+@router.get("/payouts")
+async def list_payouts(
+    current_user: User = Depends(get_current_admin),
+    db: Session = Depends(get_db),
+):
+    """Payout history + the set of teachers currently eligible for a rollout."""
+    from app.services.razorpayx_service import payouts_mode
+
+    payouts = db.query(Payout).order_by(Payout.initiated_at.desc()).limit(100).all()
+    tids = list({p.teacher_id for p in payouts})
+    users = {u.id: u for u in db.query(User).filter(User.id.in_(tids)).all()} if tids else {}
+
+    elig_profiles = db.query(TeacherProfile).filter(TeacherProfile.pending_payout >= MIN_PAYOUT).all()
+    eligible = []
+    total = 0.0
+    for pr in elig_profiles:
+        u = db.query(User).filter(User.id == pr.user_id).first()
+        if not u:
+            continue
+        amt = float(pr.pending_payout or 0)
+        total += amt
+        eligible.append({
+            "teacher_id": str(u.id),
+            "name": u.full_name,
+            "email": u.email,
+            "pending": round(amt, 2),
+            "bank_ready": bool(pr.bank_account_number and pr.bank_ifsc),
+        })
+
+    return {
+        "mode": payouts_mode(),
+        "min_threshold": MIN_PAYOUT,
+        "eligible": {"count": len(eligible), "total": round(total, 2), "teachers": eligible},
+        "payouts": [
+            {
+                "id": str(p.id),
+                "teacher_id": str(p.teacher_id),
+                "teacher_name": users[p.teacher_id].full_name if p.teacher_id in users else "—",
+                "amount": float(p.amount or 0),
+                "status": p.status,
+                "razorpay_payout_id": p.razorpay_payout_id,
+                "failure_reason": p.failure_reason,
+                "initiated_at": p.initiated_at.isoformat() if p.initiated_at else None,
+                "completed_at": p.completed_at.isoformat() if p.completed_at else None,
+            }
+            for p in payouts
+        ],
+    }
+
+
 @router.post("/payouts/process")
 async def process_payouts(
     teacher_id: str = None,
     current_user: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
-    """Trigger payout to specific teacher or all teachers with pending balance."""
+    """Disburse payouts to a specific teacher or all teachers with a pending balance ≥ threshold.
+
+    Each teacher is processed independently — one failure never blocks the rest.
+    On success/processing the teacher's pending balance is moved; on failure it is
+    left intact so the payout can be retried.
+    """
     from tasks.email_tasks import send_payout_notification_task
+    from app.services.razorpayx_service import disburse, payouts_mode
 
     if teacher_id:
-        teachers = [db.query(User).filter(User.id == teacher_id).first()]
+        profiles = [db.query(TeacherProfile).filter(TeacherProfile.user_id == teacher_id).first()]
     else:
-        profiles = db.query(TeacherProfile).filter(TeacherProfile.pending_payout >= 100).all()
-        teachers = [db.query(User).filter(User.id == p.user_id).first() for p in profiles]
+        profiles = db.query(TeacherProfile).filter(TeacherProfile.pending_payout >= MIN_PAYOUT).all()
 
-    processed = []
-    for teacher in teachers:
+    processed, failed = [], []
+    for profile in profiles:
+        if not profile:
+            continue
+        amount = float(profile.pending_payout or 0)
+        if amount < MIN_PAYOUT:
+            continue
+        teacher = db.query(User).filter(User.id == profile.user_id).first()
         if not teacher:
             continue
-        profile = db.query(TeacherProfile).filter(TeacherProfile.user_id == teacher.id).first()
-        if not profile or float(profile.pending_payout) < 100:
-            continue
-
-        amount = float(profile.pending_payout)
 
         payout = Payout(
             teacher_id=teacher.id,
             amount=amount,
             status="processing",
-            initiated_by=current_user.id
+            initiated_by=current_user.id,
         )
         db.add(payout)
+        db.flush()  # assign payout.id for reference_id
 
-        profile.total_paid_out = float(profile.total_paid_out or 0) + amount
-        profile.pending_payout = 0
+        result = disburse(db, payout, profile, teacher)
 
-        create_notification(
-            db, str(teacher.id), "payout_processed",
-            f"Payout of ₹{amount:.2f} Processed",
-            f"Your earnings of ₹{amount:.2f} have been processed",
-            {}
-        )
-        send_payout_notification_task.delay(teacher.email, teacher.full_name, amount)
-        processed.append({"teacher_id": str(teacher.id), "amount": amount})
+        if result["status"] in ("completed", "processing"):
+            # Funds committed — move the balance. A later webhook failure restores it.
+            profile.total_paid_out = float(profile.total_paid_out or 0) + amount
+            profile.pending_payout = 0
+            done = result["status"] == "completed"
+            create_notification(
+                db, str(teacher.id), "payout_processed",
+                f"Payout of ₹{amount:.2f} {'completed' if done else 'initiated'}",
+                f"Your earnings of ₹{amount:.2f} {'have been settled to' if done else 'are being settled to'} your bank account.",
+                {},
+            )
+            try:
+                send_payout_notification_task.delay(teacher.email, teacher.full_name, amount)
+            except Exception:
+                pass
+            processed.append({
+                "teacher_id": str(teacher.id), "name": teacher.full_name,
+                "amount": amount, "status": payout.status,
+            })
+        else:
+            failed.append({
+                "teacher_id": str(teacher.id), "name": teacher.full_name,
+                "amount": amount, "reason": payout.failure_reason,
+            })
 
     db.commit()
-    return {"processed": processed, "count": len(processed)}
+    return {
+        "processed": processed,
+        "failed": failed,
+        "count": len(processed),
+        "failed_count": len(failed),
+        "mode": payouts_mode(),
+    }
 
 
 @router.get("/refunds")

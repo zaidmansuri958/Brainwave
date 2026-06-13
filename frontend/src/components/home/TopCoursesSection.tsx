@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { Star, Users, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { Star, ArrowRight, BookOpen, ClipboardList } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { courseApi } from "@/lib/api";
+import { courseApi, mockTestsApi } from "@/lib/api";
+import { MockTestCard, type MockTestPackageCard } from "@/components/mock-tests/MockTestCard";
 
 const FALLBACK_COURSES = [
   { id: "1", slug: "ai-ml-bootcamp", title: "Complete AI & Machine Learning Bootcamp", teacher_name: "Dr. Arjun Patel", category: "AI/ML", rating: 4.8, total_students: 12600, price: 1499, original_price: 2000, thumbnail_color: "from-violet-600 to-indigo-800", emoji: "🤖" },
@@ -78,42 +80,102 @@ function CourseCard({ course }: { course: typeof FALLBACK_COURSES[0] & { thumbna
   );
 }
 
+type Tab = "courses" | "mock-tests";
+
 export function TopCoursesSection() {
-  const { data } = useQuery({
+  const [tab, setTab] = useState<Tab>("courses");
+
+  const { data: coursesData } = useQuery({
     queryKey: ["courses-preview"],
     queryFn: () => courseApi.list({ sort: "popular", limit: 5 }).then((r) => r.data),
     staleTime: 60000,
   });
 
-  const liveCourses = data?.courses || [];
+  const { data: mockData } = useQuery({
+    queryKey: ["mock-catalog-preview"],
+    queryFn: () => mockTestsApi.catalog().then((r) => r.data),
+    staleTime: 60000,
+    enabled: tab === "mock-tests",
+  });
 
+  const liveCourses = coursesData?.courses || [];
   const displayCourses = liveCourses.length >= 5
-    ? liveCourses.slice(0, 5).map((c: any, i: number) => ({
-        ...FALLBACK_COURSES[i],
-        ...c,
-      }))
+    ? liveCourses.slice(0, 5).map((c: any, i: number) => ({ ...FALLBACK_COURSES[i], ...c }))
     : FALLBACK_COURSES;
+
+  const mockPackages: MockTestPackageCard[] = (mockData?.packages || []).slice(0, 5);
+
+  const tabs: { key: Tab; label: string; icon: typeof BookOpen }[] = [
+    { key: "courses", label: "Courses", icon: BookOpen },
+    { key: "mock-tests", label: "Mock Tests", icon: ClipboardList },
+  ];
 
   return (
     <section className="py-14 bg-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex items-end justify-between mb-8">
+        <div className="flex flex-col gap-5 mb-8 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Top Courses</h2>
-            <p className="text-sm text-gray-500 mt-1">Explore our most popular and highly rated courses</p>
+            <h2 className="text-2xl font-bold text-gray-900">Explore What&apos;s Popular</h2>
+            <p className="text-sm text-gray-500 mt-1">
+              {tab === "courses"
+                ? "Our most popular and highly rated courses"
+                : "Timed, exam-style mock tests with instant scoring & analytics"}
+            </p>
           </div>
-          <Link href="/courses" className="flex items-center gap-1.5 text-sm font-semibold text-violet-600 hover:text-violet-700 transition-colors">
-            View all courses <ArrowRight className="h-4 w-4" />
+          <Link
+            href={tab === "courses" ? "/courses" : "/catalog/mock-tests"}
+            className="flex items-center gap-1.5 text-sm font-semibold text-violet-600 hover:text-violet-700 transition-colors"
+          >
+            View all {tab === "courses" ? "courses" : "mock tests"} <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
 
-        {/* Course grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-          {displayCourses.map((course: any) => (
-            <CourseCard key={course.id} course={course} />
+        {/* Tab switcher */}
+        <div className="mb-7 inline-flex items-center gap-1 rounded-xl bg-gray-100 p-1">
+          {tabs.map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setTab(key)}
+              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all ${
+                tab === key
+                  ? "bg-white text-violet-700 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              {label}
+            </button>
           ))}
         </div>
+
+        {/* Grid */}
+        {tab === "courses" ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+            {displayCourses.map((course: any) => (
+              <CourseCard key={course.id} course={course} />
+            ))}
+          </div>
+        ) : mockPackages.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {mockPackages.map((pkg) => (
+              <MockTestCard key={pkg.id} pkg={pkg} />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 py-16 text-center">
+            <ClipboardList className="mx-auto mb-3 h-10 w-10 text-gray-300" />
+            <p className="font-semibold text-gray-600">Mock tests coming soon</p>
+            <p className="mt-1 text-sm text-gray-400">Our teachers are crafting exam-ready papers — check back shortly.</p>
+            <Link
+              href="/catalog/mock-tests"
+              className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-violet-600 hover:text-violet-700"
+            >
+              Browse mock tests <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        )}
       </div>
     </section>
   );

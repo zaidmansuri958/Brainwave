@@ -233,8 +233,9 @@ export default function TeacherEarningsPage() {
             <div>
               <p className="text-sm font-bold text-violet-900 mb-1">How payouts work</p>
               <p className="text-xs text-violet-700 leading-relaxed">
-                Earnings accumulate in your pending balance and are automatically settled every <strong>two weeks</strong>.
-                The platform retains its commission before settlement — what you see as "Net Earned" is yours.
+                Earnings accumulate in your pending balance and are disbursed to your bank account when the
+                platform processes a payout (you can also <strong>request a payout</strong> once you&apos;ve added your bank details).
+                The platform retains its commission before settlement — what you see as &quot;Net Earned&quot; is yours.
                 Refunded purchases reverse the corresponding platform cut.
               </p>
             </div>

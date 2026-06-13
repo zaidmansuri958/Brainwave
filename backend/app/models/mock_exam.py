@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Boolean, DateTime, Text, Integer, Numeric, ForeignKey
+from sqlalchemy import Column, String, Boolean, DateTime, Text, Integer, Numeric, ForeignKey, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -33,6 +33,8 @@ class MockTestPaper(Base):
     order_index = Column(Integer, default=0)
     time_limit_minutes = Column(Integer, nullable=False)
     total_marks = Column(Numeric(10, 2), nullable=True)
+    marks_per_question = Column(Numeric(5, 2), nullable=False, default=1.0)
+    negative_marks = Column(Numeric(5, 2), nullable=False, default=0.0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     package = relationship("MockTestPackage", back_populates="papers")
@@ -90,8 +92,25 @@ class MockTestAttempt(Base):
     answers = Column(JSONB, nullable=True)
     score_percent = Column(Numeric(5, 2), nullable=True)
     total_score = Column(Numeric(10, 2), nullable=True)
+    time_taken_seconds = Column(Integer, nullable=True)
     started_at = Column(DateTime(timezone=True), server_default=func.now())
     submitted_at = Column(DateTime(timezone=True), nullable=True)
 
     student = relationship("User", foreign_keys=[student_id])
     paper = relationship("MockTestPaper", back_populates="attempts")
+
+
+class MockTestReview(Base):
+    __tablename__ = "mock_test_reviews"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    student_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    package_id = Column(UUID(as_uuid=True), ForeignKey("mock_test_packages.id", ondelete="CASCADE"))
+    rating = Column(Integer, nullable=False)
+    review_text = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (UniqueConstraint("student_id", "package_id", name="unique_mock_review"),)
+
+    student = relationship("User", foreign_keys=[student_id])
+    package = relationship("MockTestPackage")

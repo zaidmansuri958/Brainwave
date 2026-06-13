@@ -243,11 +243,22 @@ export const mockTestsApi = {
   }) => api.post("/mock-tests/purchase/confirm", data),
   myPackages: () => api.get("/mock-tests/my-packages"),
   paperTake: (paperId: string) => api.get(`/mock-tests/papers/${paperId}/take`),
-  submitAttempt: (paperId: string, answers: Record<string, string>) =>
-    api.post(`/mock-tests/papers/${paperId}/attempt`, { answers }),
+  submitAttempt: (paperId: string, answers: Record<string, string>, timeTakenSeconds?: number) =>
+    api.post(`/mock-tests/papers/${paperId}/attempt`, { answers, time_taken_seconds: timeTakenSeconds }),
   listAttempts: (paperId: string) => api.get(`/mock-tests/papers/${paperId}/attempts`),
   getAttempt: (paperId: string, attemptId: string) =>
     api.get(`/mock-tests/papers/${paperId}/attempts/${attemptId}`),
+  leaderboard: (paperId: string) => api.get(`/mock-tests/papers/${paperId}/leaderboard`),
+  analytics: (paperId: string, attemptId?: string) =>
+    api.get(`/mock-tests/papers/${paperId}/analytics`, { params: attemptId ? { attempt_id: attemptId } : {} }),
+  packageStats: (slug: string) => api.get(`/mock-tests/slug/${slug}/stats`),
+  reviews: (packageId: string) => api.get(`/mock-tests/packages/${packageId}/reviews`),
+  submitReview: (packageId: string, data: { rating: number; review_text?: string }) =>
+    api.post(`/mock-tests/packages/${packageId}/reviews`, data),
+  updateReview: (packageId: string, reviewId: string, data: { rating?: number; review_text?: string }) =>
+    api.patch(`/mock-tests/packages/${packageId}/reviews/${reviewId}`, data),
+  deleteReview: (packageId: string, reviewId: string) =>
+    api.delete(`/mock-tests/packages/${packageId}/reviews/${reviewId}`),
 };
 
 export const availabilityApi = {
@@ -310,6 +321,7 @@ export const adminApi = {
   featureCourse: (id: string, featured: boolean) =>
     api.patch(`/admin/courses/${id}/feature`, null, { params: { featured } }),
   payments: (params?: any) => api.get("/admin/payments", { params }),
+  payouts: () => api.get("/admin/payouts"),
   // backend reads teacher_id as query param
   processPayouts: (teacherId?: string) =>
     api.post("/admin/payouts/process", null, {

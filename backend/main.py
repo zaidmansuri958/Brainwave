@@ -105,6 +105,48 @@ async def razorpay_webhook(request: Request):
     data = json.loads(payload)
     event = data.get("event")
     print(f"Webhook event received: {event}")
+
+    # ── RazorpayX payout status reconciliation ──
+    if event and event.startswith("payout."):
+        from datetime import datetime, timezone
+        from app.database import SessionLocal
+        from app.models.payment import Payout
+        from app.models.user import TeacherProfile
+        from app.services.notification_service import create_notification
+
+        entity = (data.get("payload", {}) or {}).get("payout", {}).get("entity", {}) or {}
+        pout_id = entity.get("id")
+        rzp_status = (entity.get("status") or "").lower()
+        if pout_id:
+            db = SessionLocal()
+            try:
+                po = db.query(Payout).filter(Payout.razorpay_payout_id == pout_id).first()
+                if po and po.status not in ("completed", "failed"):
+                    if rzp_status == "processed":
+                        po.status = "completed"
+                        po.completed_at = datetime.now(timezone.utc)
+                        create_notification(
+                            db, str(po.teacher_id), "payout_completed",
+                            f"Payout of ₹{float(po.amount or 0):.2f} completed",
+                            "Your earnings have been settled to your bank account.", {},
+                        )
+                    elif rzp_status in ("failed", "reversed", "cancelled", "rejected"):
+                        po.status = "failed"
+                        po.failure_reason = f"RazorpayX: {rzp_status}"
+                        # Restore the teacher's pending balance so it can be retried
+                        prof = db.query(TeacherProfile).filter(TeacherProfile.user_id == po.teacher_id).first()
+                        if prof:
+                            prof.pending_payout = float(prof.pending_payout or 0) + float(po.amount or 0)
+                            prof.total_paid_out = max(0.0, float(prof.total_paid_out or 0) - float(po.amount or 0))
+                        create_notification(
+                            db, str(po.teacher_id), "payout_failed",
+                            "Payout could not be completed",
+                            "A payout failed and your balance has been restored. We'll retry shortly.", {},
+                        )
+                    db.commit()
+            finally:
+                db.close()
+
     return {"status": "ok"}
 
 

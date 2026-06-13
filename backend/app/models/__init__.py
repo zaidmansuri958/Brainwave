@@ -15,7 +15,7 @@ from app.models.promotion import CoursePromotion
 from app.models.study_material import StudyMaterialProduct, StudyMaterialFile, StudyMaterialPurchase
 from app.models.mock_exam import (
     MockTestPackage, MockTestPaper, MockTestSection, MockTestQuestion,
-    MockTestPurchase, MockTestAttempt,
+    MockTestPurchase, MockTestAttempt, MockTestReview,
 )
 from app.models.teacher_availability import TeacherAvailabilityRule
 
@@ -36,6 +36,6 @@ __all__ = [
     "CoursePromotion",
     "StudyMaterialProduct", "StudyMaterialFile", "StudyMaterialPurchase",
     "MockTestPackage", "MockTestPaper", "MockTestSection", "MockTestQuestion",
-    "MockTestPurchase", "MockTestAttempt",
+    "MockTestPurchase", "MockTestAttempt", "MockTestReview",
     "TeacherAvailabilityRule",
 ]
