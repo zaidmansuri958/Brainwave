@@ -99,16 +99,10 @@ async def generate_certificate(
             detail=f"Course not completed. Progress: {round(completion_pct)}% / required {round(required)}%"
         )
 
-    from datetime import datetime, timezone
-    cert = Certificate(
-        student_id=current_user.id,
-        course_id=course_id,
-        teacher_id=course.teacher_id,
-        issued_at=datetime.now(timezone.utc),
-    )
-    db.add(cert)
-    db.commit()
-    db.refresh(cert)
+    # Render the real PDF (+ hash + MinIO upload) via the shared service, so a manually
+    # generated certificate is identical to the one auto-issued on completion.
+    from app.services.certificate_service import issue_certificate
+    cert = issue_certificate(db, str(current_user.id), str(course_id))
     return {"certificate": _serialize_cert(cert), "already_issued": False}
 
 

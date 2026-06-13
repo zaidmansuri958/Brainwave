@@ -526,25 +526,49 @@ async def request_payout(
     current_user: User = Depends(get_current_teacher),
     db: Session = Depends(get_db)
 ):
+    from app.services.razorpayx_service import disburse, payouts_mode
+    from tasks.email_tasks import send_payout_notification_task
+
     profile = db.query(TeacherProfile).filter(TeacherProfile.user_id == current_user.id).first()
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
-    pending = float(profile.pending_payout or 0)
-    if pending <= 0:
-        raise HTTPException(status_code=400, detail="No pending payout balance")
-    amount = min(data.amount, pending) if data.amount else pending
     if not profile.bank_account_number or not profile.bank_ifsc:
         raise HTTPException(status_code=400, detail="Bank details required before requesting payout")
+
+    pending = float(profile.pending_payout or 0)
+    min_amount = float(settings.payout_min_amount)
+    amount = min(float(data.amount), pending) if data.amount else pending
+    if amount < min_amount:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Minimum payout is ₹{min_amount:.0f}. Your available balance is ₹{pending:.2f}.",
+        )
+
+    # Disburse through the same RazorpayX path the admin uses — the balance only moves once
+    # funds are actually committed (processing/completed); on failure it is left intact to retry.
     payout = Payout(
         teacher_id=current_user.id,
         amount=amount,
-        status="pending",
+        status="processing",
+        initiated_by=current_user.id,
     )
     db.add(payout)
-    profile.pending_payout = pending - amount
-    db.commit()
-    db.refresh(payout)
-    return {"payout_id": str(payout.id), "amount": amount, "status": "pending"}
+    db.flush()
+    result = disburse(db, payout, profile, current_user)
+
+    if result["status"] in ("completed", "processing"):
+        profile.total_paid_out = float(profile.total_paid_out or 0) + amount
+        profile.pending_payout = pending - amount
+        db.commit()
+        db.refresh(payout)
+        try:
+            send_payout_notification_task.delay(current_user.email, current_user.full_name, amount)
+        except Exception:
+            pass
+        return {"payout_id": str(payout.id), "amount": amount, "status": payout.status, "mode": payouts_mode()}
+
+    db.commit()  # persist the failed payout row + failure_reason
+    raise HTTPException(status_code=502, detail=payout.failure_reason or "Payout could not be initiated")
 
 
 @router.patch("/profile")

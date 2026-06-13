@@ -162,6 +162,7 @@ async def get_course(slug: str, db: Session = Depends(get_db)):
     data = jsonable_encoder(CourseResponse.from_orm(course))
     data["effective_price"] = eff
     data["discount_percent"] = discount_pct
+    data["updated_at"] = course.updated_at.isoformat() if course.updated_at else None
     return data
 
 

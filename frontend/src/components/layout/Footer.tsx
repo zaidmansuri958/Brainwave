@@ -2,12 +2,21 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useQuery } from "@tanstack/react-query";
+import api, { platformApi } from "@/lib/api";
+import { toast } from "@/hooks/use-toast";
 import {
   Linkedin, Twitter, Youtube, Instagram,
   LayoutGrid, GraduationCap, UserCheck, Building2,
   Star, Users, BookOpen, Award,
-  ShieldCheck, Lock, ArrowRight, CheckCircle2,
+  ShieldCheck, Lock, ArrowRight, CheckCircle2, Loader2,
 } from "lucide-react";
+
+function compact(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n % 1_000_000 ? 1 : 0)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(n % 1_000 ? 1 : 0)}K`;
+  return `${n}`;
+}
 
 // ─── Link data ─────────────────────────────────────────────────────────────────
 const footerColumns = [
@@ -53,8 +62,8 @@ const footerColumns = [
       { label: "Careers",         href: "#" },
       { label: "Contact Us",      href: "#" },
       { label: "Press Kit",       href: "#" },
-      { label: "Privacy Policy",  href: "#" },
-      { label: "Terms of Service", href: "#" },
+      { label: "Privacy Policy",  href: "/privacy" },
+      { label: "Terms of Service", href: "/terms" },
     ],
   },
 ];
@@ -66,22 +75,43 @@ const socialLinks = [
   { icon: Instagram, href: "#", label: "Instagram" },
 ];
 
-const stats = [
-  { icon: Users,         iconBg: "bg-violet-100",   iconColor: "text-violet-600", value: "50K+",  label: "Active Learners"   },
-  { icon: GraduationCap, iconBg: "bg-emerald-100",  iconColor: "text-emerald-600",value: "1K+",   label: "Expert Teachers"   },
-  { icon: BookOpen,      iconBg: "bg-blue-100",     iconColor: "text-blue-600",   value: "10M+",  label: "Lessons Delivered" },
-  { icon: Star,          iconBg: "bg-amber-100",    iconColor: "text-amber-500",  value: "95%",   label: "Satisfaction Rate" },
-];
+const statMeta = [
+  { icon: Users,         iconBg: "bg-violet-100",   iconColor: "text-violet-600", key: "students", label: "Active Learners" },
+  { icon: GraduationCap, iconBg: "bg-emerald-100",  iconColor: "text-emerald-600",key: "teachers", label: "Expert Teachers" },
+  { icon: BookOpen,      iconBg: "bg-blue-100",     iconColor: "text-blue-600",   key: "courses",  label: "Courses"         },
+  { icon: Star,          iconBg: "bg-amber-100",    iconColor: "text-amber-500",  key: "rating",   label: "Avg Rating"      },
+] as const;
 
 export function Footer() {
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  function handleSubscribe(e: React.FormEvent) {
+  const { data: stats } = useQuery({
+    queryKey: ["platform-stats"],
+    queryFn: () => platformApi.stats().then((r) => r.data),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  function statValue(key: string): string {
+    if (!stats) return "—";
+    if (key === "rating") return stats.avg_rating ? `${stats.avg_rating}/5` : "—";
+    return compact(stats[key] ?? 0);
+  }
+
+  async function handleSubscribe(e: React.FormEvent) {
     e.preventDefault();
-    if (!email) return;
-    setSubscribed(true);
-    setEmail("");
+    if (!email || submitting) return;
+    setSubmitting(true);
+    try {
+      await api.post("/newsletter/subscribe", { email });
+      setSubscribed(true);
+      setEmail("");
+    } catch {
+      toast({ title: "Couldn't subscribe", description: "Please check your email and try again.", variant: "destructive" });
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -137,9 +167,10 @@ export function Footer() {
                   </div>
                   <button
                     type="submit"
-                    className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-semibold text-sm px-5 py-3 rounded-r-xl transition-colors shrink-0"
+                    disabled={submitting || !email}
+                    className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-semibold text-sm px-5 py-3 rounded-r-xl transition-colors shrink-0 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    Subscribe <ArrowRight className="h-4 w-4" />
+                    {submitting ? <><Loader2 className="h-4 w-4 animate-spin" /> Subscribing…</> : <>Subscribe <ArrowRight className="h-4 w-4" /></>}
                   </button>
                 </form>
               )}
@@ -174,15 +205,19 @@ export function Footer() {
             </p>
 
             {/* Rating */}
-            <div className="flex items-center gap-1.5 mb-5">
-              <div className="flex">
-                {[1,2,3,4,5].map((i) => (
-                  <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
-                ))}
+            {stats?.avg_rating ? (
+              <div className="mb-5">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <div className="flex">
+                    {[1,2,3,4,5].map((i) => (
+                      <Star key={i} className={`h-4 w-4 ${i <= Math.round(stats.avg_rating) ? "fill-amber-400 text-amber-400" : "fill-gray-200 text-gray-200"}`} />
+                    ))}
+                  </div>
+                  <span className="text-sm font-semibold text-gray-700">{stats.avg_rating}/5</span>
+                </div>
+                <p className="text-xs text-gray-400">from {compact(stats.students)} learners</p>
               </div>
-              <span className="text-sm font-semibold text-gray-700">4.8/5</span>
-            </div>
-            <p className="text-xs text-gray-400 -mt-3 mb-5">from 24k+ learners</p>
+            ) : null}
 
             {/* Social icons */}
             <div className="flex gap-2.5">
@@ -225,13 +260,13 @@ export function Footer() {
 
         {/* ── Stats bar ───────────────────────────────────────────────────── */}
         <div className="mt-12 rounded-2xl border border-gray-200 grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-gray-200 overflow-hidden">
-          {stats.map(({ icon: Icon, iconBg, iconColor, value, label }) => (
+          {statMeta.map(({ icon: Icon, iconBg, iconColor, key, label }) => (
             <div key={label} className="flex items-center gap-4 px-6 py-5">
               <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${iconBg} shrink-0`}>
                 <Icon className={`h-5 w-5 ${iconColor}`} />
               </div>
               <div>
-                <p className="text-xl font-extrabold text-gray-900 leading-tight">{value}</p>
+                <p className="text-xl font-extrabold text-gray-900 leading-tight">{statValue(key)}</p>
                 <p className="text-xs text-gray-500 mt-0.5">{label}</p>
               </div>
             </div>

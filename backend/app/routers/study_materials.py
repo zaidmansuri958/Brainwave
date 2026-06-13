@@ -10,7 +10,7 @@ from app.middleware.auth_middleware import get_current_user, get_current_teacher
 from app.models.user import User
 from app.models.study_material import StudyMaterialProduct, StudyMaterialFile, StudyMaterialPurchase
 from app.services.storage_service import upload_file
-from app.services.payment_service import create_razorpay_order, verify_razorpay_signature, record_payment
+from app.services.payment_service import create_razorpay_order, verify_razorpay_signature, create_pending_payment, finalize_payment
 from app.services.notification_service import create_notification
 
 router = APIRouter(prefix="/study-materials", tags=["StudyMaterials"])
@@ -199,8 +199,25 @@ async def purchase_initiate(
     )
     if existing:
         raise HTTPException(status_code=400, detail="Already purchased")
-    order = create_razorpay_order(float(prod.price))
-    return {"razorpay_order_id": order["id"], "amount": float(prod.price), "currency": prod.currency}
+    price = float(prod.price or 0)
+    if price <= 0:
+        # Free product — grant access immediately without a Razorpay round-trip.
+        db.add(StudyMaterialPurchase(student_id=current_user.id, product_id=prod.id, payment_id=None, amount_paid=0))
+        prod.enrolled_count = int(prod.enrolled_count or 0) + 1
+        db.commit()
+        return {"free": True, "enrolled": True}
+    order = create_razorpay_order(price)
+    create_pending_payment(
+        db,
+        payer_id=str(current_user.id),
+        payee_id=str(prod.teacher_id),
+        payment_type="study_material",
+        reference_id=str(prod.id),
+        razorpay_order_id=order["id"],
+        total_amount=price,
+        currency=prod.currency,
+    )
+    return {"razorpay_order_id": order["id"], "amount": price, "currency": prod.currency}
 
 
 @router.post("/purchase/confirm")
@@ -214,20 +231,22 @@ async def purchase_confirm(
     prod = db.query(StudyMaterialProduct).filter(StudyMaterialProduct.id == data.product_id).first()
     if not prod:
         raise HTTPException(status_code=404, detail="Not found")
-    pay = record_payment(
+    # Idempotency: a replayed confirm must not create a second purchase / payment.
+    existing = db.query(StudyMaterialPurchase).filter(
+        StudyMaterialPurchase.student_id == current_user.id,
+        StudyMaterialPurchase.product_id == prod.id,
+    ).first()
+    if existing:
+        return {"success": True}
+    pay = finalize_payment(
         db,
-        payer_id=str(current_user.id),
-        payee_id=str(prod.teacher_id),
-        payment_type="study_material",
-        reference_id=data.product_id,
         razorpay_order_id=data.razorpay_order_id,
         razorpay_payment_id=data.razorpay_payment_id,
-        total_amount=float(prod.price),
-        currency=prod.currency,
-        tier_enrollment_count=None,
+        payer_id=str(current_user.id),
+        reference_id=str(data.product_id),
     )
     pur = StudyMaterialPurchase(
-        student_id=current_user.id, product_id=prod.id, payment_id=pay.id, amount_paid=prod.price
+        student_id=current_user.id, product_id=prod.id, payment_id=pay.id, amount_paid=pay.total_amount
     )
     db.add(pur)
     prod.enrolled_count = int(prod.enrolled_count or 0) + 1

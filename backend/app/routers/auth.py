@@ -1,9 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
+from app.config import settings
 from app.database import get_db
 from app.schemas.user import UserRegister, UserLogin, GoogleAuth, TokenRefresh, AuthResponse, UserResponse, UserUpdate
 from app.services.auth_service import register_user, login_user, get_or_create_google_user
-from app.utils.jwt import verify_token, create_access_token, blacklist_token, get_current_user_payload
+from fastapi.security import HTTPAuthorizationCredentials
+from app.utils.jwt import verify_token, create_access_token, blacklist_token, get_current_user_payload, security
 from app.middleware.auth_middleware import get_current_user
 from app.models.user import User
 import httpx
@@ -71,8 +74,10 @@ async def refresh_token(data: TokenRefresh):
 
 @router.post("/logout")
 async def logout(
-    payload: dict = Depends(get_current_user_payload)
+    credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
+    # Revoke the presented access token so it can't be reused after logout.
+    blacklist_token(credentials.credentials)
     return {"message": "Logged out successfully"}
 
 
@@ -103,13 +108,60 @@ async def update_me(
 
 @router.post("/forgot-password")
 async def forgot_password(data: dict, db: Session = Depends(get_db)):
-    """
-    Password reset stub. Always returns 200 to prevent email enumeration.
-    Email delivery requires SMTP configuration — wire up a mail service here.
-    """
-    email = data.get("email", "").strip().lower()
+    """Generate a time-limited reset token and email a reset link.
+    Always returns 200 to prevent email enumeration."""
+    email = (data.get("email") or "").strip().lower()
     user = db.query(User).filter(User.email == email).first()
-    if user:
-        # TODO: generate a time-limited reset token, store it, and email the reset link
-        pass
+    if user and user.password_hash:
+        from datetime import datetime, timedelta
+        from jose import jwt as jose_jwt
+        expire = datetime.utcnow() + timedelta(minutes=30)
+        token = jose_jwt.encode(
+            {"sub": str(user.id), "type": "password_reset", "exp": expire},
+            settings.jwt_secret,
+            algorithm=settings.jwt_algorithm,
+        )
+        reset_link = f"{settings.frontend_url}/reset-password?token={token}"
+        try:
+            from app.utils.email import send_email
+            send_email(
+                to=user.email,
+                subject=f"Reset your {settings.platform_name} password",
+                html=f"""
+                <h2>Reset your password</h2>
+                <p>Hi {user.full_name or 'there'},</p>
+                <p>We received a request to reset your password. This link is valid for 30 minutes:</p>
+                <p><a href="{reset_link}">Reset my password</a></p>
+                <p>If you didn't request this, you can safely ignore this email.</p>
+                """,
+            )
+        except Exception:
+            pass
     return {"message": "If that email is registered, a reset link has been sent."}
+
+
+class ResetPassword(BaseModel):
+    token: str
+    new_password: str
+
+
+@router.post("/reset-password")
+async def reset_password(data: ResetPassword, db: Session = Depends(get_db)):
+    """Complete a password reset using the emailed token."""
+    if len((data.new_password or "")) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
+    try:
+        # verify_token decodes, checks expiry, and rejects already-used (blacklisted) tokens.
+        payload = verify_token(data.token)
+    except HTTPException:
+        raise HTTPException(status_code=400, detail="Reset link is invalid, expired, or already used")
+    if payload.get("type") != "password_reset":
+        raise HTTPException(status_code=400, detail="Invalid reset token")
+    user = db.query(User).filter(User.id == payload.get("sub")).first()
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid reset token")
+    from app.services.auth_service import hash_password
+    user.password_hash = hash_password(data.new_password)
+    db.commit()
+    blacklist_token(data.token)  # single-use
+    return {"message": "Password reset successful. You can now log in."}

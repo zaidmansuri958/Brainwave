@@ -18,6 +18,8 @@ from app.models.mock_exam import (
     MockTestPurchase, MockTestAttempt, MockTestReview,
 )
 from app.models.teacher_availability import TeacherAvailabilityRule
+from app.models.chat import ChatLog
+from app.models.newsletter import NewsletterSubscriber
 
 __all__ = [
     "User", "TeacherProfile",
@@ -38,4 +40,6 @@ __all__ = [
     "MockTestPackage", "MockTestPaper", "MockTestSection", "MockTestQuestion",
     "MockTestPurchase", "MockTestAttempt", "MockTestReview",
     "TeacherAvailabilityRule",
+    "ChatLog",
+    "NewsletterSubscriber",
 ]

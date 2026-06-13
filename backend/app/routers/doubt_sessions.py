@@ -7,7 +7,7 @@ from app.models.doubt_session import DoubtSession, DoubtSessionBooking
 from app.models.enrollment import Enrollment
 from app.middleware.auth_middleware import get_current_user, get_current_teacher
 from app.models.user import User
-from app.services.payment_service import create_razorpay_order, verify_razorpay_signature, record_payment
+from app.services.payment_service import create_razorpay_order, verify_razorpay_signature, create_pending_payment, finalize_payment
 from app.services.notification_service import create_notification
 from app.config import settings
 from datetime import datetime
@@ -165,6 +165,15 @@ async def initiate_doubt_booking(
         raise HTTPException(status_code=400, detail="Session is full")
 
     order = create_razorpay_order(float(session.price))
+    create_pending_payment(
+        db,
+        payer_id=str(current_user.id),
+        payee_id=str(session.teacher_id),
+        payment_type="doubt_session",
+        reference_id=str(session_id),
+        razorpay_order_id=order["id"],
+        total_amount=float(session.price),
+    )
     return {
         "razorpay_order_id": order["id"],
         "amount": float(session.price),
@@ -195,15 +204,12 @@ async def book_doubt_session(
     if existing:
         raise HTTPException(status_code=400, detail="Already booked")
 
-    payment = record_payment(
+    payment = finalize_payment(
         db,
-        payer_id=str(current_user.id),
-        payee_id=str(session.teacher_id),
-        payment_type="doubt_session",
-        reference_id=session_id,
         razorpay_order_id=razorpay_order_id,
         razorpay_payment_id=razorpay_payment_id,
-        total_amount=float(session.price)
+        payer_id=str(current_user.id),
+        reference_id=str(session_id),
     )
 
     booking = DoubtSessionBooking(

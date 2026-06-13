@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from app.database import get_db
 from app.models.enrollment import Enrollment
 from app.models.course import Course
+from app.models.chat import ChatLog
 from app.middleware.auth_middleware import get_current_user
 from app.models.user import User
 from app.config import settings
@@ -90,6 +91,15 @@ async def chat_message(
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
 
+    # Persist the question now, while the request session is still open.
+    try:
+        db.add(ChatLog(course_id=course_id, user_id=current_user.id, role="user", content=body.message))
+        db.commit()
+    except Exception:
+        db.rollback()
+
+    uid, cid, course_title = str(current_user.id), str(course_id), course.title
+
     async def generate():
         response_text = None
         sources = []
@@ -109,7 +119,7 @@ async def chat_message(
 
         # ── Built-in fallback (always works) ─────────────────────────────────
         if not response_text:
-            response_text = _fallback_response(body.message, course.title)
+            response_text = _fallback_response(body.message, course_title)
 
         # ── Stream word-by-word ───────────────────────────────────────────────
         words = response_text.split(" ")
@@ -118,6 +128,18 @@ async def chat_message(
             yield f"data: {json.dumps(chunk)}\n\n"
 
         yield f"data: {json.dumps({'sources': sources, 'done': True})}\n\n"
+
+        # Persist the answer with a fresh session — the request session may be closed by now.
+        try:
+            from app.database import SessionLocal
+            _db = SessionLocal()
+            try:
+                _db.add(ChatLog(course_id=cid, user_id=uid, role="assistant", content=response_text))
+                _db.commit()
+            finally:
+                _db.close()
+        except Exception:
+            pass
 
     return StreamingResponse(generate(), media_type="text/event-stream")
 
@@ -128,4 +150,19 @@ async def get_chat_history(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return {"messages": []}
+    rows = (
+        db.query(ChatLog)
+        .filter(ChatLog.course_id == course_id, ChatLog.user_id == current_user.id)
+        .order_by(ChatLog.created_at.asc())
+        .all()
+    )
+    return {
+        "messages": [
+            {
+                "role": r.role,
+                "content": r.content,
+                "created_at": r.created_at.isoformat() if r.created_at else None,
+            }
+            for r in rows
+        ]
+    }

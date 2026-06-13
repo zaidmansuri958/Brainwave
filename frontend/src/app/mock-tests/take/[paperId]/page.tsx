@@ -37,9 +37,10 @@ export default function MockTestTakePage({ params }: { params: { paperId: string
   const leftRef = useRef<number | null>(null);
   leftRef.current = left;
 
-  const { data: paper, isLoading } = useQuery({
+  const { data: paper, isLoading, isError, error } = useQuery({
     queryKey: ["paper-take", paperId],
     queryFn: () => mockTestsApi.paperTake(paperId).then((r) => r.data),
+    retry: false,
   });
 
   const totalSecs = useMemo(() => (paper?.time_limit_minutes || 60) * 60, [paper]);
@@ -81,13 +82,37 @@ export default function MockTestTakePage({ params }: { params: { paperId: string
   }, [result]);
 
   /* ── Loading ── */
-  if (isLoading || !paper) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-[#f8f7ff] flex flex-col items-center justify-center gap-4">
         <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg">
           <Loader2 className="h-7 w-7 animate-spin text-white" />
         </div>
         <p className="text-sm font-semibold text-gray-500">Loading your exam…</p>
+      </div>
+    );
+  }
+
+  /* ── Error / no access (was an infinite spinner before) ── */
+  if (isError || !paper) {
+    const status = (error as any)?.response?.status;
+    const noAccess = status === 403;
+    return (
+      <div className="min-h-screen bg-[#f8f7ff] flex flex-col items-center justify-center gap-4 px-6 text-center">
+        <div className="h-14 w-14 rounded-2xl bg-red-100 flex items-center justify-center">
+          <AlertTriangle className="h-7 w-7 text-red-500" />
+        </div>
+        <p className="text-base font-bold text-gray-800">
+          {noAccess ? "You don't have access to this test" : "Couldn't load this test"}
+        </p>
+        <p className="text-sm text-gray-500 max-w-sm">
+          {noAccess
+            ? "You need to purchase this package before you can take its papers."
+            : getApiErrorMessage(error, "Please go back and try again.")}
+        </p>
+        <Link href="/catalog/mock-tests" className="rounded-xl bg-violet-600 text-white text-sm font-semibold px-5 py-2.5">
+          Browse mock tests
+        </Link>
       </div>
     );
   }

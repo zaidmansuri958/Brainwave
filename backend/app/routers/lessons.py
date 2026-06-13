@@ -9,6 +9,7 @@ from app.middleware.auth_middleware import get_current_user
 from app.models.user import User
 from app.utils.enrollment_access import get_valid_enrollment
 from app.services.storage_service import get_presigned_url
+from app.config import settings
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -69,8 +70,18 @@ async def get_video_url(
         if not enrollment:
             raise HTTPException(status_code=403, detail="Not enrolled or access expired")
 
+    # Hand out a short-lived presigned URL rather than the permanent public object URL,
+    # so the enrollment check above actually gates access.
+    master_url = lesson.video_url
+    if master_url:
+        prefix = settings.storage_public_url.rstrip("/") + "/"
+        if master_url.startswith(prefix):
+            bucket, _, key = master_url[len(prefix):].partition("/")
+            if bucket and key:
+                master_url = get_presigned_url(bucket, key, expiry=3600)
+
     return {
-        "master_url": lesson.video_url,
+        "master_url": master_url,
         "qualities": ["480p", "720p", "1080p"]
     }
 

@@ -35,6 +35,7 @@ interface Course {
   difficulty_level?: string; language?: string; enrolled_count: number; avg_rating: number;
   review_count: number; total_duration_minutes: number; total_chapters: number;
   certificate_enabled: boolean; tags?: string[]; effective_price?: number; discount_percent?: number;
+  updated_at?: string;
   chapters?: Chapter[];
   teacher?: { id: string; full_name: string; avatar_url?: string; teacher_profile?: { bio?: string; expertise_areas?: string[]; credibility_score?: number; total_students?: number; }; };
 }
@@ -343,7 +344,9 @@ export function CourseDetailClient({ course }: { course: Course }) {
 
               {/* Rating + enrollment row */}
               <div className="flex flex-wrap items-center gap-2 mb-3">
-                <span className="text-xs font-bold bg-[#eceb98] text-[#3d3c0a] px-2.5 py-1 rounded">Bestseller</span>
+                {(course.enrolled_count || 0) >= 50 && (
+                  <span className="text-xs font-bold bg-[#eceb98] text-[#3d3c0a] px-2.5 py-1 rounded">Bestseller</span>
+                )}
                 {Number(course.avg_rating) > 0 && (<>
                   <span className="text-sm font-bold text-[#f69c08]">{Number(course.avg_rating).toFixed(1)}</span>
                   <div className="flex gap-0.5">{[1, 2, 3, 4, 5].map((i) => (<Star key={i} className={`h-3.5 w-3.5 ${i <= Math.round(course.avg_rating) ? "fill-[#f69c08] text-[#f69c08]" : "fill-[#6a6f73] text-[#6a6f73]"}`} />))}</div>
@@ -368,8 +371,8 @@ export function CourseDetailClient({ course }: { course: Course }) {
                     <span>Created by <span className="text-[#cec0fc] underline cursor-pointer">{course.teacher.full_name}</span></span>
                   </div>
                 )}
-                {course.total_duration_minutes > 0 && (
-                  <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-[#6a6f73]" />Last updated {new Date().toLocaleString("en-IN", { month: "long", year: "numeric" })}</span>
+                {course.updated_at && (
+                  <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-[#6a6f73]" />Last updated {new Date(course.updated_at).toLocaleString("en-IN", { month: "long", year: "numeric" })}</span>
                 )}
                 {course.language && <span className="flex items-center gap-1.5"><Globe className="h-3.5 w-3.5 text-[#6a6f73]" />{course.language}</span>}
                 {course.certificate_enabled && <span className="flex items-center gap-1.5"><Award className="h-3.5 w-3.5 text-[#6a6f73]" />Certificate</span>}
@@ -585,8 +588,8 @@ export function CourseDetailClient({ course }: { course: Course }) {
                 <div className="flex-1 space-y-1.5">
                   {[5, 4, 3, 2, 1].map((star) => {
                     const count = getStarCount(star);
-                    const pct = reviews.length ? Math.round((count / reviews.length) * 100) : [70, 20, 6, 3, 1][5 - star];
-                    const displayCount = reviews.length ? count.toLocaleString() : ["2,040", "210", "70", "20", "10"][5 - star];
+                    const pct = reviews.length ? Math.round((count / reviews.length) * 100) : 0;
+                    const displayCount = reviews.length ? count.toLocaleString() : "0";
                     return (
                       <div key={star} className="flex items-center gap-2.5">
                         <div className="flex-1 h-2 bg-[#d1d7dc] rounded-full overflow-hidden">

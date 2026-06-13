@@ -52,6 +52,12 @@ export default function MaterialDetailPublicPage({ params }: { params: { slug: s
       }
       let checkoutCompleted = false;
       const { data: order } = await materialsApi.purchaseInitiate(product!.id);
+      // Free product — backend grants access immediately, no Razorpay round-trip.
+      if (order?.free || order?.enrolled) {
+        qc.invalidateQueries({ queryKey: ["my-material-purchases"] });
+        toast({ title: "Added to your library!" });
+        return;
+      }
       const ok = await loadRazorpay();
       if (!ok) throw new Error("Could not load payment window. Check your connection or ad blocker.");
       openRazorpayCheckout({

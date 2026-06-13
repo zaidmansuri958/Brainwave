@@ -72,6 +72,13 @@ export default function MockPackagePublicPage({ params }: { params: { slug: stri
       }
       let done = false;
       const { data: order } = await mockTestsApi.purchaseInitiate(pkg!.id);
+      // Free package — backend grants access immediately, no Razorpay round-trip.
+      if (order?.free || order?.enrolled) {
+        qc.invalidateQueries({ queryKey: ["my-mock-packages"] });
+        qc.invalidateQueries({ queryKey: ["mock-pkg", slug] });
+        toast({ title: "Added to your library! Start your tests below." });
+        return;
+      }
       const ok = await loadRazorpay();
       if (!ok) throw new Error("Could not load payment window.");
       openRazorpayCheckout({

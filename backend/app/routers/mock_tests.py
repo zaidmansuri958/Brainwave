@@ -18,7 +18,7 @@ from app.models.mock_exam import (
     MockTestAttempt,
     MockTestReview,
 )
-from app.services.payment_service import create_razorpay_order, verify_razorpay_signature, record_payment
+from app.services.payment_service import create_razorpay_order, verify_razorpay_signature, create_pending_payment, finalize_payment
 
 
 router = APIRouter(prefix="/mock-tests", tags=["MockTests"])
@@ -412,8 +412,24 @@ async def purchase_initiate(
     )
     if ex:
         raise HTTPException(status_code=400, detail="Already purchased")
-    order = create_razorpay_order(float(pkg.price))
-    return {"razorpay_order_id": order["id"], "amount": float(pkg.price), "currency": pkg.currency}
+    price = float(pkg.price or 0)
+    if price <= 0:
+        # Free package — grant access immediately without a Razorpay round-trip.
+        db.add(MockTestPurchase(student_id=current_user.id, package_id=pkg.id, payment_id=None, amount_paid=0))
+        db.commit()
+        return {"free": True, "enrolled": True}
+    order = create_razorpay_order(price)
+    create_pending_payment(
+        db,
+        payer_id=str(current_user.id),
+        payee_id=str(pkg.teacher_id),
+        payment_type="mock_test",
+        reference_id=str(pkg.id),
+        razorpay_order_id=order["id"],
+        total_amount=price,
+        currency=pkg.currency,
+    )
+    return {"razorpay_order_id": order["id"], "amount": price, "currency": pkg.currency}
 
 
 @router.post("/purchase/confirm")
@@ -427,24 +443,26 @@ async def purchase_confirm(
     pkg = db.query(MockTestPackage).filter(MockTestPackage.id == data.package_id).first()
     if not pkg:
         raise HTTPException(status_code=404, detail="Not found")
-    pay = record_payment(
+    # Idempotency: a replayed confirm must not create a second purchase / payment.
+    existing = db.query(MockTestPurchase).filter(
+        MockTestPurchase.student_id == current_user.id,
+        MockTestPurchase.package_id == pkg.id,
+    ).first()
+    if existing:
+        return {"success": True}
+    pay = finalize_payment(
         db,
-        payer_id=str(current_user.id),
-        payee_id=str(pkg.teacher_id),
-        payment_type="mock_test",
-        reference_id=data.package_id,
         razorpay_order_id=data.razorpay_order_id,
         razorpay_payment_id=data.razorpay_payment_id,
-        total_amount=float(pkg.price),
-        currency=pkg.currency,
-        tier_enrollment_count=None,
+        payer_id=str(current_user.id),
+        reference_id=str(data.package_id),
     )
     db.add(
         MockTestPurchase(
             student_id=current_user.id,
             package_id=pkg.id,
             payment_id=pay.id,
-            amount_paid=pkg.price,
+            amount_paid=pay.total_amount,
         )
     )
     db.commit()
@@ -477,46 +495,17 @@ async def submit_attempt(
     )
     if not pur:
         raise HTTPException(status_code=403, detail="Purchase required")
-    sections = db.query(MockTestSection).filter(MockTestSection.paper_id == paper_id).all()
-    marks_per_q = float(paper.marks_per_question or 1)
-    neg_per_q = float(paper.negative_marks or 0)
-    total = 0.0
-    earned = 0.0
-    correct_count = 0
-    wrong_count = 0
-    skipped_count = 0
-    for sec in sections:
-        questions = (
-            db.query(MockTestQuestion).filter(MockTestQuestion.section_id == sec.id).order_by(MockTestQuestion.order_index).all()
-        )
-        for q in questions:
-            q_marks = float(q.marks or marks_per_q)
-            total += q_marks
-            ans = (data.answers or {}).get(str(q.id), "")
-            if q.question_type in ("mcq", "mcq_multi"):
-                if not ans or str(ans).strip() == "":
-                    skipped_count += 1
-                elif str(ans).lower().strip() == str(q.correct_answer or "").lower().strip():
-                    correct_count += 1
-                    earned += q_marks
-                else:
-                    wrong_count += 1
-                    earned -= neg_per_q
-            else:
-                if ans and q.correct_answer and str(ans).lower() in str(q.correct_answer).lower():
-                    correct_count += 1
-                    earned += q_marks * 0.5
-    penalty_deducted = round(wrong_count * neg_per_q, 2)
-    net_score = max(0.0, earned)
-    pct = (net_score / total * 100) if total > 0 else 0
+    # Single source of truth for scoring — identical to the analytics/results path,
+    # so the immediate result screen and the detailed results page can never disagree.
+    bd = _score_breakdown(paper, data.answers or {}, db)
     from datetime import datetime, timezone
 
     att = MockTestAttempt(
         student_id=current_user.id,
         paper_id=paper_id,
         answers=data.answers,
-        score_percent=round(pct, 2),
-        total_score=round(net_score, 2),
+        score_percent=bd["score_percent"],
+        total_score=bd["total_score"],
         time_taken_seconds=data.time_taken_seconds,
         submitted_at=datetime.now(timezone.utc),
     )
@@ -525,13 +514,13 @@ async def submit_attempt(
     db.refresh(att)
     return {
         "attempt_id": str(att.id),
-        "score_percent": round(pct, 2),
-        "total_score": round(net_score, 2),
-        "max_score": round(total, 2),
-        "correct_count": correct_count,
-        "wrong_count": wrong_count,
-        "skipped_count": skipped_count,
-        "penalty_deducted": penalty_deducted,
+        "score_percent": bd["score_percent"],
+        "total_score": bd["total_score"],
+        "max_score": bd["max_score"],
+        "correct_count": bd["correct_count"],
+        "wrong_count": bd["wrong_count"],
+        "skipped_count": bd["skipped_count"],
+        "penalty_deducted": bd["penalty_deducted"],
         "time_taken_seconds": data.time_taken_seconds,
     }
 
@@ -875,6 +864,21 @@ async def paper_leaderboard(
     paper = db.query(MockTestPaper).filter(MockTestPaper.id == paper_id).first()
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
+
+    # Gate the leaderboard (which exposes other students' names/scores) behind purchase.
+    pkg = db.query(MockTestPackage).filter(MockTestPackage.id == paper.package_id).first()
+    is_owner = current_user.role == "admin" or (pkg and str(pkg.teacher_id) == str(current_user.id))
+    if not is_owner:
+        owned = (
+            db.query(MockTestPurchase)
+            .filter(
+                MockTestPurchase.student_id == current_user.id,
+                MockTestPurchase.package_id == paper.package_id,
+            )
+            .first()
+        )
+        if not owned:
+            raise HTTPException(status_code=403, detail="Purchase required to view the leaderboard")
 
     best = _best_attempts_for_paper(paper_id, db)
     best.sort(key=lambda a: float(a.total_score or 0), reverse=True)

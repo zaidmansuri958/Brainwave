@@ -224,6 +224,23 @@ async def request_refund(
             Payment.status == "completed"
         ).order_by(Payment.created_at.desc()).first()
 
+        # Eligibility policy — must be a paid enrollment, within the window, and
+        # below the max watched-content threshold.
+        if not payment:
+            return JSONResponse(status_code=400, content={"detail": "No completed payment found for this enrollment"})
+
+        from datetime import datetime, timezone, timedelta
+        enrolled_at = enrollment.enrolled_at
+        if enrolled_at is not None:
+            if enrolled_at.tzinfo is None:
+                enrolled_at = enrolled_at.replace(tzinfo=timezone.utc)
+            window_days = int(settings.refund_window_days)
+            if datetime.now(timezone.utc) > enrolled_at + timedelta(days=window_days):
+                return JSONResponse(status_code=400, content={"detail": f"Refund window of {window_days} days has passed"})
+        max_watch = float(settings.refund_max_watch_percent)
+        if watch_pct > max_watch:
+            return JSONResponse(status_code=400, content={"detail": f"Not eligible: more than {max_watch:.0f}% of the course has been completed"})
+
         refund = RefundRequest(
             student_id=user_id,
             enrollment_id=enrollment_id,
@@ -237,6 +254,28 @@ async def request_refund(
         db.commit()
         db.refresh(refund)
         return {"refund_request_id": str(refund.id), "status": "pending", "watch_percent": watch_pct}
+    finally:
+        db.close()
+
+
+@app.post("/api/v1/newsletter/subscribe")
+async def newsletter_subscribe(data: dict):
+    from app.database import get_db
+    from app.models.newsletter import NewsletterSubscriber
+    import re
+
+    email = (data.get("email") or "").strip().lower()
+    if not email or not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
+        return JSONResponse(status_code=400, content={"detail": "Please enter a valid email address."})
+
+    db_gen = get_db()
+    db = next(db_gen)
+    try:
+        existing = db.query(NewsletterSubscriber).filter(NewsletterSubscriber.email == email).first()
+        if not existing:
+            db.add(NewsletterSubscriber(email=email))
+            db.commit()
+        return {"subscribed": True}
     finally:
         db.close()
 

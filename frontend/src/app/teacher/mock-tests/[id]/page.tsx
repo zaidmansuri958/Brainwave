@@ -52,10 +52,12 @@ interface Paper {
 function QuestionForm({
   sectionId,
   marksDefault,
+  orderIndex,
   onDone,
 }: {
   sectionId: string;
   marksDefault: number;
+  orderIndex: number;
   onDone: () => void;
 }) {
   const { toast } = useToast();
@@ -71,7 +73,7 @@ function QuestionForm({
         options: opts.filter(Boolean),
         correct_answer: correct !== null ? opts[correct] : "",
         marks: marksDefault,
-        order_index: 0,
+        order_index: orderIndex,
       }),
     onSuccess: () => {
       toast({ title: "Question added" });
@@ -206,6 +208,7 @@ function SectionBlock({
             <QuestionForm
               sectionId={section.id}
               marksDefault={marksDefault}
+              orderIndex={section.questions.length}
               onDone={() => { setAdding(false); onRefetch(); }}
             />
           ) : (

@@ -31,11 +31,17 @@ class Settings(BaseSettings):
     razorpay_key_id: str = ""
     razorpay_key_secret: str = ""
     razorpay_webhook_secret: str = ""
+    # Platform fee for marketplace sales (mock tests, study materials, doubt sessions).
+    # Course sales use the volume-tiered rate in app/utils/pricing.py instead.
     platform_cut_percent: int = 20
     # RazorpayX (teacher payouts). Leave account number blank to run in simulated mode.
     razorpayx_account_number: str = ""
     razorpayx_mode: str = "auto"  # auto | simulated | live
     payout_min_amount: float = 100.0
+
+    # Refund policy
+    refund_window_days: int = 7
+    refund_max_watch_percent: float = 25.0
     
     # Email
     resend_api_key: str = ""

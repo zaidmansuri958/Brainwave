@@ -446,11 +446,21 @@ async def approve_refund(
     refund = db.query(RefundRequest).filter(RefundRequest.id == refund_id).first()
     if not refund:
         raise HTTPException(status_code=404, detail="Refund request not found")
+    # Idempotency — never process the same request twice.
+    if refund.status != "pending":
+        raise HTTPException(status_code=400, detail=f"Refund already {refund.status}")
 
     payment = db.query(Payment).filter(Payment.id == refund.payment_id).first()
-    if payment:
-        process_refund(payment.razorpay_payment_id, float(payment.total_amount))
+    if payment and payment.status == "completed":
+        result = process_refund(payment.razorpay_payment_id, float(payment.total_amount))
+        if isinstance(result, dict) and result.get("id"):
+            refund.razorpay_refund_id = result.get("id")
         payment.status = "refunded"
+        # Claw back the teacher's share so we don't pay out money that was returned.
+        if payment.payee_id and payment.teacher_earning:
+            prof = db.query(TeacherProfile).filter(TeacherProfile.user_id == payment.payee_id).first()
+            if prof:
+                prof.pending_payout = max(0.0, float(prof.pending_payout or 0) - float(payment.teacher_earning or 0))
 
     if refund.enrollment:
         refund.enrollment.is_active = False
@@ -478,6 +488,8 @@ async def reject_refund(
     refund = db.query(RefundRequest).filter(RefundRequest.id == refund_id).first()
     if not refund:
         raise HTTPException(status_code=404, detail="Refund request not found")
+    if refund.status != "pending":
+        raise HTTPException(status_code=400, detail=f"Refund already {refund.status}")
 
     refund.status = "rejected"
     refund.admin_note = admin_note

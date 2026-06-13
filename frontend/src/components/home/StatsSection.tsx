@@ -1,5 +1,7 @@
 ﻿"use client";
 import { Users, GraduationCap, BookOpen, Heart } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { platformApi } from "@/lib/api";
 
 const logos = [
   { name: "Google",    src: "https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg",          w: 52 },
@@ -8,12 +10,24 @@ const logos = [
   { name: "NVIDIA",    src: "https://upload.wikimedia.org/wikipedia/commons/2/21/Nvidia_logo.svg",               w: 58 },
 ];
 
+function compact(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n % 1_000_000 ? 1 : 0)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(n % 1_000 ? 1 : 0)}K`;
+  return `${n}`;
+}
+
 export function StatsSection() {
+  const { data } = useQuery({
+    queryKey: ["platform-stats"],
+    queryFn: () => platformApi.stats().then((r) => r.data),
+    staleTime: 5 * 60 * 1000,
+  });
+
   const stats = [
-    { icon: Users,         value: "50K+", label: "Active Learners"  },
-    { icon: GraduationCap, value: "2K+",  label: "Expert Teachers"  },
-    { icon: BookOpen,      value: "1K+",  label: "Courses"          },
-    { icon: Heart,         value: "95%",  label: "Satisfaction Rate" },
+    { icon: Users,         value: data ? compact(data.students) : "—", label: "Active Learners"  },
+    { icon: GraduationCap, value: data ? compact(data.teachers) : "—", label: "Expert Teachers"  },
+    { icon: BookOpen,      value: data ? compact(data.courses)  : "—", label: "Courses"          },
+    { icon: Heart,         value: data?.avg_rating ? `${data.avg_rating}/5` : "—", label: "Avg Rating" },
   ];
 
   return (

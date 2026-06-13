@@ -7,7 +7,7 @@ from app.models.community import CommunityPost
 from app.models.payment import Payment
 from app.middleware.auth_middleware import get_current_user
 from app.models.user import User
-from app.services.payment_service import create_razorpay_order, verify_razorpay_signature, record_payment
+from app.services.payment_service import create_razorpay_order, verify_razorpay_signature, create_pending_payment, finalize_payment
 from app.services.notification_service import create_notification
 from app.schemas.payment import EnrollmentInitiate, EnrollmentConfirm
 from app.utils.pricing import effective_course_price, enrollment_access_fields
@@ -58,6 +58,16 @@ async def initiate_enrollment(
         return {"free": True, "enrolled": True}
 
     order = create_razorpay_order(eff)
+    create_pending_payment(
+        db,
+        payer_id=str(current_user.id),
+        payee_id=str(course.teacher_id),
+        payment_type="course_purchase",
+        reference_id=str(data.course_id),
+        razorpay_order_id=order["id"],
+        total_amount=float(eff),
+        currency=course.currency,
+    )
     return {
         "razorpay_order_id": order["id"],
         "amount": eff,
@@ -75,30 +85,36 @@ async def confirm_enrollment(
     if not verify_razorpay_signature(data.razorpay_payment_id, data.razorpay_order_id, data.razorpay_signature):
         raise HTTPException(status_code=400, detail="Payment verification failed")
 
-    course = db.query(Course).filter(Course.id == data.course_id).first()
+    # Validate against the order created at /initiate (amount, payee and course are read from
+    # the stored order — never trusted from the client) and credit the teacher exactly once.
+    payment = finalize_payment(
+        db,
+        razorpay_order_id=data.razorpay_order_id,
+        razorpay_payment_id=data.razorpay_payment_id,
+        payer_id=str(current_user.id),
+        reference_id=str(data.course_id),
+    )
+
+    course = db.query(Course).filter(Course.id == payment.reference_id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
 
-    tier_n = int(course.enrolled_count or 0)
-    eff = effective_course_price(db, course)
+    # Idempotency: a replayed confirm must not create a second enrollment.
+    existing = db.query(Enrollment).filter(
+        Enrollment.student_id == current_user.id,
+        Enrollment.course_id == course.id,
+    ).first()
+    if existing:
+        if not existing.is_active:
+            existing.is_active = True
+            db.commit()
+        return {"enrolled": True, "enrollment_id": str(existing.id)}
 
-    payment = record_payment(
-        db,
-        payer_id=str(current_user.id),
-        payee_id=str(course.teacher_id),
-        payment_type="course_purchase",
-        reference_id=str(data.course_id),
-        razorpay_order_id=data.razorpay_order_id,
-        razorpay_payment_id=data.razorpay_payment_id,
-        total_amount=float(eff),
-        currency=course.currency,
-        tier_enrollment_count=tier_n,
-    )
-
+    eff = float(payment.total_amount or 0)
     af = enrollment_access_fields(course)
     enrollment = Enrollment(
         student_id=current_user.id,
-        course_id=data.course_id,
+        course_id=course.id,
         payment_id=payment.id,
         amount_paid=eff,
         **af,
